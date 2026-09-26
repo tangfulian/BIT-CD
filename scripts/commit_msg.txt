@@ -1,0 +1,46 @@
+fix: 权重缺失改显式报错、Agent 越权与凭据泄露、测试套件修复等 17 项
+
+基于《网站分析/分析报告.md》的多维度审计结果，修复以下问题。
+
+安全
+- Agent 接口补管理员校验：此前仅要求登录，任意注册用户即可调用该接口
+  驱动真实浏览器并以管理员身份操作前端
+- 管理员 JWT 不再写入 LLM 提示词：改为通过 CDP 直接注入浏览器 localStorage，
+  此前令牌会随 task 明文发往第三方 DashScope
+- 关闭 Agent 浏览器的 disable_security，保留同源策略
+- --no-sandbox 改为仅在 root 环境下添加，其余环境保留沙箱
+- history 页 location/change_type 补 HTML 转义，修复存储型 XSS
+- /results 的 CORS 改为白名单判断，不再无条件回显请求方 Origin
+- .dockerignore 补 .env.production，此前会被 COPY . . 打进生产镜像
+
+正确性
+- 模型权重缺失时抛 ModelNotAvailableError 并由全局处理器返回 503：
+  此前只打一条 warning 就用未训练网络继续推理并返回 200，
+  而前端仍把 FC_SIAM_DIFF/SNUNET/CHANGEFORMER 三个无权重模型列在
+  下拉框、对比页与评估页（评估页默认全选），会输出看似正常的结果
+- 删除前端硬编码的 f1_score: 87.76（会经 AI 解读进入答辩材料）
+- checkpoints/BIT_LEVIR 更名为 BIT_SYSU：该权重与 checkpoints/test/best_ckpt.pt
+  内容完全一致（MD5 ac3c38e2…），训练日志记录 data_name: SYSU，原名属误标
+- 图片解码统一为 _decode_image，非法文件返回 400 而非裸 500；顺带收敛
+  原先散落在 detect.py 的 15 处重复解码代码
+- models/ 的 from misc.* 改为 from core.misc.*：该顶层包并不存在，
+  此前仅靠 Dockerfile 的 cp hack 维持，非 Docker 环境无法启动
+- 新增全局异常处理器，统一 JSON 错误响应
+
+性能与体验
+- detect/ai 的 9 处同步重活移入线程池：这些端点声明为 async def 却同步调用
+  torch 前向与 dashscope SDK，单 worker 下一次检测即阻塞整个事件循环
+- 前端补 hash 路由：此前完全没有路由，刷新即回首页、前进后退键失效
+- 历史分页参数加上界（page ≥ 1、limit ≤ 100），此前可一次拉走全表
+- 请求计数改为按需建桶 + 最长路径优先匹配：原先 24 个映射仅 9 个有计数桶，
+  且 /detect 抢先命中导致 compare/rethreshold/otsu/ndvi 计数恒为 0
+
+测试
+- tests/test_full_api.py 移至 scripts/smoke_test.py：该文件在模块顶层发请求
+  并 sys.exit(1)，pytest 收集阶段即中断整个会话
+- conftest 改用文件型测试库：routers 中的 SessionLocal 是模块级绑定，
+  替换 db_module.SessionLocal 无法影响它们，此前报 no such table: users
+- 补验证码绕过与限流重置 fixture；测试环境固定 USER_RESET_PASSWORD
+- UserRegister 的验证码字段设为可选默认空串，空值仍会被 verify_captcha 拒绝，
+  生产校验强度不变（已有端到端用例覆盖）
+- 结果：11 failed / 22 errors → 46 passed

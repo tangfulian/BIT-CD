@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黑土地遥感变化检测系统 - BlackLand CD</title>
+    <meta name="description" content="黑土地遥感变化检测智能平台，融合深度学习与GIS技术，为东北黑土地保护提供精准的变化检测与数据分析">
+    <meta name="theme-color" content="#2d6a4f">
+    <meta property="og:title" content="黑土地遥感变化检测系统 - BlackLand CD">
+    <meta property="og:description" content="黑土地保护智能平台 — 遥感变化检测与AI分析">
+    <meta property="og:image" content="images/logo.png">
+    <meta property="og:type" content="website">
+
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://webapi.amap.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="apple-touch-icon" href="images/logo.png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- 高德地图：密钥由 js/config.local.js 提供（该文件不入库），缺失时自动降级 -->
+    <script src="js/config.local.js"></script>
+    <script>
+      (function () {
+        var key = (window.__APP_LOCAL_CONFIG__ && window.__APP_LOCAL_CONFIG__.amapKey) || "";
+        if (!key) {
+          console.warn("[配置] 未提供高德 Key，地图相关功能不可用。"
+            + "请复制 js/config.local.example.js 为 js/config.local.js 并填入 Key。");
+          return;
+        }
+        var s = document.createElement("script");
+        s.src = "https://webapi.amap.com/maps?v=2.0&key=" + encodeURIComponent(key);
+        s.async = true;
+        document.head.appendChild(s);
+      })();
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/geotiff@2.1.3/dist-browser/geotiff.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="images/logo.png" type="image/png">
+</head>
+<body>
+    <a href="#mainApp" class="skip-link">跳到主内容</a>
+    <!-- 登录/注册页面 -->
+    <div id="authPage" class="auth-container hidden">
+        <button class="auth-overlay-close" id="authOverlayClose" title="关闭">&times;</button>
+        <div class="auth-card">
+            <div class="auth-logo">
+                <!-- Logo png -->
+                <img src="images/logo.png" alt="BlackLand CD" style="width:80px; height:80px; margin:0 auto 16px; display:block;">
+                <h1 data-i18n="auth.title">黑土地遥感变化检测系统</h1>
+                <p data-i18n="auth.subtitle">BLACKLAND CD · 黑土地保护智能平台</p>
+            </div>
+            <form id="loginForm" class="auth-form" novalidate onsubmit="event.preventDefault()">
+                <div class="form-group">
+                    <label for="login_user" data-i18n="auth.username">用户名</label>
+                    <input type="text" id="login_user" name="username" autocomplete="username" data-i18n="auth.usernamePlaceholder" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label for="login_pwd" data-i18n="auth.password">密码</label>
+                    <input type="password" id="login_pwd" name="password" autocomplete="current-password" data-i18n="auth.passwordPlaceholder" placeholder="请输入密码">
+                </div>
+                <div class="form-group captcha-group">
+                    <label data-i18n="auth.captcha">验证码</label>
+                    <div class="captcha-row">
+                        <img id="loginCaptchaImg" class="captcha-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='44'%3E%3Crect fill='%23f0f0f0' width='120' height='44' rx='4'/%3E%3Ctext x='60' y='26' text-anchor='middle' fill='%23999' font-size='13'%3E点击加载%3C/text%3E%3C/svg%3E" alt="验证码" title="点击刷新验证码">
+                        <input type="text" id="login_captcha" class="captcha-input" autocomplete="off" maxlength="4" placeholder="请输入验证码">
+                        <button type="button" id="refreshLoginCaptcha" class="captcha-refresh" title="刷新验证码">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" id="loginBtn" data-i18n="auth.login">登录系统</button>
+                <button type="button" class="btn-secondary" id="goRegister" data-i18n="auth.goRegister">没有账号？去注册</button>
+            </form>
+            <form id="registerForm" class="auth-form hidden" novalidate onsubmit="event.preventDefault()">
+                <div class="form-group">
+                    <label for="reg_user" data-i18n="auth.username">用户名</label>
+                    <input type="text" id="reg_user" name="username" autocomplete="username" data-i18n="auth.setUsername" placeholder="设置用户名">
+                </div>
+                <div class="form-group">
+                    <label for="reg_pwd" data-i18n="auth.password">密码</label>
+                    <input type="password" id="reg_pwd" name="new-password" autocomplete="new-password" data-i18n="auth.passwordPlaceholder" placeholder="密码≥8位，含字母+数字">
+                </div>
+                <div class="form-group captcha-group">
+                    <label data-i18n="auth.captcha">验证码</label>
+                    <div class="captcha-row">
+                        <img id="captchaImg" class="captcha-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='44'%3E%3Crect fill='%23f0f0f0' width='120' height='44' rx='4'/%3E%3Ctext x='60' y='26' text-anchor='middle' fill='%23999' font-size='13'%3E点击加载%3C/text%3E%3C/svg%3E" alt="验证码" title="点击刷新验证码">
+                        <input type="text" id="reg_captcha" class="captcha-input" autocomplete="off" maxlength="4" placeholder="请输入验证码">
+                        <button type="button" id="refreshCaptcha" class="captcha-refresh" title="刷新验证码">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" id="registerBtn" data-i18n="auth.register">注册账号</button>
+                <button type="button" class="btn-secondary" id="goLogin" data-i18n="auth.goLogin">已有账号？去登录</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 主系统页面 -->
+    <div id="mainApp" class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <!-- 侧边栏 Logo -->
+                    <div class="logo-icon">
+                         <img src="images/logo.png" alt="logo" style="width:100%; height:100%; object-fit:contain;">
+                    </div>
+                    <div><h2>BlackLand CD</h2></div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <!-- 地块信息配置 -->
+                <button class="nav-item" data-page="land">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2C7.58 2 4 6.48 4 12c0 5.52 7 10 8 10s8-4.48 8-10c0-5.52-3.58-10-8-10z"/></svg>
+                    <span data-i18n="nav.land">地块信息配置</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <!-- 单张检测 -->
+                <button class="nav-item active" data-page="single">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                    <span data-i18n="nav.single">单张变化检测</span>
+                </button>
+                <!-- 批量检测 -->
+                <button class="nav-item" data-page="batch">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <span data-i18n="nav.batch">批量变化检测</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <!-- 检测历史 -->
+                <button class="nav-item" data-page="history">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span data-i18n="nav.history">检测历史</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <!-- 数据大屏 -->
+                <button class="nav-item" data-page="dashboard">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    <span data-i18n="nav.dashboard">数据大屏</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <!-- 时序分析 -->
+                <button class="nav-item" data-page="timeline">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <span data-i18n="nav.timeline">时序分析</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <!-- 系统状态 -->
+                <button class="nav-item" data-page="status">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <span data-i18n="nav.status">系统状态</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <!-- 结果对比 -->
+                <button class="nav-item" data-page="compare">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                    <span data-i18n="nav.compare">结果对比</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <!-- 模型评估 -->
+                <button class="nav-item" data-page="evaluate">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    <span data-i18n="nav.evaluate">模型评估</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <!-- AI Agent 浏览器操控 -->
+                <button class="nav-item" data-page="agent">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="4"/><circle cx="9" cy="9" r="2"/><circle cx="15" cy="9" r="2"/><path d="M9 15c.83.67 1.83 1 3 1s2.17-.33 3-1"/><line x1="12" y1="13" x2="12" y2="17"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg>
+                    <span data-i18n="nav.agent">AI Agent</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <!-- 检测地图 -->
+                <button class="nav-item" data-page="mapviewer">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2C7.58 2 4 6.48 4 12c0 5.52 7 10 8 10s8-4.48 8-10c0-5.52-3.58-10-8-10z"/></svg>
+                    <span data-i18n="nav.mapviewer">检测地图</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <!-- 用户管理（仅管理员可见） -->
+                <button class="nav-item admin-only hidden" data-page="usermgr">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span data-i18n="nav.usermgr">用户管理</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <!-- 个人中心 -->
+                <button class="nav-item" data-page="profile">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span data-i18n="nav.profile">个人中心</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <!-- 关于系统 -->
+                <button class="nav-item" data-page="about">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <span data-i18n="nav.about">关于系统</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <!-- 游客状态栏 -->
+                <div id="guestBar" class="sidebar-guest-bar">
+                    <div class="guest-status-row">
+                        <span class="guest-dot"></span>
+                        <span data-i18n="guest.notLoggedIn">未登录</span>
+                    </div>
+                    <div class="guest-quota-row" id="guestQuotaRow">
+                        剩余 <strong id="guestQuota">3</strong> 次免费检测
+                    </div>
+                    <button class="btn-primary btn-sm" id="guestLoginBtn" data-i18n="guest.login">登录</button>
+                    <button class="btn-outline btn-sm" id="guestRegisterBtn" data-i18n="guest.register">注册</button>
+                </div>
+                <!-- 已登录用户栏 -->
+                <div id="userBar">
+                    <div class="user-info">
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <div class="user-details">
+                            <h4 id="showUser">用户</h4>
+                            <p data-i18n="auth.loggedIn">已登录</p>
+                            <p id="userRole" style="font-size: 13px;">角色：普通用户</p>
+                        </div>
+                    </div>
+                    <button class="btn-danger" id="logoutBtn" data-i18n="auth.logout" aria-label="退出登录">退出登录</button>
+                </div>
+                <button class="btn-theme-toggle" id="toggleThemeBtn" aria-label="切换深色/亮色模式" aria-pressed="false">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    暗色模式
+                </button>
+                <button class="btn-theme-toggle" id="langSwitchBtn" style="font-weight:600;" data-i18n="system.langSwitch" aria-label="切换语言">中/EN</button>
+            </div>
+        </aside>
+
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+        <main class="main-content">
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+            <!-- ========== 地块信息配置页面（左右布局） ========== -->
+            <div id="page-land" class="page-content">
+                <div class="page-header">
+                    <div>
+                        <h1 data-i18n="land.title">精准地块信息配置</h1>
+                        <p data-i18n="land.subtitle">左侧地图定位，右侧填写地块详情，配置自动保存</p>
+                    </div>
+                    <button class="btn-primary" id="saveLandInfo" style="width: auto; padding: 10px 24px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        <span data-i18n="land.saveInfo">保存配置</span>
+                    </button>
+                </div>
+
+                <div class="land-layout">
+                    <div class="land-map-area">
+                        <div class="card" style="padding: 16px; height: 100%; display: flex; flex-direction: column;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <label class="form-label" style="margin: 0;" data-i18n="land.gpsLabel">GPS地理定位</label>
+                                <div style="display: flex; gap: 8px;">
+                                    <button type="button" id="getGPSBtn" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 13px;">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="10" r="3"/><path d="M12 2C7.58 2 4 6.48 4 12c0 5.52 7 10 8 10s8-4.48 8-10c0-5.52-3.58-10-8-10z"/></svg>
+                                        <span data-i18n="land.getGPS">获取当前位置</span>
+                                    </button>
+                                    <button type="button" id="drawAreaBtn" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 13px;">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+                                        <span data-i18n="land.drawArea">绘制地块</span>
+                                    </button>
+                                    <button type="button" id="clearDrawBtn" class="btn-gray" style="width: auto; padding: 8px 16px; font-size: 13px; display: none;" data-i18n="common.reset">清除</button>
+                                </div>
+                            </div>
+                            <div id="gpsStatus" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;"><span data-i18n="land.gpsHint">点击按钮获取当前位置，或手动绘制地块范围</span></div>
+                            <div id="mapContainer" style="flex: 1; width: 100%; min-height: 400px; border-radius: var(--radius-md); border: 1px solid var(--border);"></div>
+                        </div>
+                    </div>
+
+                    <div class="land-form-area">
+                        <div class="card" style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div class="form-group"><label class="form-label" data-i18n="land.t1Time">T1影像拍摄时间</label><input type="month" id="t1_time" value="2021-05" class="form-control"></div>
+                                <div class="form-group"><label class="form-label" data-i18n="land.t2Time">T2影像拍摄时间</label><input type="month" id="t2_time" value="2022-05" class="form-control"></div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="land.province">所在省份</label>
+                                    <select id="province" class="form-control">
+                                        <option value="黑龙江省" selected>黑龙江省</option>
+                                        <option value="吉林省">吉林省</option>
+                                        <option value="辽宁省">辽宁省</option>
+                                        <option value="内蒙古自治区">内蒙古自治区</option>
+                                    </select>
+                                </div>
+                                <div class="form-group"><label class="form-label" data-i18n="land.city">所在市县</label><input type="text" id="city" value="齐齐哈尔市" class="form-control"></div>
+                                <div class="form-group"><label class="form-label" data-i18n="land.latLng">地块经纬度范围</label><input type="text" id="lat_lng" class="form-control"></div>
+                                <div class="form-group"><label class="form-label" data-i18n="land.area">地块总面积（亩）</label><input type="number" id="area" class="form-control"></div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="land.landType">耕地类型</label>
+                                    <select id="land_type" class="form-control">
+                                        <option value="黑土核心区旱田" selected>黑土核心区旱田</option>
+                                        <option value="水田">水田</option>
+                                        <option value="旱改水地块">旱改水地块</option>
+                                        <option value="坡耕地">坡耕地</option>
+                                        <option value="风沙地">风沙地</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="land.cropType">主要种植作物</label>
+                                    <select id="crop_type" class="form-control">
+                                        <option value="玉米-大豆轮作" selected>玉米-大豆轮作</option>
+                                        <option value="水稻">水稻</option>
+                                        <option value="玉米连作">玉米连作</option>
+                                        <option value="大豆连作">大豆连作</option>
+                                        <option value="杂粮作物">杂粮作物</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="land.dataSource">影像数据源</label>
+                                    <select id="data_source" class="form-control">
+                                        <option value="无人机航拍光学影像" selected>无人机航拍光学影像</option>
+                                        <option value="高分二号卫星影像">高分二号卫星影像</option>
+                                        <option value="哨兵二号卫星影像">哨兵二号卫星影像</option>
+                                        <option value="其他卫星光学影像">其他卫星光学影像</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="land.changeType">核心变化类型</label>
+                                    <select id="change_type_define" class="form-control">
+                                        <option value="水蚀沟壑发育">水蚀沟壑发育</option>
+                                        <option value="风蚀沙化">风蚀沙化</option>
+                                        <option value="耕地撂荒">耕地撂荒</option>
+                                        <option value="耕地非农化（建房/建厂）">耕地非农化</option>
+                                        <option value="耕地非粮化（种树/挖塘）">耕地非粮化</option>
+                                        <option value="黑土层变薄退化" selected data-i18n="land.defaultChangeType">黑土层变薄退化</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== 单张检测 ========== -->
+            <div id="page-single" class="page-content active">
+                <div class="page-header">
+                    <div>
+                        <h1 data-i18n="detect.title">单张变化检测</h1>
+                        <p data-i18n="detect.subtitle">上传双时相遥感影像，使用多种模型进行智能变化检测</p>
+                    </div>
+                </div>
+
+                <div class="detect-layout">
+                    <div class="detect-config">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                                    <span data-i18n="detect.config">检测配置</span>
+                                </h3>
+                            </div>
+                            <div class="config-row">
+                                <div class="form-group" style="flex:2;">
+                                    <label class="form-label" data-i18n="plot.selectPlot">选择地块</label>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <select id="detectPlotSelect" class="form-control" style="flex:1;">
+                                            <option value="">-- 手动填写 --</option>
+                                        </select>
+                                        <button type="button" id="managePlotBtn" class="btn-gray" style="width: auto; padding: 8px 12px; font-size: 13px; white-space: nowrap;" data-i18n="plot.managePlots">管理地块</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="config-row">
+                                <div class="form-group" style="flex:2;">
+                                    <label class="form-label" data-i18n="detect.selectModel">选择检测模型</label>
+                                    <select id="model_type" class="form-control">
+                                        <option value="BIT">BIT 变化检测模型（推荐）</option>
+                                        <option value="DIFF">传统差分模型（基准对比）</option>
+                                        <option value="AFCF3D">AFCF3D-Net 3D卷积模型</option>
+                                        <option value="BIT_LuojiaSET">BIT LuojiaSET（珞珈数据集）</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex:1;">
+                                    <label class="form-label" data-i18n="detect.threshold">置信度阈值</label>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <input type="number" id="threshold" value="0.5" min="0.1" max="0.99" step="0.01" class="form-control" style="flex:1;">
+                                        <button type="button" id="autoThresholdBtn" class="btn-gray" style="width: auto; padding: 8px 16px; font-size: 13px; white-space: nowrap;" data-i18n="detect.autoThreshold">自动</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 模型对比复选框 -->
+                            <div class="model-compare-checkboxes" id="modelCompareCheckboxes" style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; padding: 12px; background: var(--bg-card-hover); border-radius: var(--radius-md); border: 1px solid var(--border);">
+                                <span style="font-size:13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                    <span data-i18n="modelCompare.selectHint">勾选 2 个以上模型可进行对比</span>
+                                </span>
+                                <label class="model-check-label"><input type="checkbox" class="model-compare-check" value="BIT" checked> BIT <small class="model-tag-ai">AI模型</small></label>
+                                <label class="model-check-label"><input type="checkbox" class="model-compare-check" value="DIFF"> DIFF <small class="model-tag-basic">基准方法</small></label>
+                                <label class="model-check-label"><input type="checkbox" class="model-compare-check" value="AFCF3D"> AFCF3D <small class="model-tag-ai">AI模型</small></label>
+                                <label class="model-check-label"><input type="checkbox" class="model-compare-check" value="BIT_LuojiaSET"> BIT_LuojiaSET <small class="model-tag-ai">AI模型</small></label>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="detect.t1Label">T1 时相影像（前时相）</label>
+                                <div class="upload-zone" id="upload1">
+                                    <div class="upload-placeholder">
+                                        <div class="upload-icon-big">
+                                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        </div>
+                                        <div class="upload-text" data-i18n="detect.placeholder">点击或拖拽上传 T1 影像</div>
+                                        <div class="upload-hint" data-i18n="upload.hint">支持 JPG、PNG、TIFF，最大 10MB</div>
+                                    </div>
+                                    <img id="img1" class="upload-preview hidden" loading="lazy" decoding="async" alt="T1 时相影像预览" />
+                                    <div id="f1name" class="file-name hidden"></div>
+                                    <input type="file" id="file1" accept="image/*" hidden>
+                                </div>
+                            </div>
+
+                            <div style="display:flex;gap:8px;justify-content:center;margin-bottom:4px;">
+                                <button type="button" id="swapPairBtn" class="btn-gray" style="padding:6px 14px;font-size:12px;" title="交换 T1/T2">🔄 交换前后时相</button>
+                                <button type="button" id="susycdQuickBtn" class="btn-gray" style="padding:6px 14px;font-size:12px;" title="从 SUSY-CD 数据集快速配对">📂 SUSY-CD 快速配对</button>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="detect.t2Label">T2 时相影像（后时相）</label>
+                                <div class="upload-zone" id="upload2">
+                                    <div class="upload-placeholder">
+                                        <div class="upload-icon-big">
+                                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        </div>
+                                        <div class="upload-text" data-i18n="detect.placeholder">点击或拖拽上传 T2 影像</div>
+                                        <div class="upload-hint" data-i18n="upload.hint">支持 JPG、PNG、TIFF，最大 10MB</div>
+                                    </div>
+                                    <img id="img2" class="upload-preview hidden" loading="lazy" decoding="async" alt="T2 时相影像预览" />
+                                    <div id="f2name" class="file-name hidden"></div>
+                                    <input type="file" id="file2" accept="image/*" hidden>
+                                </div>
+                            </div>
+
+                            <div class="btn-group">
+                                <button class="btn-success" id="startBtn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                    <span data-i18n="detect.start">开始检测</span>
+                                </button>
+                                <button class="btn-gray" id="clearBtn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                    <span data-i18n="common.reset">重置</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detect-result">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                                    <span data-i18n="detect.resultTitle">检测结果</span>
+                                </h3>
+                                <button class="btn-gray" id="retryBtn" style="display: none; padding: 8px 16px; font-size: 14px;" data-i18n="detect.retry">重新检测</button>
+                            </div>
+                            <div id="status" class="status-badge"></div>
+                            <div id="resultArea" class="hidden fade-in">
+                                <div class="stats-row">
+                                    <div class="stat-card">
+                                        <div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+                                        <div class="stat-detail"><div class="stat-value" id="t_pixel">-</div><div class="stat-label" data-i18n="detect.totalPixel">总像素</div></div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" transform="rotate(45 12 12)"/></svg></div>
+                                        <div class="stat-detail"><div class="stat-value" id="c_pixel">-</div><div class="stat-label" data-i18n="detect.changePixel">变化像素</div></div>
+                                    </div>
+                                    <div class="stat-card highlight">
+                                        <div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg></div>
+                                        <div class="stat-detail"><div class="stat-value" id="c_ratio">-%</div><div class="stat-label" data-i18n="detect.changeRatio">变化比例</div></div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg></div>
+                                        <div class="stat-detail"><div class="stat-value" id="t_used">-</div><div class="stat-label" data-i18n="detect.threshold">置信阈值</div></div>
+                                    </div>
+                                    <div class="stat-card highlight">
+                                        <div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22L8 14l6 6L22 2"/></svg></div>
+                                        <div class="stat-detail"><div class="stat-value" id="actual_area">-</div><div class="stat-label" data-i18n="detect.actualArea">实际变化面积</div></div>
+                                    </div>
+                                </div>
+                                <div id="thresholdAdjustBar" class="hidden threshold-adjust-bar" style="margin: 16px 0; padding: 14px 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                    <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;" data-i18n="detect.thresholdSlider">交互调阈值</span>
+                                    <input type="range" id="thresholdSlider" min="1" max="99" value="50" class="threshold-slider" style="flex:1;min-width:120px;">
+                                    <span id="thresholdSliderVal" style="font-size:13px;font-weight:600;color:var(--primary);min-width:36px;">0.50</span>
+                                    <button type="button" id="otsuResultBtn" class="btn-gray" style="padding:6px 12px;font-size:12px;white-space:nowrap;" data-i18n="detect.otsuBtn">Otsu自动</button>
+                                    <button type="button" id="saveThresholdBtn" class="btn-action" style="padding:6px 14px;font-size:12px;white-space:nowrap;" data-i18n="detect.saveThreshold">保存阈值</button>
+                                    <span style="font-size:11px;color:var(--text-tertiary);" data-i18n="detect.adjustThresholdHint">拖动滑块实时调整变化检测阈值</span>
+                                </div>
+                                <div id="aiClassificationResult" class="hidden" style="margin: 16px 0;"></div>
+                                <div class="result-images-grid">
+                                    <div class="result-image-card"><h4 data-i18n="detect.t1Label">T1 时相</h4><img id="img1_big" loading="lazy" decoding="async" alt="T1 时相原图"></div>
+                                    <div class="result-image-card"><h4 data-i18n="detect.t2Label">T2 时相</h4><img id="img2_big" loading="lazy" decoding="async" alt="T2 时相原图"></div>
+                                    <div class="result-image-card"><h4 data-i18n="history.detailMask">变化掩膜</h4><img id="resultMask" loading="lazy" decoding="async" alt="变化掩膜结果"></div>
+                                    <div class="result-image-card"><h4 data-i18n="history.detailHeat">热力图</h4><img id="resultHeat" loading="lazy" decoding="async" alt="变化热力图"></div>
+                                    <div class="result-image-card full-width"><h4 data-i18n="history.detailFusion">叠加图</h4><img id="resultFusion" loading="lazy" decoding="async" alt="变化叠加图"></div>
+                                </div>
+                                <div class="result-actions">
+                                    <button class="btn-action" id="compareViewBtn" style="display:none;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><line x1="12" y1="2" x2="12" y2="22"/><polyline points="6 7 2 12 6 17"/><polyline points="18 7 22 12 18 17"/></svg>
+                                        <span data-i18n="detect.compareView">对比查看</span>
+                                    </button>
+                                    <button class="btn-action" id="annotateBtn" style="display:none;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                        <span data-i18n="detect.annotate">修正掩膜</span>
+                                    </button>
+                                    <button class="btn-action btn-action-warning" id="revertMaskBtn" style="display:none;" title="还原为修正前的原始掩膜">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                        <span data-i18n="detect.revertMask">还原掩膜</span>
+                                    </button>
+                                    <button class="btn-action" id="downloadBtn">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                        <span data-i18n="detect.downloadMask">下载结果</span>
+                                    </button>
+                                    <button class="btn-action" id="shareLinkBtn" style="display:none;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                        <span data-i18n="detect.shareLink">复制分享链接</span>
+                                    </button>
+                                    <button class="btn-action" id="downloadReportBtn" style="display: none;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                        <span data-i18n="detect.downloadReport">下载报告</span>
+                                    </button>
+                                    <button class="btn-action primary" id="aiAnalysisBtn">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                                        <span data-i18n="detect.aiAnalysis">AI 智能解读</span>
+                                    </button>
+                                </div>
+                                <div class="result-actions" style="margin-top: 8px; border-top: 1px solid var(--border-light); padding-top: 12px;">
+                                    <button class="btn-action btn-action-accent" id="ndviT1Btn" style="display:none;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                                        <span data-i18n="ndvi.compute">NDVI分析</span>
+                                    </button>
+                                    <button class="btn-action" id="checkRegBtn" style="display:none;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/><path d="M16 8l-5.5 5.5L8 11"/></svg>
+                                        <span data-i18n="registration.check">检查配准</span>
+                                    </button>
+                                    <button class="btn-action" id="areaStatsBtn" style="display:none;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                                        <span data-i18n="areaStats.show">面积统计</span>
+                                    </button>
+                                    <button class="btn-action" id="exportGeojsonBtn" style="display:none;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
+                                        <span data-i18n="geojson.export">导出GeoJSON</span>
+                                    </button>
+                                    <button class="btn-action" id="preprocessImgBtn" style="display:none;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                                        <span data-i18n="imageTools.preprocess">预处理</span>
+                                    </button>
+                                    <button class="btn-action" id="galleryViewBtn" style="display:none;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                                        <span data-i18n="gallery.viewGallery">图库浏览</span>
+                                    </button>
+                                </div>
+                                <div id="aiAnalysisResult" class="ai-analysis-card hidden fade-in">
+                                    <div class="ai-analysis-header">
+                                        <span style="font-size: 20px;">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                                        </span>
+                                        <h3 data-i18n="detect.aiReportTitle">AI 专业解读报告</h3>
+                                    </div>
+                                    <div class="ai-analysis-content" id="aiAnalysisContent"></div>
+                                </div>
+                                <div id="modelCompareSection" class="hidden fade-in" style="margin-top: 24px;">
+                                    <h3 class="section-subtitle" data-i18n="modelCompare.results">对比结果</h3>
+                                    <div id="modelCompareGrid" class="model-compare-grid"></div>
+                                    <div id="modelCompareAnalysis" class="hidden" style="margin-top: 24px;">
+                                        <h4 class="section-subtitle" data-i18n="modelCompare.statsTitle">统计对比</h4>
+                                        <div class="compare-table-wrap" id="compareStatsTable"></div>
+                                        <h4 class="section-subtitle" style="margin-top: 20px;" data-i18n="modelCompare.chartTitle">变化比例对比</h4>
+                                        <div id="compareBarChart" class="compare-bar-chart"></div>
+                                    </div>
+                                    <p class="model-compare-note">注：不同模型使用不同的检测算法，结果可能存在差异。DIFF 为像素级差分基准，其余模型使用深度学习特征。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== 批量检测 ========== -->
+            <div id="page-batch" class="page-content">
+                <div class="page-header">
+                    <h1 data-i18n="batch.title">批量变化检测</h1>
+                    <p data-i18n="batch.subtitle">批量上传双时相影像，自动完成大规模变化检测</p>
+                </div>
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                                <span data-i18n="batch.config">批量配置</span>
+                            </h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="detect.selectModel">选择检测模型</label>
+                            <select id="batch_model" class="form-control">
+                                <option value="BIT">BIT 变化检测模型</option>
+                                <option value="DIFF">传统差分模型</option>
+                                <option value="AFCF3D">AFCF3D-Net 3D卷积模型</option>
+                                <option value="BIT_LuojiaSET">BIT LuojiaSET（珞珈数据集）</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label class="form-label" data-i18n="batch.t1Label">T1 时相影像（批量）</label><input type="file" id="batch_t1" multiple accept="image/*" class="form-control"></div>
+                        <div class="form-group"><label class="form-label" data-i18n="batch.t2Label">T2 时相影像（批量）</label><input type="file" id="batch_t2" multiple accept="image/*" class="form-control"></div>
+                        <div class="form-group">
+                        <label class="form-label" data-i18n="detect.threshold">变化置信度阈值</label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="number" id="batch_th" value="0.5" class="form-control" style="flex:1;">
+                            <button type="button" id="batchAutoThresholdBtn" class="btn-gray" style="width: auto; padding: 8px 16px; font-size: 13px; white-space: nowrap;" data-i18n="detect.autoThreshold">自动</button>
+                        </div>
+                    </div>
+                        <div class="btn-group"><button class="btn-success" id="batchStart">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            <span data-i18n="batch.start">开始批量检测</span>
+                        </button></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                <span data-i18n="batch.result">批量结果</span>
+                            </h3>
+                        </div>
+                        <div id="batch_status" class="status-badge"></div>
+                        <div id="batchSummaryBar" class="batch-summary-bar hidden">
+                            <div class="batch-summary-item"><span class="batch-summary-val" id="batchSumTotal">0</span><span class="batch-summary-lbl" data-i18n="batch.sumTotal">总数</span></div>
+                            <div class="batch-summary-item"><span class="batch-summary-val" id="batchSumDone" style="color:var(--primary);">0</span><span class="batch-summary-lbl" data-i18n="batch.sumDone">已完成</span></div>
+                            <div class="batch-summary-item"><span class="batch-summary-val" id="batchSumFailed" style="color:var(--danger);">0</span><span class="batch-summary-lbl" data-i18n="batch.sumFailed">失败</span></div>
+                            <div class="batch-summary-item"><span class="batch-summary-val" id="batchSumAvgRatio">--</span><span class="batch-summary-lbl" data-i18n="compare.avgRatio">平均变化率</span></div>
+                        </div>
+                        <div class="progress-bar-container hidden" id="batchProgressContainer">
+                            <div class="progress-bar" id="batchProgressBar" style="width: 0%;"></div>
+                            <div class="progress-text" id="batchProgressText">0%</div>
+                        </div>
+                        <div class="table-wrapper" style="margin-top: 16px;">
+                        <table class="data-table" id="batchTable" style="width: 100%; border-collapse: collapse; border-radius: var(--radius-md); overflow: hidden;">
+                            <thead><tr><th style="background: var(--bg-main); padding: 14px 16px; text-align: left; font-weight: 600; font-size: 13px; color: var(--text-secondary); border-bottom: 2px solid var(--border);" data-i18n="batch.csvNo">序号</th><th style="background: var(--bg-main); padding: 14px 16px; text-align: left; font-weight: 600; font-size: 13px; color: var(--text-secondary); border-bottom: 2px solid var(--border);" data-i18n="common.preview">预览</th><th style="background: var(--bg-main); padding: 14px 16px; text-align: left; font-weight: 600; font-size: 13px; color: var(--text-secondary); border-bottom: 2px solid var(--border);" data-i18n="batch.csvName">图片名称</th><th style="background: var(--bg-main); padding: 14px 16px; text-align: left; font-weight: 600; font-size: 13px; color: var(--text-secondary); border-bottom: 2px solid var(--border);" data-i18n="batch.csvRatio">变化比例</th><th style="background: var(--bg-main); padding: 14px 16px; text-align: left; font-weight: 600; font-size: 13px; color: var(--text-secondary); border-bottom: 2px solid var(--border);" data-i18n="common.delete">操作</th><th style="background: var(--bg-main); padding: 14px 16px; text-align: left; font-weight: 600; font-size: 13px; color: var(--text-secondary); border-bottom: 2px solid var(--border);" data-i18n="batch.csvStatus">状态</th></tr></thead>
+                            <tbody id="batchTableBody">
+                                <tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 40px;" data-i18n="batch.noData">暂无数据，请上传影像后开始检测</td></tr>
+                            </tbody>
+                        </table>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn-success" id="batchExport" style="display: none;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                <span data-i18n="batch.exportCSV">导出CSV报告</span>
+                            </button>
+                            <button class="btn-primary" id="batchExportPDF" style="display: none;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                <span data-i18n="batch.exportPDF">导出PDF报告</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== 检测历史 ========== -->
+            <div id="page-history" class="page-content">
+                <div class="page-header">
+                    <div>
+                        <h1 data-i18n="history.title">检测历史</h1>
+                        <p data-i18n="history.subtitle">查看您的所有检测记录</p>
+                    </div>
+                    <button class="btn-small-danger" id="clearAllHistory" data-i18n="history.clearAll">清空所有历史</button>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span data-i18n="history.recordList">历史记录</span>
+                        </h3>
+                    </div>
+                    <div class="history-filters" style="margin-bottom: 16px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                        <input type="text" id="historySearch" class="form-control" data-i18n="history.searchPlaceholder" placeholder="搜索图片名称或位置..." style="flex: 2; min-width: 200px;">
+                        <select id="historyTypeFilter" class="form-control" style="flex: 1; min-width: 150px;">
+                            <option value="all" data-i18n="history.allTypes">所有类型</option>
+                            <option value="水蚀沟壑发育">水蚀沟壑发育</option>
+                            <option value="风蚀沙化">风蚀沙化</option>
+                            <option value="耕地撂荒">耕地撂荒</option>
+                            <option value="耕地非农化（建房/建厂）">耕地非农化</option>
+                            <option value="耕地非粮化（种树/挖塘）">耕地非粮化</option>
+                            <option value="黑土层变薄退化">黑土层变薄退化</option>
+                        </select>
+                        <select id="historyModelFilter" class="form-control" style="flex: 1; min-width: 120px;">
+                            <option value="all" data-i18n="history.allModels">所有模型</option>
+                            <option value="BIT">BIT</option>
+                            <option value="BIT_LuojiaSET">BIT_LuojiaSET</option>
+                            <option value="AFCF3D">AFCF3D</option>
+                            <option value="DIFF">传统差分</option>
+                        </select>
+                        <button class="btn-gray" id="historyFilterBtn" style="flex: 0 0 auto; padding: 8px 16px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                            <span data-i18n="common.filter">筛选</span>
+                        </button>
+                        <button class="btn-gray" id="historyResetFilter" style="flex: 0 0 auto; padding: 8px 16px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                            <span data-i18n="common.reset">重置</span>
+                        </button>
+                    </div>
+                    <div class="history-list" id="historyList" style="max-height: 600px; overflow-y: auto;">
+                        <div class="skeleton-loading" id="historySkeleton">
+                            <div class="skeleton skeleton-card" style="height:56px; margin-bottom:8px;"></div>
+                            <div class="skeleton skeleton-card" style="height:56px; margin-bottom:8px;"></div>
+                            <div class="skeleton skeleton-card" style="height:56px; margin-bottom:8px;"></div>
+                        </div>
+                        <div id="historyEmpty" class="empty-state hidden">
+                            <div class="empty-state-icon">
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            </div>
+                            <div class="empty-state-title" data-i18n="history.noHistory">暂无检测历史</div>
+                            <div class="empty-state-desc" data-i18n="history.noHistoryDesc">完成首次检测后，记录将显示在这里</div>
+                        </div>
+                    </div>
+                    <div id="historyPagination" class="pagination"></div>
+                </div>
+            </div>
+
+            <!-- ========== 数据大屏（科技风） ========== -->
+            <div id="page-dashboard" class="page-content">
+                <div class="tech-bigscreen">
+                    <!-- 顶部标题栏 -->
+                    <div class="tech-header">
+                        <div class="tech-header-left">
+                            <div class="tech-status-dot"></div>
+                            <span>系统运行中</span>
+                        </div>
+                        <div class="tech-header-center">
+                            <div class="tech-title-line"></div>
+                            <h1 class="tech-main-title">黑土地遥感监测数据大屏</h1>
+                            <div class="tech-title-line"></div>
+                        </div>
+                        <div class="tech-header-right">
+                            <span id="bsDateTime" class="tech-datetime">--</span>
+                        </div>
+                    </div>
+
+                    <!-- 核心指标卡片 -->
+                    <div class="tech-stats-row">
+                        <div class="tech-stat-card">
+                            <div class="tech-stat-glow"></div>
+                            <div class="tech-stat-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <div class="tech-stat-body">
+                                <div class="tech-stat-value" id="bsTotalDetections">0</div>
+                                <div class="tech-stat-label">检测总次数</div>
+                            </div>
+                        </div>
+                        <div class="tech-stat-card">
+                            <div class="tech-stat-glow"></div>
+                            <div class="tech-stat-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            </div>
+                            <div class="tech-stat-body">
+                                <div class="tech-stat-value" id="bsTotalChangeArea">0<span class="tech-unit">万</span></div>
+                                <div class="tech-stat-label">累计变化像素</div>
+                            </div>
+                        </div>
+                        <div class="tech-stat-card">
+                            <div class="tech-stat-glow"></div>
+                            <div class="tech-stat-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            </div>
+                            <div class="tech-stat-body">
+                                <div class="tech-stat-value" id="bsTodayDetections">0</div>
+                                <div class="tech-stat-label">今日检测</div>
+                            </div>
+                        </div>
+                        <div class="tech-stat-card">
+                            <div class="tech-stat-glow"></div>
+                            <div class="tech-stat-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="10" r="3"/><path d="M12 2C7.58 2 4 6.48 4 12c0 5.52 7 10 8 10s8-4.48 8-10c0-5.52-3.58-10-8-10z"/></svg>
+                            </div>
+                            <div class="tech-stat-body">
+                                <div class="tech-stat-value" id="bsActivePlots">0</div>
+                                <div class="tech-stat-label">活跃地块</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 图表区域：左右双列 + 底部全宽 -->
+                    <div class="tech-charts-top">
+                        <div class="tech-chart-panel">
+                            <div class="tech-panel-header">
+                                <span class="tech-panel-dot"></span>
+                                <h3>变化类型分布</h3>
+                            </div>
+                            <div id="bsTypeChart" class="tech-chart"></div>
+                        </div>
+                        <div class="tech-chart-panel">
+                            <div class="tech-panel-header">
+                                <span class="tech-panel-dot"></span>
+                                <h3>模型使用统计</h3>
+                            </div>
+                            <div id="bsModelChart" class="tech-chart"></div>
+                        </div>
+                    </div>
+                    <div class="tech-charts-bottom">
+                        <div class="tech-chart-panel tech-chart-wide">
+                            <div class="tech-panel-header">
+                                <span class="tech-panel-dot"></span>
+                                <h3>近7天检测趋势</h3>
+                            </div>
+                            <div id="bsTrendChart" class="tech-chart" style="height:300px;"></div>
+                        </div>
+                        <div class="tech-chart-panel">
+                            <div class="tech-panel-header">
+                                <span class="tech-panel-dot"></span>
+                                <h3>最新检测记录</h3>
+                            </div>
+                            <div id="bsRecentList" class="tech-recent-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== 时序分析 ========== -->
+            <div id="page-timeline" class="page-content">
+                <div class="page-header">
+                    <h1 data-i18n="timeline.title">多期变化时间轴</h1>
+                    <p data-i18n="timeline.subtitle">选择地块，查看多次检测的变化趋势</p>
+                </div>
+                <div class="card">
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="timeline.selectPlot">选择地块</label>
+                        <select id="timelinePlot" class="form-control"></select>
+                    </div>
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            <span data-i18n="timeline.changeTrend">变化比例趋势</span>
+                        </h3>
+                    </div>
+                    <div style="position: relative; height: 400px; width: 100%;">
+                        <div id="timelineChart" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;"></div>
+                    </div>
+                    <div id="timelinePlotInfo" class="timeline-plot-info hidden"></div>
+                    <div class="timeline-strip-section hidden" id="timelineStripSection">
+                        <div class="timeline-strip-header">
+                            <h4 data-i18n="timeline.detectionHistory">各期检测详情</h4>
+                            <div class="timeline-strip-header-actions">
+                                <button class="btn-small-action" id="timelineCompareBtn" disabled data-i18n="timeline.compareTwo">对比所选</button>
+                                <button class="btn-small-secondary" id="timelineGridToggle" data-i18n="timeline.expandAll">展开全部</button>
+                            </div>
+                        </div>
+                        <div class="timeline-strip-wrapper">
+                            <div class="timeline-strip-fade-left" id="timelineStripFadeLeft"></div>
+                            <div class="timeline-strip-fade-right" id="timelineStripFadeRight"></div>
+                            <button class="timeline-scroll-btn timeline-scroll-btn-left" id="timelineScrollLeft" disabled>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                            </button>
+                            <button class="timeline-scroll-btn timeline-scroll-btn-right" id="timelineScrollRight" disabled>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                            </button>
+                            <div id="timelineStrip" class="timeline-strip"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- 系统状态页面 -->
+            <div id="page-status" class="page-content">
+                <div class="page-header">
+                    <h1 data-i18n="status.title">系统状态</h1>
+                    <p data-i18n="status.subtitle">后端运行信息与健康状态</p>
+                </div>
+                <div class="status-grid">
+                    <div class="card status-card">
+                        <div class="card-header"><h3 class="card-title" data-i18n="status.modelInfo">模型信息</h3></div>
+                        <p><span data-i18n="status.modelName">模型名称：</span><span id="stModel" data-i18n="common.loading">加载中...</span></p>
+                        <p><span data-i18n="status.computeDevice">计算设备：</span><span id="stDevice">-</span></p>
+                        <p><span data-i18n="status.pytorchLabel">PyTorch版本：</span><span id="stTorch">-</span></p>
+                        <p><span data-i18n="status.pythonLabel">Python版本：</span><span id="stPython">-</span></p>
+                        <p><span data-i18n="status.databaseLabel">数据库：</span><span id="stDB">-</span></p>
+                    </div>
+                    <div class="card status-card">
+                        <div class="card-header"><h3 class="card-title" data-i18n="status.runtimeStatus">运行状态</h3></div>
+                        <p><span data-i18n="status.uptimeLabel">运行时间：</span><span id="stUptime">-</span></p>
+                        <div class="status-progress-row">
+                            <span>CPU</span>
+                            <div class="status-progress-track"><div id="stCpuBar" class="status-progress-fill" style="width:0;"></div></div>
+                            <span id="stCpuVal" class="status-progress-pct">0%</span>
+                        </div>
+                        <div class="status-progress-row">
+                            <span data-i18n="status.memory">内存</span>
+                            <div class="status-progress-track"><div id="stMemBar" class="status-progress-fill" style="width:0;"></div></div>
+                            <span id="stMemVal" class="status-progress-pct">0%</span>
+                        </div>
+                        <p id="stMemDetail" style="font-size:12px;color:var(--text-tertiary);margin-top:4px;"></p>
+                    </div>
+                    <div class="card status-card">
+                        <div class="card-header"><h3 class="card-title" data-i18n="status.requestStats">请求统计</h3></div>
+                        <p><span data-i18n="status.totalRequests">总请求数：</span><span id="stReqTotal">0</span></p>
+                        <div class="status-req-bars" id="stReqBars"></div>
+                    </div>
+                    <div class="card status-card">
+                        <div class="card-header"><h3 class="card-title" data-i18n="status.storageTitle">存储使用</h3></div>
+                        <p><span data-i18n="status.uploadsSize">上传目录：</span><span id="stDiskUploads">-</span></p>
+                        <p><span data-i18n="status.resultsSize">结果目录：</span><span id="stDiskResults">-</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 检测地图页面 -->
+            <div id="page-mapviewer" class="page-content">
+                <div class="page-header">
+                    <div>
+                        <h1 data-i18n="map.title">检测结果地图</h1>
+                        <p data-i18n="map.subtitle">所有带地理位置的检测记录在地图上可视化展示</p>
+                    </div>
+                    <div style="display:flex;gap:12px;align-items:center;">
+                        <button class="btn-small-action" id="heatmapToggleBtn" style="display:none;" data-i18n="map.heatmapMode">热力图模式</button>
+                        <span style="font-size:13px;color:var(--text-secondary);">
+                            <span style="color:#10b981;">●</span> <5% &nbsp;
+                            <span style="color:#667eea;">●</span> 5-15% &nbsp;
+                            <span style="color:#f59e0b;">●</span> 15-30% &nbsp;
+                            <span style="color:#ef4444;">●</span> >30%
+                        </span>
+                    </div>
+                </div>
+                <div class="map-layout">
+                    <div class="card" style="padding:0;overflow:hidden;flex:1;">
+                        <div id="mapviewerMap" style="width:100%;height:600px;position:relative;">
+                            <div id="mapEmptyHint" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:10;pointer-events:none;">
+                                <p style="font-size:15px;color:var(--text-secondary);margin-bottom:6px;">📍 暂无带坐标的检测记录</p>
+                                <p style="font-size:12px;color:var(--text-tertiary);">在检测时填写经纬度（如 126.63, 45.75），记录将在此地图上展示</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card map-side-panel" id="mapSidePanel">
+                        <h4 data-i18n="map.statsTitle">检测统计</h4>
+                        <div id="mapStatsContent">
+                            <p class="map-stat-row"><span data-i18n="map.geoRecords">带坐标记录：</span><strong id="mapGeoCount">0</strong></p>
+                            <p class="map-stat-row"><span data-i18n="compare.avgRatio">平均变化率：</span><strong id="mapAvgRatio">--</strong></p>
+                            <p class="map-stat-row"><span data-i18n="map.maxRatio">最高变化率：</span><strong id="mapMaxRatio">--</strong></p>
+                            <p class="map-stat-row"><span data-i18n="map.uniqueLocations">覆盖地区：</span><strong id="mapUniqueLocs">0</strong></p>
+                        </div>
+                        <div id="mapSelectedInfo" class="hidden" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+                            <h4 data-i18n="map.selectedMarker">选中标记</h4>
+                            <div id="mapSelectedContent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 用户管理页面 -->
+            <div id="page-usermgr" class="page-content">
+                <div class="page-header">
+                    <div>
+                        <h1 data-i18n="usermgr.title">用户管理</h1>
+                        <p data-i18n="usermgr.subtitle">管理所有注册用户</p>
+                    </div>
+                    <button class="btn-primary" id="umRefreshBtn" style="width:auto;padding:10px 24px;" data-i18n="usermgr.refresh">刷新列表</button>
+                </div>
+                <div class="card">
+                    <div style="overflow-x:auto;">
+                        <table class="data-table um-table" style="width:100%;border-collapse:collapse;">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="usermgr.id">ID</th><th data-i18n="auth.username">用户名</th><th data-i18n="usermgr.role">角色</th><th data-i18n="usermgr.detections">检测次数</th><th data-i18n="usermgr.createdAt">注册时间</th><th data-i18n="usermgr.actions">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="umTableBody">
+                                <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-secondary);" data-i18n="common.loading">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="umPagination" class="pagination"></div>
+                </div>
+            </div>
+
+            <!-- 结果对比页面 -->
+            <div id="page-compare" class="page-content">
+                <div class="page-header">
+                    <h1 data-i18n="compare.title">检测结果对比</h1>
+                    <p data-i18n="compare.subtitle">选择两个历史记录进行并排比较</p>
+                </div>
+                <div id="compareStatsBar" class="stats-bar">
+                    <div class="stats-bar-item"><span class="stats-bar-value" id="cmpTotalRecords">0</span><span class="stats-bar-label" data-i18n="compare.totalRecords">检测总数</span></div>
+                    <div class="stats-bar-item"><span class="stats-bar-value" id="cmpTodayRecords">0</span><span class="stats-bar-label" data-i18n="compare.todayRecords">今日检测</span></div>
+                    <div class="stats-bar-item"><span class="stats-bar-value" id="cmpAvgRatio">0%</span><span class="stats-bar-label" data-i18n="compare.avgRatio">平均变化率</span></div>
+                    <div class="stats-bar-item"><span class="stats-bar-value" id="cmpModelCount">0</span><span class="stats-bar-label" data-i18n="compare.modelCount">使用模型数</span></div>
+                </div>
+                <div class="compare-selectors">
+                    <div class="form-group" style="flex:1;">
+                        <label data-i18n="compare.recordA">记录 A</label>
+                        <select id="compareId1" class="form-control"></select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label data-i18n="compare.recordB">记录 B</label>
+                        <select id="compareId2" class="form-control"></select>
+                    </div>
+                    <button class="btn-primary" id="compareBtn" style="width: auto; padding: 10px 20px;" data-i18n="compare.compareBtn">开始对比</button>
+                </div>
+                <div id="comparePreview" class="compare-preview-cards hidden"></div>
+                <div id="compareResult" class="compare-result-grid hidden"></div>
+            </div>
+
+            <!-- ========== 模型评估页面 ========== -->
+            <div id="page-evaluate" class="page-content">
+                <div class="page-header">
+                    <h1 data-i18n="eval.title">模型批量评估</h1>
+                    <p data-i18n="eval.subtitle">基于 SUSY-CD 数据集，对多个模型批量计算 Precision / Recall / F1 / IoU</p>
+                </div>
+
+                <div class="card" style="margin-bottom:20px;">
+                    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                        <button class="btn-primary" id="evalPickFolderBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                            <span data-i18n="eval.pickFolder">选择 SUSY-CD 数据集目录</span>
+                        </button>
+                        <span style="font-size:13px;color:var(--text-tertiary);" data-i18n="eval.pickHint">选择包含 A/ B/ label/ 的根目录</span>
+                    </div>
+                    <div id="evalFolderInfo" class="hidden" style="margin-top:12px;padding:10px 14px;background:var(--bg-main);border-radius:var(--radius-sm);font-size:13px;">
+                        <span data-i18n="eval.foundPairs">发现配对：</span><strong id="evalPairCount">0</strong> <span data-i18n="eval.pairsUnit">对</span>
+                        &nbsp;·&nbsp; <span id="evalHasLabels" style="font-size:13px;"></span>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:20px;">
+                    <h4 style="margin-bottom:8px;" data-i18n="eval.models">选择评估模型</h4>
+                    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+                        <label class="model-check-label"><input type="checkbox" class="eval-model-check" value="BIT" checked> BIT</label>
+                        <label class="model-check-label"><input type="checkbox" class="eval-model-check" value="DIFF" checked> DIFF</label>
+                        <label class="model-check-label"><input type="checkbox" class="eval-model-check" value="AFCF3D" checked> AFCF3D</label>
+                        <label class="model-check-label"><input type="checkbox" class="eval-model-check" value="BIT_LuojiaSET" checked> BIT_LuojiaSET</label>
+                    </div>
+                    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                        <label style="font-size:13px;color:var(--text-secondary);" data-i18n="detect.threshold">阈值：</label>
+                        <input type="number" id="evalThreshold" value="0.5" min="0.1" max="0.99" step="0.01" class="form-control" style="width:80px;">
+                        <label style="font-size:13px;color:var(--text-secondary);margin-left:8px;" data-i18n="eval.evalCount">评估数量：</label>
+                        <input type="number" id="evalCount" value="50" min="1" max="9999" step="1" class="form-control" style="width:70px;">
+                        <span style="font-size:11px;color:var(--text-tertiary);" data-i18n="eval.evalCountHint">（设为 0 评估全部）</span>
+                        <button class="btn-primary" id="evalStartBtn" disabled data-i18n="eval.start">开始批量评估</button>
+                        <button class="btn-gray hidden" id="evalCancelBtn" data-i18n="common.cancel">取消</button>
+                    </div>
+                </div>
+
+                <div id="evalProgressBar" class="hidden card" style="margin-bottom:20px;">
+                    <div style="background:var(--bg-main);border-radius:4px;height:8px;overflow:hidden;margin-bottom:6px;">
+                        <div id="evalProgressFill" style="height:100%;width:0%;background:var(--primary);transition:width 0.3s;"></div>
+                    </div>
+                    <div id="evalProgressText" style="font-size:12px;color:var(--text-tertiary);text-align:center;">准备中...</div>
+                </div>
+
+                <!-- 结果表格 -->
+                <div id="evalResults" class="hidden card" style="margin-bottom:20px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                        <h3 style="margin:0;" data-i18n="eval.resultsTitle">评估结果</h3>
+                        <div>
+                            <strong id="evalBestModel" style="font-size:14px;color:var(--primary);margin-right:16px;"></strong>
+                            <button class="btn-action hidden" id="evalExportCsvBtn" data-i18n="eval.exportCsv">导出CSV</button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead><tr>
+                                <th data-i18n="common.model">模型</th>
+                                <th>Precision</th><th>Recall</th><th>F1</th><th>IoU</th>
+                                <th data-i18n="eval.avgTime">平均耗时</th>
+                                <th data-i18n="eval.samples">样本数</th>
+                            </tr></thead>
+                            <tbody id="evalTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 消融实验图表 -->
+                <div id="evalCharts" class="hidden" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+                    <div class="card"><h4 style="margin-bottom:12px;" data-i18n="eval.barChart">指标对比柱状图</h4><div id="evalBarChart" style="height:320px;"></div></div>
+                    <div class="card"><h4 style="margin-bottom:12px;" data-i18n="eval.radarChart">模型能力雷达图</h4><div id="evalRadarChart" style="height:320px;"></div></div>
+                </div>
+
+                <!-- 阈值扫描 -->
+                <div id="evalScanSection" class="hidden card" style="margin-bottom:20px;">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                        <h4 style="margin:0;" data-i18n="eval.scanTitle">阈值扫描 — F1 曲线</h4>
+                        <button id="evalScanBtn" class="btn btn-secondary btn-sm" data-i18n="eval.scanBtn">开始扫描</button>
+                        <span id="evalScanStatus" class="hidden" style="font-size:13px;color:var(--text-secondary);"></span>
+                    </div>
+                    <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px;" data-i18n="eval.scanHint">对最佳 F1 样本用 0.05~0.95 阈值扫描，绘制 F1 变化曲线</p>
+                    <div id="evalScanChart" class="hidden" style="height:350px;"></div>
+                </div>
+
+                <!-- 误检漏检案例 -->
+                <div id="evalCases" class="hidden" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:40px;">
+                    <div class="card"><h4 style="margin-bottom:12px;" data-i18n="eval.bestCases">最佳案例</h4><div id="evalBestCases"></div></div>
+                    <div class="card"><h4 style="margin-bottom:12px;" data-i18n="eval.worstCases">最差案例</h4><div id="evalWorstCases"></div></div>
+                </div>
+            </div>
+
+            <!-- ========== AI Agent 浏览器操控 ========== -->
+            <div id="page-agent" class="page-content">
+                <div class="page-header">
+                    <div>
+                        <h1 data-i18n="agent.title">AI Agent 浏览器操控</h1>
+                        <p data-i18n="agent.subtitle">通过自然语言指令，让 AI 自动操控浏览器完成复杂任务</p>
+                    </div>
+                </div>
+
+                <div class="agent-layout">
+                    <div class="agent-control-panel">
+                        <div class="card agent-input-card">
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="agent.instruction">操作指令</label>
+                                <textarea id="agentInstruction" class="form-control agent-textarea"
+                                          data-i18n="agent.instructionPlaceholder"
+                                          placeholder="用自然语言描述您想要执行的操作，例如：打开检测页面，上传两张影像并用 BIT 模型检测..."
+                                          rows="4"></textarea>
+                            </div>
+                            <div class="agent-controls-row">
+                                <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+                                    <label class="form-label" style="margin:0;white-space:nowrap;" data-i18n="agent.maxSteps">最大步数</label>
+                                    <input type="number" id="agentMaxSteps" value="25" min="5" max="100" class="form-control" style="width:80px;">
+                                </div>
+                                <div style="display:flex;gap:8px;">
+                                    <button id="agentCancelBtn" class="btn-gray hidden" data-i18n="agent.cancel">取消执行</button>
+                                    <button id="agentStartBtn" class="btn-primary" data-i18n="agent.start">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                        开始执行
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="agent-keyboard-hint">
+                                <kbd>Ctrl</kbd> + <kbd>Enter</kbd> <span data-i18n="agent.shortcutHint">快速执行</span>
+                            </div>
+                        </div>
+
+                        <div id="agentStatusCard" class="card hidden">
+                            <div id="agentStatusText" class="agent-status-large" data-i18n="agent.preparing">准备中...</div>
+                            <div class="agent-progress-track"><div id="agentProgressFill" class="agent-progress-fill" style="width:0%;"></div></div>
+                            <div class="agent-meta-row">
+                                <span><span data-i18n="agent.steps">步数</span>: <strong id="agentStepCount">0</strong> / <span id="agentMaxStepsDisplay">25</span></span>
+                                <span><span data-i18n="agent.duration">耗时</span>: <strong id="agentDuration">0s</strong></span>
+                            </div>
+                        </div>
+
+                        <div id="agentResultCard" class="card hidden">
+                            <div class="card-header">
+                                <h3 class="card-title" data-i18n="agent.result">执行结果</h3>
+                                <span id="agentResultBadge" class="status-badge"></span>
+                            </div>
+                            <div id="agentResultContent" class="agent-result-content"></div>
+                            <div id="agentErrorList" class="agent-error-list hidden"></div>
+                        </div>
+                    </div>
+
+                    <div class="agent-screenshot-panel">
+                        <div id="agentScreenshotCard" class="card agent-screenshot-card">
+                            <div class="card-header">
+                                <h3 class="card-title" data-i18n="agent.screenshots">操作截图</h3>
+                                <span id="agentScreenshotCount" class="agent-screenshot-count"></span>
+                            </div>
+                            <div id="agentScreenshotMain" class="agent-screenshot-main">
+                                <div class="agent-screenshot-placeholder" data-i18n="agent.screenshotPlaceholder">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:12px;opacity:0.4;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                                    <p>执行任务后，操作截图将显示在这里</p>
+                                </div>
+                            </div>
+                            <div id="agentScreenshotStrip" class="agent-screenshot-strip hidden"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== 个人中心 ========== -->
+            <div id="page-profile" class="page-content">
+                <div class="page-header">
+                    <h1 data-i18n="profile.title">个人中心</h1>
+                    <p data-i18n="profile.subtitle">账号信息与个人统计</p>
+                </div>
+                <div id="profileSkeleton" class="skeleton-loading">
+                    <div class="skeleton skeleton-card" style="height:140px; margin-bottom:20px;"></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                        <div class="skeleton skeleton-card" style="height:180px;"></div>
+                        <div class="skeleton skeleton-card" style="height:180px;"></div>
+                    </div>
+                </div>
+                <div id="profileContent" class="hidden fade-in">
+                    <div class="profile-header">
+                        <div class="profile-avatar-lg" id="profileAvatar">U</div>
+                        <div class="profile-info">
+                            <h2 id="profileUsername">--</h2>
+                            <p id="profileRole">--</p>
+                            <div class="profile-meta">
+                                <span data-i18n="usermgr.createdAt">注册时间：</span><span id="profileCreatedAt">--</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-grid">
+                        <div class="profile-card">
+                            <h3 data-i18n="profile.personalStats">个人统计</h3>
+                            <div class="profile-stat"><span class="profile-stat-label" data-i18n="profile.totalDetections">检测总数</span><span class="profile-stat-value" id="profDetections">0</span></div>
+                            <div class="profile-stat"><span class="profile-stat-label" data-i18n="profile.plotsCount">地块数量</span><span class="profile-stat-value" id="profPlots">0</span></div>
+                            <div class="profile-stat"><span class="profile-stat-label" data-i18n="profile.avgRatio">平均变化率</span><span class="profile-stat-value" id="profAvgRatio">--</span></div>
+                            <div class="profile-stat"><span class="profile-stat-label" data-i18n="profile.lastActive">最近活动</span><span class="profile-stat-value" id="profLastActive">--</span></div>
+                        </div>
+                        <div class="profile-card">
+                            <h3 data-i18n="profile.changePassword">修改密码</h3>
+                            <div id="profilePwdForm">
+                                <div class="form-group"><label class="form-label" data-i18n="profile.oldPassword">当前密码</label><input type="password" id="profOldPwd" class="form-control" autocomplete="current-password"></div>
+                                <div class="form-group"><label class="form-label" data-i18n="profile.newPassword">新密码</label><input type="password" id="profNewPwd" class="form-control" autocomplete="new-password" data-i18n="profile.newPwdPlaceholder" placeholder="密码≥8位，含字母+数字"></div>
+                                <button class="btn-primary" id="profChangePwdBtn" style="margin-top:8px;" data-i18n="profile.changePwdBtn">修改密码</button>
+                                <span id="profPwdMsg" style="font-size:13px;margin-left:10px;"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== 关于系统 ========== -->
+            <div id="page-about" class="page-content">
+                <div class="about-hero">
+                    <div class="about-logo"><img src="images/logo.png" alt="BlackLand CD" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain;"></div>
+                    <span class="about-version">v1.0.0</span>
+                    <p class="about-desc" data-i18n="about.description">黑土地遥感变化检测智能平台，融合深度学习与GIS技术，为东北黑土地保护提供高效、精准的变化检测与数据分析解决方案。</p>
+                </div>
+                <div class="about-grid">
+                    <div class="about-card">
+                        <h3 data-i18n="about.techStack">技术栈</h3>
+                        <table>
+                            <tr><td data-i18n="about.frontend">前端</td><td>Vanilla JS + ECharts + 高德地图</td></tr>
+                            <tr><td data-i18n="about.backend">后端</td><td>Python FastAPI + SQLAlchemy</td></tr>
+                            <tr><td data-i18n="about.aiModel">AI模型</td><td>PyTorch BIT Transformer</td></tr>
+                            <tr><td data-i18n="about.database">数据库</td><td>SQLite</td></tr>
+                            <tr><td data-i18n="about.aiService">AI服务</td><td>通义千问（Qwen-Turbo）</td></tr>
+                        </table>
+                    </div>
+                    <div class="about-card">
+                        <h3 data-i18n="about.features">系统功能</h3>
+                        <table>
+                            <tr><td>·</td><td data-i18n="about.feat1">双时相遥感影像变化检测</td></tr>
+                            <tr><td>·</td><td data-i18n="about.feat2">批量多模型对比分析</td></tr>
+                            <tr><td>·</td><td data-i18n="about.feat3">AI智能解读与分类</td></tr>
+                            <tr><td>·</td><td data-i18n="about.feat4">地块管理与时序追踪</td></tr>
+                            <tr><td>·</td><td data-i18n="about.feat5">GIS地图可视化</td></tr>
+                            <tr><td>·</td><td data-i18n="about.feat6">检测报告自动生成</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="about-changelog">
+                    <h2 data-i18n="about.changelog">更新日志</h2>
+                    <ul class="changelog-list">
+                        <li><span class="changelog-ver">v1.0</span><span class="changelog-date">2026-05</span><span data-i18n="about.logV1">首个正式版本：单张/批量变化检测、多模型对比、AI智能解读、地块管理、标注系统、时序分析、GIS地图可视化、用户管理、Docker部署</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- ========== 404 页面 ========== -->
+            <div id="page-notfound" class="page-content">
+                <div class="notfound-container">
+                    <div class="notfound-code">404</div>
+                    <h2 class="notfound-title" data-i18n="notfound.title">页面未找到</h2>
+                    <p class="notfound-desc" data-i18n="notfound.desc">您访问的页面不存在或已被移除。请检查地址是否正确，或返回首页。</p>
+                    <div class="notfound-actions">
+                        <button class="btn-primary" onclick="document.querySelector('.nav-item[data-page=\'single\']').click()" data-i18n="notfound.goHome">返回首页</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer 页脚 -->
+            <footer class="app-footer">
+                <span>&copy; 2026 BlackLand CD · <span data-i18n="footer.copyright">黑土地遥感变化检测系统</span></span>
+                <span><a href="javascript:void(0)" onclick="document.querySelector('.nav-item[data-page=\'about\']').click()" data-i18n="footer.aboutLink">关于系统</a> &nbsp;|&nbsp; <span data-i18n="footer.version">版本</span> v1.0.0</span>
+            </footer>
+        </main>
+
+        <!-- 地块管理弹窗模板 -->
+        <div id="plotManagerModal" class="modal-overlay hidden">
+            <div class="modal-box" style="max-width: 640px; width: 95vw;">
+                <div class="modal-title"><span id="plotModalTitle" data-i18n="plot.managePlots">管理地块</span></div>
+                <div class="modal-content">
+                    <div id="plotListContainer" class="plot-list-container"></div>
+                    <div id="plotEditForm" class="plot-edit-form hidden">
+                        <div class="form-group"><label class="form-label" data-i18n="plot.plotName">地块名称</label><input type="text" id="plotEditName" class="form-control" data-i18n="plot.plotNamePlaceholder" placeholder="例如：试验田A区"></div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div class="form-group"><label class="form-label" data-i18n="land.province">所在省份</label><select id="plotEditProvince" class="form-control"><option value="黑龙江省">黑龙江省</option><option value="吉林省">吉林省</option><option value="辽宁省">辽宁省</option><option value="内蒙古自治区">内蒙古自治区</option></select></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.city">所在市县</label><input type="text" id="plotEditCity" class="form-control"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.latLng">地块经纬度范围</label><input type="text" id="plotEditLatLng" class="form-control"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.area">地块总面积（亩）</label><input type="number" id="plotEditArea" class="form-control" step="0.1" min="0"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.landType">耕地类型</label><input type="text" id="plotEditLandType" class="form-control"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.cropType">主要种植作物</label><input type="text" id="plotEditCropType" class="form-control"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.dataSource">影像数据源</label><input type="text" id="plotEditDataSource" class="form-control"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.changeType">核心变化类型</label><input type="text" id="plotEditChangeType" class="form-control"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.t1Time">T1影像拍摄时间</label><input type="month" id="plotEditT1Time" class="form-control"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.t2Time">T2影像拍摄时间</label><input type="month" id="plotEditT2Time" class="form-control"></div>
+                        </div>
+                        <div class="plot-edit-form-actions" style="display:flex;gap:8px;margin-top:16px;">
+                            <button class="btn-primary" id="plotSaveBtn" data-i18n="common.save">保存</button>
+                            <button class="btn-gray" id="plotCancelEditBtn" data-i18n="common.cancel">取消</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-primary" id="plotNewBtn" data-i18n="plot.createPlot">新建地块</button>
+                    <button class="btn-modal btn-modal-secondary" id="plotModalCloseBtn" data-i18n="common.close">关闭</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 批量恢复提示条 -->
+        <div id="batchRestoreBanner" class="batch-restore-banner hidden">
+            <span id="batchRestoreText"></span>
+            <div style="display:flex;gap:8px;">
+                <button class="btn-small-action" id="batchRestoreBtn" data-i18n="batch.restore">恢复任务</button>
+                <button class="btn-small-secondary" id="batchDismissBtn" data-i18n="batch.dismiss">放弃</button>
+            </div>
+        </div>
+
+        <!-- AI小助手悬浮窗 -->
+        <div id="chatbotWidget" class="chatbot-widget hidden">
+            <div id="chatbotWindow" class="chatbot-window">
+                <div class="chatbot-header">
+                    <h3>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                        <span data-i18n="chat.title">黑土地AI助手</span>
+                    </h3>
+                    <button class="chatbot-close-btn" id="chatbotClose">&times;</button>
+                </div>
+                <div class="chatbot-messages" id="chatbotMessages">
+                    <div class="chat-message ai" data-i18n="chat.welcome">您好！我是东北黑土地变化检测智能系统的专属AI助手。我可以为您解答黑土地保护、遥感变化检测技术、系统操作等相关问题。请问有什么可以帮助您的？</div>
+                </div>
+                <div class="chatbot-input-area">
+                    <input type="text" id="chatbotInput" class="chatbot-input" data-i18n="chat.placeholder" placeholder="请输入您的问题...">
+                    <button id="chatbotSend" class="chatbot-send-btn" data-i18n="chat.send">发送</button>
+                </div>
+                <div class="chatbot-resize-handle"></div>
+            </div>
+            <button id="chatbotToggle" class="chatbot-toggle-btn" title="打开AI助手" aria-label="打开AI助手">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <div id="reportContainer" style="position: absolute; left: -9999px; top: 0; width: 800px; background: var(--bg-card); padding: 40px; font-family: 'Inter', sans-serif; color: var(--text-primary);"></div>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: bitcd-app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # 强制使用 SQLite（轻量服务器无需单独数据库容器）
+      - DATABASE_URL=sqlite:///./blackland.db
+    volumes:
+      - ./checkpoints:/app/checkpoints:ro
+      - ./results:/app/results
+      - ./uploads:/app/uploads
+      - ./samples/predict:/app/samples/predict
+      - ./blackland.db:/app/blackland.db
+    restart: unless-stopped

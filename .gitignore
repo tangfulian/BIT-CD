@@ -1,0 +1,70 @@
+# 数据集（体量庞大，不适合 Git 管理）
+datasets/
+
+# 环境变量（含 API Key，严禁提交）
+.env
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 数据库
+*.db
+
+# 模型检查点
+checkpoints/
+
+# 推理结果
+results/
+predict/
+samples/predict/
+vis/
+
+# 上传文件
+uploads/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# 压缩包
+*.zip
+*.rar
+*.7z
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# PyTorch 模型权重
+*.pt
+*.pth
+
+# Browser Agent Chrome 用户目录
+browser_profile/
+
+# Conda 环境（体积大）
+environment.yml
+
+# 日志
+logs/
+
+# 测试期间生成的临时数据库
+tests/test_bitcd.db
+verify_tmp.db
+
+# 本地密钥配置（不入库）
+frontend/js/config.local.js

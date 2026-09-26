@@ -1,0 +1,18 @@
+{
+  "name": "BIT_CD 黑土地遥感变化检测系统",
+  "short_name": "BIT_CD",
+  "description": "黑土地保护智能平台 - 遥感变化检测与AI分析",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#2d6a4f",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "images/logo.png",
+      "sizes": "80x80",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["productivity", "utilities"]
+}
