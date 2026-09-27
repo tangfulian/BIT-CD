@@ -642,6 +642,8 @@ export const en = {
     "ndvi.failed": "NDVI calculation failed",
     "ndvi.compute": "NDVI Analysis",
     "ndvi.scale": "NDVI Scale",
+    "ndvi.approxBadge": "Approximate",
+    "ndvi.approxNote": "The uploaded image is RGB with no near-infrared band. The blue band is used as a stand-in here, so this is not a quantitative NDVI — values are only meaningful relative to other images in the same batch, and must not be read as vegetation cover or compared across images.",
 
     // Area Stats
     "areaStats.title": "Change Area Statistics",

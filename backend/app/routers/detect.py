@@ -27,7 +27,9 @@ from backend.app.services.detect_service import (
     evaluate_scan,
     load_score_map,
     mask_to_geojson,
+    model_availability,
     otsu_threshold,
+    rebuild_fusion_from_score,
     recommend_threshold_from_images,
     save_score_map,
 )
@@ -82,6 +84,29 @@ def _rewrite_url(request: Request, url: str | None) -> str:
     if not filename:
         return url
     return f"{str(request.base_url).rstrip('/')}/results/{filename}"
+
+
+@router.get("/detect/models")
+async def list_models():
+    """对外声明真实可用的模型清单。
+
+    注册表里登记的模型多于实际部署的（部分权重未随仓库分发）。前端据此渲染
+    选项，就不会把跑不出结果的模型摆给用户选。available=false 的仍然可以请求，
+    但只会得到 503，故这里一并说明原因。
+    """
+    availability = model_availability()
+    return JSONResponse(content={
+        "code": 200,
+        "models": [
+            {
+                "name": name,
+                "available": ok,
+                "reason": "" if ok else "权重未部署",
+            }
+            for name, ok in availability.items()
+        ],
+        "available": [n for n, ok in availability.items() if ok],
+    })
 
 
 @router.post("/detect")
@@ -149,10 +174,16 @@ async def detect(
     mask_filename = f"{unique_id}_mask.png"
     heat_filename = f"{unique_id}_heat.png"
     fusion_filename = f"{unique_id}_fusion.png"
+    t2_filename = f"{unique_id}_t2.png"
     save_score_map(score_map, f"results/{score_filename}")
     _imwrite(f"results/{mask_filename}", change_mask)
     _imwrite(f"results/{heat_filename}", heatmap)
     _imwrite(f"results/{fusion_filename}", fusion)
+    # 留一份 T2（256×256，与掩膜同尺寸）供重调阈值时重建融合图。
+    # 融合图 = alpha 混合(T2, 掩膜)，没有 T2 就重建不出来——此前
+    # /detect/rethreshold 正是卡在这里，只能留下与掩膜自相矛盾的旧融合图。
+    # 用 PIL 保存而不是 cv2：cv2 按 BGR 解释数组，直接存 PIL 的 RGB 会红蓝互换。
+    img_t2.save(f"results/{t2_filename}")
 
     detection_id = None
     if current_user is not None:
@@ -340,11 +371,9 @@ async def rethreshold(
     _imwrite(f"results/{heat_filename}", heatmap)
 
     fusion_filename = f"rethresh_{detection_id}_{unique_id}_fusion.png"
-    fusion = _make_fusion_for_detection(detection, change_mask)
+    fusion = rebuild_fusion_from_score(score_path, change_mask)
     if fusion is not None:
         _imwrite(f"results/{fusion_filename}", fusion)
-    else:
-        fusion_filename = None
 
     detection.threshold = round(threshold, 4)
     detection.ratio = ratio
@@ -352,8 +381,12 @@ async def rethreshold(
     detection.total_pixel = total_pixel
     detection.mask_url = _result_url(request, mask_filename)
     detection.heat_url = _result_url(request, heat_filename)
-    if fusion_filename:
+    if fusion is not None:
         detection.fusion_url = _result_url(request, fusion_filename)
+    else:
+        # 早期记录没存 T2，重建不出来。置空而不是留着旧图——否则前端会同时
+        # 显示新掩膜和旧融合图，两张图互相矛盾，比少一张图更糟。
+        detection.fusion_url = None
     db.commit()
 
     return JSONResponse(content={
@@ -432,9 +465,20 @@ async def compute_ndvi(
     request: Request,
     img: UploadFile = File(...),
 ):
-    """计算上传影像的 NDVI（归一化植被指数）。"""
+    """计算上传影像的 NDVI（归一化植被指数）。
+
+    这里返回的多半是近似值而非定量 NDVI：上传解码基于 PIL，而 PIL 会把
+    4 波段影像读成 RGBA（第 4 波段当作 alpha），近红外到不了 calc_ndvi。
+    响应中的 approximate / note 字段如实说明了这一点，前端须展示该提示。
+
+    mode=None 是刻意的不作为：不主动把影像压成 RGB，以免在将来换成能保留
+    波段的数据源后，又因为这里丢通道而白费。单波段等不足 3 波的输入仍回退
+    为 RGB，避免下游按索引取通道时报错。
+    """
     img_bytes = await img.read()
-    img_pil = _decode_image(img_bytes, "影像", size=0)
+    img_pil = _decode_image(img_bytes, "影像", mode=None, size=0)
+    if len(img_pil.getbands()) < 3:
+        img_pil = img_pil.convert("RGB")
     ndvi_result = calc_ndvi(img_pil)
     return JSONResponse(content={"code": 200, "ndvi": ndvi_result})
 
@@ -480,11 +524,6 @@ async def compute_area_stats(
     res = resolution if resolution > 0 else None
     stats = calc_area_stats(mask, resolution_m_per_px=res)
     return JSONResponse(content={"code": 200, "area_stats": stats})
-
-
-def _make_fusion_for_detection(detection, mask):
-    """尝试从已有的 fusion 图中反推 T2 原图来生成新的 fusion。"""
-    return None
 
 
 @router.post("/evaluate")

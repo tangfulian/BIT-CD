@@ -666,6 +666,8 @@ export const zhCN = {
     "ndvi.failed": "NDVI计算失败",
     "ndvi.compute": "NDVI分析",
     "ndvi.scale": "NDVI 色标",
+    "ndvi.approxBadge": "近似值",
+    "ndvi.approxNote": "上传影像为 RGB，不含近红外波段。此处以蓝波段近似计算，不是定量 NDVI —— 数值仅可在同一批影像内作相对比较，不可作为植被覆盖度或用于跨影像对比。",
 
     // 面积统计
     "areaStats.title": "变化面积统计",

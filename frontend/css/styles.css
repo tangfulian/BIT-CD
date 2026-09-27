@@ -4252,6 +4252,29 @@ select.form-control {
 /* ============================================================
    NDVI 植被指数分析
    ============================================================ */
+/* 近似值提示：RGB 影像没有近红外，结果不是定量 NDVI，
+   这条提示必须始终可见，不能折叠成 tooltip 之类的弱提示。 */
+.ndvi-approx-badge {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 8px;
+    padding: 1px 8px;
+    font-size: var(--font-xs);
+    font-weight: 500;
+    border-radius: 10px;
+    color: var(--soil-edge, #453626);
+    background: var(--straw, #C9A24D);
+}
+.ndvi-approx-note {
+    margin: 10px 0 14px;
+    padding: 10px 12px;
+    font-size: var(--font-sm);
+    line-height: 1.6;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    border-left: 3px solid var(--straw, #C9A24D);
+    border-radius: var(--radius-sm);
+}
 .ndvi-classification-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));

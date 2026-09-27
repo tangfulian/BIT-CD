@@ -33,9 +33,15 @@ export const NDVIViewer = {
     },
 
     _showNDVIResult(ndvi, sourceId) {
+        // 缺 approximate 字段时按近似处理：宁可多提示，也不要把近似值
+        // 当成定量 NDVI 展示给用户（旧版后端不返回该字段）。
+        const approx = ndvi.approximate !== false;
         const html = [
             '<div class="modal-box" style="max-width:650px;">',
-                '<div class="modal-title">' + I18n.t('ndvi.title') + '</div>',
+                '<div class="modal-title">' + I18n.t('ndvi.title') +
+                    (approx ? ' <span class="ndvi-approx-badge">' + I18n.t('ndvi.approxBadge') + '</span>' : '') +
+                '</div>',
+                approx ? '<div class="ndvi-approx-note">' + I18n.t('ndvi.approxNote') + '</div>' : '',
                 '<div class="ndvi-classification-grid">',
                     '<div class="ndvi-class-item water"><div class="ndvi-class-dot"></div><span>' + I18n.t('ndvi.water') + '</span><strong>' + ndvi.classification.water.toLocaleString() + '</strong></div>',
                     '<div class="ndvi-class-item bare"><div class="ndvi-class-dot"></div><span>' + I18n.t('ndvi.bareSoil') + '</span><strong>' + ndvi.classification.bare_soil.toLocaleString() + '</strong></div>',

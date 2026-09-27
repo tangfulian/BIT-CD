@@ -35,9 +35,10 @@ class ModelNotAvailableError(RuntimeError):
     def __init__(self, model_type: str, ckpt_path: str):
         self.model_type = model_type
         self.ckpt_path = ckpt_path
+        others = [m for m, ok in model_availability().items() if ok and m != model_type]
+        hint = ("当前可用：" + "、".join(others)) if others else "当前没有其他可用模型"
         super().__init__(
-            f"模型 {model_type} 未部署：缺少权重文件 {ckpt_path}。"
-            f"请部署该模型权重后再使用，或改选其他可用模型。"
+            f"模型 {model_type} 未部署：缺少权重文件 {ckpt_path}。{hint}。"
         )
 
 
@@ -45,6 +46,36 @@ _device = None
 _cd_models = {}
 _model_locks = {}
 _model_lock = threading.Lock()
+
+
+def resolve_checkpoint_path(model_type):
+    """模型权重的绝对路径；无需权重的模型（如 DIFF）返回 None。"""
+    cfg = MODEL_CONFIGS.get(model_type)
+    if cfg is None or cfg["net_G"] is None:
+        return None
+    return os.path.join(
+        ML_CONFIG["checkpoint_root"], cfg["project_name"], cfg["checkpoint_name"]
+    )
+
+
+def is_model_available(model_type):
+    """该模型此刻是否真的能出结果。
+
+    注册表里有、磁盘上没有的模型（FC_SIAM_DIFF / SNUNET / CHANGEFORMER 就属于
+    这种），调用时只会拿到 503。与其让前端把不可用的模型列出来让用户撞墙，
+    不如提供一个可查询的真实能力清单。
+    """
+    cfg = MODEL_CONFIGS.get(model_type)
+    if cfg is None:
+        return False          # 注册表里根本没有这个模型
+    if cfg["net_G"] is None:
+        return True           # 不需要权重即可工作（像素差分）
+    return os.path.exists(resolve_checkpoint_path(model_type))
+
+
+def model_availability():
+    """{模型名: 是否可用}，覆盖注册表中全部模型。"""
+    return {name: is_model_available(name) for name in MODEL_CONFIGS}
 
 
 def get_device():
@@ -174,7 +205,7 @@ def detect_change(img1_pil, img2_pil, threshold, model_type, unique_id):
     h, w = score_map.shape
     change_mask = (score_map > threshold).astype(np.uint8) * 255
     heatmap = _get_heatmap(score_map)
-    fusion = _get_fusion(img2_pil, change_mask)
+    fusion = get_fusion(img2_pil, change_mask)
 
     total_pixel = h * w
     change_pixel = int(np.sum(change_mask > 0))
@@ -240,10 +271,31 @@ def _get_heatmap(score_map):
     return cv2.applyColorMap(np.uint8(score_norm * 255), cv2.COLORMAP_JET)
 
 
-def _get_fusion(img, mask, alpha=0.6):
+def get_fusion(img, mask, alpha=0.6):
+    """把掩膜半透明叠加到 T2 原图上。img 为 PIL Image 或 HWC 数组。"""
     img_arr = np.array(img)
     mask_rgb = np.dstack([mask, mask, mask])
     return cv2.addWeighted(img_arr, 1 - alpha, mask_rgb, alpha, 0)
+
+
+def rebuild_fusion_from_score(score_path, change_mask):
+    """由 score_map 路径推出同期的 T2，重建融合图。
+
+    /detect 会把 T2 以 {uid}_t2.png 与 {uid}_score.png 相邻存下，所以这里
+    可以直接由 score_map 路径推出 T2，无需改表结构。
+    早期记录（存这份 T2 之前产生的）找不到文件，返回 None 由调用方决定
+    如何处理——绝不能退回去用旧融合图，那会和刚生成的掩膜自相矛盾。
+    """
+    t2_path = score_path.replace("_score.png", "_t2.png")
+    if not os.path.exists(t2_path):
+        logger.warning("缺少 T2 影像，无法重建融合图: %s", t2_path)
+        return None
+    try:
+        with Image.open(t2_path) as t2:
+            return get_fusion(t2.convert("RGB"), change_mask)
+    except Exception:
+        logger.exception("重建融合图失败: %s", t2_path)
+        return None
 
 
 def mask_to_geojson(mask, simplify=True):
@@ -295,15 +347,44 @@ def calc_area_stats(change_mask, resolution_m_per_px=None):
 
 
 def calc_ndvi(img_pil):
-    """计算 NDVI（归一化植被指数）。输入 PIL RGB 影像，返回 NDVI 数组 + 统计。
-    假设 RGB 对应 R/G/NIR（红/绿/近红外），如无 NIR 则用 R/G/B 近似。"""
+    """计算 NDVI（归一化植被指数）。
+
+    近红外的来源有两种，可解释性差别极大，所以结果里一并声明：
+
+    - 影像确有第 4 个非 alpha 波段时，按 RGBN 惯例取第 4 波段作近红外，
+      此时 approximate=False，是通常意义上的 NDVI。
+    - 只有 RGB 时没有近红外可用，退而用蓝波段顶替（approximate=True）。
+      这不是定量 NDVI —— 蓝波段与近红外的光谱响应没有对应关系，其数值
+      只在同一批影像内部有相对意义，不能跨影像比较，也不能当作植被覆盖度。
+      此前该字段对二者不加区分，界面上把近似值当成真实 NDVI 展示。
+
+    需要清楚的是：**当前实际输入几乎必然走近似路径**。上传解码基于 PIL，
+    而 PIL 会把 4 波段 TIFF 直接读成 RGBA（第 4 波段被当作 alpha），
+    多光谱影像的近红外根本传不到这里。上面那条真近红外分支是为将来换成
+    能保留波段的数据源（如 tifffile/rasterio 直读 GeoTIFF）预留的，
+    在此之前 approximate 恒为 True，界面必须始终显示该提示。
+    """
+    bands = img_pil.getbands()
     arr = np.array(img_pil, dtype=np.float32)
+
+    if len(bands) >= 4 and bands[3] != "A":
+        nir = arr[:, :, 3]
+        nir_source = "band4"
+        approximate = False
+        note = "近红外取自影像第 4 波段。"
+    else:
+        nir = arr[:, :, 2]
+        nir_source = "blue_proxy"
+        approximate = True
+        note = (
+            "影像无近红外波段，此处以蓝波段近似，不是定量 NDVI；"
+            "数值仅可在同一批影像内作相对比较，不可作为植被覆盖度使用。"
+        )
+
     red = arr[:, :, 0]
-    nir = arr[:, :, 2]  # 用 B 通道近似 NIR
     denom = nir + red
     denom[denom == 0] = 1.0
-    ndvi = (nir - red) / denom
-    ndvi_clamped = np.clip(ndvi, -1, 1)
+    ndvi_clamped = np.clip((nir - red) / denom, -1, 1)
 
     # NDVI 分类
     water = int(np.sum(ndvi_clamped < 0))
@@ -321,6 +402,10 @@ def calc_ndvi(img_pil):
             "water": water, "bare_soil": bare,
             "low_veg": veg_low, "mid_veg": veg_mid, "high_veg": veg_high,
         },
+        "approximate": approximate,
+        "nir_source": nir_source,
+        "n_bands": len(bands),
+        "note": note,
     }
 
 

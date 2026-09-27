@@ -3,7 +3,24 @@ import { Utils } from './utils.js';
 import { Modal } from './modal.js';
 import { I18n } from './i18n.js';
 
-const ALL_MODELS = ["BIT", "DIFF", "FC_SIAM_DIFF", "SNUNET", "CHANGEFORMER", "AFCF3D"];
+// 模型清单以后端 /detect/models 为准，这里只是拿不到接口时的兜底。
+// 此前写死 7 个：其中 3 个（FC_SIAM_DIFF/SNUNET/CHANGEFORMER）磁盘上没有权重，
+// 列了也只会 503；同时又漏了实际可用的 BIT_LuojiaSET —— 结果筛选（见下方
+// ALL_MODELS.includes）会把它的评估指标整个滤掉，评估完却看不到数。
+const FALLBACK_MODELS = ["BIT", "DIFF", "AFCF3D", "BIT_LuojiaSET"];
+let ALL_MODELS = FALLBACK_MODELS.slice();
+
+async function syncAvailableModels() {
+    try {
+        const res = await fetch(CONFIG.API_BASE_URL + '/detect/models');
+        const data = await res.json();
+        if (data.code === 200 && Array.isArray(data.available) && data.available.length) {
+            ALL_MODELS = data.available;
+        }
+    } catch (e) {
+        // 接口不可用就沿用兜底清单，不影响评估流程
+    }
+}
 
 function $(id) { return document.getElementById(id); }
 
@@ -14,6 +31,8 @@ export const Evaluator = {
     _cancelled: false,
 
     init() {
+        // 拉取真实可用模型，不阻塞渲染：用户选完文件夹再点评估，通常早已返回
+        syncAvailableModels();
         const startBtn = $('evalStartBtn');
         if (startBtn) startBtn.onclick = () => this._start();
         const cancelBtn = $('evalCancelBtn');
