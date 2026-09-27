@@ -2,13 +2,27 @@ import json
 import logging
 import re
 
-import dashscope
-from dashscope import Generation
+import httpx
 
 from backend.app.core.config import DASHSCOPE_API_KEY
 
-dashscope.api_key = DASHSCOPE_API_KEY
 logger = logging.getLogger(__name__)
+
+# 百炼的 OpenAI 兼容端点。
+#
+# 此前走原生 dashscope SDK 的 Generation.call，它把请求固定发往
+# /api/v1/services/aigc/text-generation/generation 这个 legacy 路径。
+# 实测该路径只服务 qwen-turbo / qwen-plus 这类老模型：换成 Qwen3.7 系列后
+# 一律返回 400 "url error"。而 qwen-turbo 本身就在 2026-10-10 的下线名单上，
+# 也就是说这条路径没有未来。改走兼容端点，与 agent_service 统一。
+_DASHSCOPE_CHAT_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+
+# qwen-turbo 的替代。同为最低价档；已实测文本对话、JSON 分类、
+# 定损草稿（含强制尾注与禁止假装看过影像两条约束）均可用。
+# 换模型只改这一处。
+_AI_MODEL = "qwen3.7-flash"
+_AI_TIMEOUT = 90.0
+_AI_MAX_TOKENS = 2048
 
 CLASSIFY_SYSTEM_PROMPT = (
     "你是东北黑土地变化检测领域的专家。你的任务是分析遥感变化检测数据，"
@@ -24,26 +38,53 @@ CLASSIFY_SYSTEM_PROMPT = (
 )
 
 
-def chat(user_input: str, history: list, system_prompt: str) -> str:
+def _chat_completion(messages: list, temperature: float, max_tokens: int = _AI_MAX_TOKENS) -> str:
+    """调用兼容端点，返回首个 choice 的文本内容。
+
+    原本由 dashscope SDK 兜的三种失败——未配置 key、非 200、空响应——
+    在这里显式处理，错误信息保持可读。
+    """
     if not DASHSCOPE_API_KEY:
-        # 未配置 key 时 Generation.call 会抛出难以理解的底层错误，
-        # 这里提前拦住给出可读原因。
         raise Exception("未配置 DASHSCOPE_API_KEY，AI 功能不可用")
+
+    try:
+        resp = httpx.post(
+            _DASHSCOPE_CHAT_URL,
+            headers={"Authorization": f"Bearer {DASHSCOPE_API_KEY}"},
+            json={
+                "model": _AI_MODEL,
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+            },
+            timeout=_AI_TIMEOUT,
+        )
+    except httpx.HTTPError as exc:
+        raise Exception(f"AI调用失败：{type(exc).__name__}: {exc}") from exc
+
+    if resp.status_code != 200:
+        # 截断响应体：模型下线后报的是 403 access_denied，且文案里不含
+        # 「已下线」字样，把原始报文带出来才有可能定位。
+        raise Exception(f"AI调用失败：HTTP {resp.status_code} {resp.text[:200]}")
+
+    try:
+        choices = resp.json().get("choices") or []
+    except ValueError as exc:
+        raise Exception("AI返回的不是合法 JSON") from exc
+    if not choices:
+        raise Exception("AI返回了空响应")
+
+    content = (choices[0].get("message") or {}).get("content") or ""
+    if not content.strip():
+        raise Exception("AI返回了空响应")
+    return content
+
+
+def chat(user_input: str, history: list, system_prompt: str) -> str:
     messages = [{"role": "system", "content": system_prompt}]
     messages.extend(history)
     messages.append({"role": "user", "content": user_input})
-    response = Generation.call(
-        model=Generation.Models.qwen_turbo,
-        messages=messages,
-        result_format="message",
-        stream=False,
-        temperature=0.3,
-    )
-    if response.status_code == 200:
-        if response.output.choices:
-            return response.output.choices[0].message.content
-        raise Exception("AI返回了空响应")
-    raise Exception(f"AI调用失败：{response.message}")
+    return _chat_completion(messages, temperature=0.3)
 
 
 DISASTER_DRAFT_SYSTEM_PROMPT = (
@@ -80,7 +121,7 @@ def classify_change(
     t1_time: str = "",
     t2_time: str = "",
 ) -> dict:
-    """调用 DashScope qwen_turbo 根据检测统计数据和元数据分类变化类型。"""
+    """根据检测统计数据和元数据分类变化类型。模型见 _AI_MODEL。"""
     user_prompt = (
         f"请根据以下检测数据判断变化类型：\n"
         f"- 地块位置：{location or '未知'}\n"
@@ -92,25 +133,16 @@ def classify_change(
         f"请基于上述数据推断最可能的变化类型，返回JSON。"
     )
     try:
-        response = Generation.call(
-            model=Generation.Models.qwen_turbo,
-            messages=[
+        text = _chat_completion(
+            [
                 {"role": "system", "content": CLASSIFY_SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt},
             ],
-            result_format="message",
-            stream=False,
             temperature=0.1,
         )
-        if response.status_code == 200:
-            if not response.output.choices:
-                raise Exception("AI返回了空响应")
-            text = response.output.choices[0].message.content
-            match = re.search(r"\{.*\}", text, re.DOTALL)
-            if match:
-                return json.loads(match.group())
-        raise Exception(f"AI响应解析失败：{response.message if hasattr(response, 'message') else '未知错误'}")
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        if not match:
+            raise Exception(f"AI响应解析失败：模型未按要求返回 JSON，原文片段 {text[:120]}")
+        return json.loads(match.group())
     except json.JSONDecodeError:
         raise Exception("AI返回的JSON格式无效")
-    except Exception:
-        raise

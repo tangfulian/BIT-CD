@@ -42,7 +42,7 @@ SYSTEM_ANALYSIS_PROMPT = (
 @limiter.limit("10/minute", key_func=get_user_key)
 async def ai_chat(request: Request, chat_req: ChatRequest, current_user=Depends(get_current_user)):
     try:
-        # dashscope SDK 是同步阻塞调用（网络往返数秒），移入线程池
+        # AI 调用是同步阻塞的（网络往返数秒），移入线程池
         reply = await run_in_threadpool(chat, chat_req.user_input, chat_req.history, SYSTEM_CHAT_PROMPT)
         return {"code": 200, "reply": reply}
     except Exception as e:

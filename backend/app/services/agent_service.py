@@ -147,8 +147,13 @@ def _get_chrome_path() -> str:
 
 
 def _build_llm() -> ChatOpenAI:
+    # qwen-vl-plus 的替代。选它的三个理由，缺一不可：
+    #   1. qwen-vl-plus 在百炼 2026-10-10 的下线名单上，下线后直接 403；
+    #   2. 它**不支持 Function Calling**（实测：给 tools 时只回散文、不返回
+    #      tool_calls），而 Agent 的决策循环依赖结构化工具调用；
+    #   3. qwen3.7-plus 实测视觉可用、FC 可用，且属于官方推荐的 Qwen3.7 系列。
     return ChatOpenAI(
-        model="qwen-vl-plus",
+        model="qwen3.7-plus",
         base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
         api_key=DASHSCOPE_API_KEY,
         temperature=0.2,
@@ -159,9 +164,19 @@ def _build_llm() -> ChatOpenAI:
 
 
 def _build_fallback_llm() -> ChatOpenAI:
-    """备用 LLM（文本模型，结构化输出更稳定）"""
+    """备用 LLM。
+
+    原来用 qwen-plus（纯文本）。换成 qwen3.7-flash 而非保留原样，是因为
+    备用模型会接手主模型失败的**同一条**对话，那个对话里可能有截图 ——
+    实测 qwen3.7-flash 同样具备视觉能力，而 qwen-plus 已属老一代
+    （其日期快照已在百炼另一批下线名单中），不如一并挪到新系列。
+
+    注意：本构造函数没有传 dont_force_structured_output，走库默认值 False，
+    即**会**带 response_format。这是必需的 —— 实测 qwen3.7-flash 在不带
+    response_format 时会返回 ```json 围栏包裹的内容，结构化解析会失败。
+    """
     return ChatOpenAI(
-        model="qwen-plus",
+        model="qwen3.7-flash",
         base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
         api_key=DASHSCOPE_API_KEY,
         temperature=0.1,
