@@ -18,13 +18,19 @@ from backend.app.services.disaster_service import (
 
 
 def _graded_fixture():
-    """100 个变化像素，四档各占 40/30/20/10。"""
+    """10×10=100 像素的影像，其中**只有 50 个像素发生变化**，四档各 20/15/10/5。
+
+    掩膜刻意只覆盖一半 —— 早先的 fixture 让全部像素都变化，变化占比恰好是
+    100%，于是"按总像素摊派"与"按变化像素摊派"给出完全一样的结果，
+    掩盖了受灾面积被高估的 bug。留一半不变才能把两者区分开。
+    """
     score = np.zeros((10, 10), np.float32)
-    score.flat[:40] = 0.30    # < 0.60 轻度
-    score.flat[40:70] = 0.65  # 中度
-    score.flat[70:90] = 0.80  # 重度
-    score.flat[90:100] = 0.95 # 绝收
-    mask = np.full((10, 10), 255, np.uint8)
+    score.flat[:20] = 0.30    # 轻度（< 0.60）
+    score.flat[20:35] = 0.65  # 中度
+    score.flat[35:45] = 0.80  # 重度
+    score.flat[45:50] = 0.95  # 绝收
+    mask = np.zeros((10, 10), np.uint8)
+    mask.flat[:50] = 255      # 只有前 50 个像素属于变化区
     return score, mask
 
 
@@ -32,7 +38,7 @@ class TestGradeSeverity:
     def test_counts_match_known_distribution(self):
         score, mask = _graded_fixture()
         g = grade_severity(score, mask)
-        assert [g[k]["pixels"] for k in ("mild", "moderate", "severe", "total")] == [40, 30, 20, 10]
+        assert [g[k]["pixels"] for k in ("mild", "moderate", "severe", "total")] == [20, 15, 10, 5]
 
     def test_shares_sum_to_one(self):
         score, mask = _graded_fixture()
@@ -71,27 +77,52 @@ class TestGradeSeverity:
     def test_custom_bounds_respected(self):
         score, mask = _graded_fixture()
         g = grade_severity(score, mask, {"moderate": 0.9, "severe": 0.95, "total": 0.99})
-        # 0.9 以下全部归轻度：40+30+20 = 90
-        assert g["mild"]["pixels"] == 90
+        # 0.9 以下全部归轻度：20+15+10 = 45
+        assert g["mild"]["pixels"] == 45
 
 
 class TestAssessMath:
     def test_loss_per_level_and_total(self):
-        """逐级金额与合计必须与手算一致。"""
+        """逐级金额与合计必须与手算一致。
+
+        100 亩地块、影像 100 像素、其中 50 像素变化：
+        各级面积 = 100 × 像素数/100 = 像素数本身。
+        mild 20亩 × 500kg × 2元 × 0.2 = 4000
+        """
         score, mask = _graded_fixture()
         r = assess(score, mask, area_mu=100, yield_per_mu=500, price_per_kg=2.0)
         got = {l["level"]: l["loss_yuan"] for l in r["levels"]}
-        # 40亩*500kg*2元*20% = 8000 等
-        assert got == {"mild": 8000.0, "moderate": 12000.0,
-                       "severe": 14000.0, "total": 10000.0}
-        assert r["total_loss_yuan"] == 44000.0
-        assert r["affected_area_mu"] == 100.0
+        assert got == {"mild": 4000.0, "moderate": 6000.0,
+                       "severe": 7000.0, "total": 5000.0}
+        assert r["total_loss_yuan"] == 22000.0
 
-    def test_area_allocated_by_share(self):
+    def test_affected_area_is_not_the_whole_plot(self):
+        """回归：受灾面积必须按**总像素**摊派，不能把整块地都算成受灾。
+
+        地块 100 亩、影像 100 像素、其中 50 像素变化 → 受灾 50 亩。
+        早先按变化像素摊派，四级面积之和恒等于地块总面积，无论检出多少变化
+        都会报出 100 亩受灾 —— 这是个 2 倍的高估，且变化占比越小时高估越离谱。
+        """
+        score, mask = _graded_fixture()
+        r = assess(score, mask, area_mu=100, yield_per_mu=1, price_per_kg=1)
+        assert r["affected_area_mu"] == 50.0
+        assert r["affected_area_mu"] < r["plot_area_mu"]
+
+    def test_tiny_change_does_not_report_whole_plot(self):
+        """检出 1% 变化时，受灾面积就该是 1% —— 这条若挂说明分母又用错了。"""
+        score = np.full((100, 100), 0.99, np.float32)
+        mask = np.zeros((100, 100), np.uint8)
+        mask.flat[:100] = 255          # 10000 像素中仅 100 个变化 = 1%
+        r = assess(score, mask, area_mu=200, yield_per_mu=1, price_per_kg=1)
+        assert r["affected_area_mu"] == pytest.approx(2.0, abs=0.01)
+
+    def test_area_scales_with_plot_area(self):
         score, mask = _graded_fixture()
         r = assess(score, mask, area_mu=200, yield_per_mu=1, price_per_kg=1)
         got = {l["level"]: l["area_mu"] for l in r["levels"]}
-        assert got == {"mild": 80.0, "moderate": 60.0, "severe": 40.0, "total": 20.0}
+        # 200 亩 → 各级 = 200 × 像素数/100
+        assert got == {"mild": 40.0, "moderate": 30.0, "severe": 20.0, "total": 10.0}
+        assert r["affected_area_mu"] == 100.0
 
     def test_zero_area_is_all_zero(self):
         score, mask = _graded_fixture()
@@ -116,10 +147,12 @@ class TestAssessMath:
         score, mask = _graded_fixture()
         r = assess(score, mask, area_mu=100, yield_per_mu=500, price_per_kg=2.0)
         s = r["survey_cost"]
-        # 默认 10 元/亩 人工，3.5 元/亩 遥感，受灾 100 亩
-        assert s["manual_cost_yuan"] == 1000.0
-        assert s["remote_cost_yuan"] == 350.0
-        assert s["saving_yuan"] == 650.0
+        # 默认 10 元/亩 人工，3.5 元/亩 遥感；查勘成本按**受灾面积**算
+        # （只查受灾的地块，不是整块地），本 fixture 受灾 50 亩
+        assert r["affected_area_mu"] == 50.0
+        assert s["manual_cost_yuan"] == 500.0
+        assert s["remote_cost_yuan"] == 175.0
+        assert s["saving_yuan"] == 325.0
 
 
 class TestHonestyFields:

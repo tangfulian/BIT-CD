@@ -139,8 +139,12 @@ def assess(
 ):
     """定损计算。全部为确定性算术，不依赖任何模型或外部服务。
 
-    各级面积按「该级像素数 / 变化像素总数」摊派到地块总面积 —— 地块面积对应
-    整幅影像，而变化区域才是受灾区域，故分母取变化像素而非总像素。
+    各级面积按「该级像素数 / **影像总像素数**」摊派到地块总面积。
+
+    分母必须是总像素而不是变化像素：地块面积对应整幅影像，只有发生变化的那
+    部分才受灾。若按变化像素摊派，四级面积之和会等于地块总面积，等于无论检出
+    多少变化都把整块地报成受灾 —— 一块 100 亩的地检出 3.81% 变化时会报出
+    100 亩受灾，而不是 3.81 亩。
 
     返回体里的 assumptions 列出所有由人给定、而非本系统推断的数值。
     """
@@ -152,6 +156,7 @@ def assess(
 
     graded = grade_severity(score_map, change_mask, grade_bounds)
     changed_px = sum(g["pixels"] for g in graded.values())
+    total_px = int(np.asarray(change_mask).size)
 
     area_mu = float(area_mu or 0.0)
     yield_per_mu = float(yield_per_mu or 0.0)
@@ -162,16 +167,19 @@ def assess(
     affected_area = 0.0
 
     for lvl in SEVERITY_LEVELS:
-        # 无变化像素时 share 全为 0，面积自然为 0，不会除零
-        share = graded[lvl]["share"]
-        lvl_area = round(area_mu * share, 4)
+        # 各级面积 = 地块总面积 × 该级像素数 / 影像总像素数
+        # 无变化像素时为 0，不会除零
+        lvl_area = (
+            round(area_mu * graded[lvl]["pixels"] / total_px, 4)
+            if total_px else 0.0
+        )
         # 损失 = 面积 × 亩产 × 单价 × 该级减产比例
         lvl_loss = round(lvl_area * yield_per_mu * price_per_kg * rates[lvl], 2)
         levels.append({
             "level": lvl,
             "label": SEVERITY_LABELS[lvl],
             "pixels": graded[lvl]["pixels"],
-            "share": share,
+            "share": graded[lvl]["share"],
             "area_mu": lvl_area,
             "loss_rate": rates[lvl],
             "loss_yuan": lvl_loss,
@@ -226,7 +234,7 @@ def assess(
              "note": costs.get("source_note", SURVEY_COST_REFERENCE["source_note"])},
         ],
         "formula": {
-            "area": "各级面积 = 地块总面积 × (该级像素数 / 变化像素总数)",
+            "area": "各级面积 = 地块总面积 × (该级像素数 / 影像总像素数)",
             "loss": "各级损失 = 各级面积 × 亩产 × 单价 × 该级减产比例",
             "saving": "节省 = (人工查勘单价 − 遥感定损单价) × 受灾面积",
         },
