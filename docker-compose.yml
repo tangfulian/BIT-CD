@@ -13,8 +13,16 @@ services:
       - DATABASE_URL=sqlite:///./blackland.db
     volumes:
       - ./checkpoints:/app/checkpoints:ro
+      # 前后端代码挂载进来，改代码只需传文件 + docker compose restart，
+      # 不必重建镜像（重建一次要十几分钟，主要在装 torch）
+      - ./frontend:/app/frontend:ro
+      - ./backend:/app/backend:ro
+      # alembic 必须挂载：数据库迁移在应用启动时由 init_db() 执行，
+      # 不挂的话容器用的是镜像里烘焙的旧迁移，**新写的迁移永远不生效且不报错**。
+      - ./alembic:/app/alembic:ro
+      - ./alembic.ini:/app/alembic.ini:ro
       - ./results:/app/results
       - ./uploads:/app/uploads
       - ./samples/predict:/app/samples/predict
-      - ./blackland.db:/app/blackland.db
+      - ./data/blackland.db:/app/blackland.db
     restart: unless-stopped
