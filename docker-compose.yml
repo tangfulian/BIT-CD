@@ -25,4 +25,14 @@ services:
       - ./uploads:/app/uploads
       - ./samples/predict:/app/samples/predict
       - ./data/blackland.db:/app/blackland.db
+    # Chrome 在容器里默认只有 64MB /dev/shm，本系统有地图、ECharts 大屏、
+    # 影像画布这类重页面，渲染进程容易因共享内存不足而崩溃 —— 且崩溃发生在
+    # CDP 就绪之后，日志上只表现为任务莫名失败。代码侧已加
+    # --disable-dev-shm-usage，这里再把实际共享内存调大，两头都堵上。
+    shm_size: 1gb
+    # Agent 每次运行会拉起 Chrome，它 fork 出的 renderer/gpu 子进程在被杀后
+    # 由 PID 1 负责回收。容器里 PID 1 默认是 uvicorn，它不做这件事，于是这些
+    # 已死的子进程会以 <defunct>（僵尸）形式堆积、占着 PID 不放 —— 实测一次
+    # 运行留下 8 个。init: true 会插入一个真正的 init（tini）来回收它们。
+    init: true
     restart: unless-stopped
