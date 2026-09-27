@@ -1151,6 +1151,15 @@
                                           placeholder="用自然语言描述您想要执行的操作，例如：打开检测页面，上传两张影像并用 BIT 模型检测..."
                                           rows="4"></textarea>
                             </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="agent.attach">附件（可选）</label>
+                                <div class="agent-attach-row">
+                                    <input type="file" id="agentFiles" class="form-control agent-file-input" multiple
+                                           accept=".jpg,.jpeg,.png,.tif,.tiff,.bmp,.webp">
+                                </div>
+                                <div id="agentFileList" class="agent-file-list"></div>
+                                <span class="field-hint" data-i18n="agent.attachHint">上传的影像会作为附件交给 Agent；请在指令里说明哪张是前期、哪张是后期。</span>
+                            </div>
                             <div class="agent-controls-row">
                                 <div class="form-group" style="display:flex;align-items:center;gap:8px;">
                                     <label class="form-label" style="margin:0;white-space:nowrap;" data-i18n="agent.maxSteps">最大步数</label>

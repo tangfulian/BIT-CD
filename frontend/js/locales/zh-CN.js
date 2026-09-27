@@ -346,6 +346,8 @@ export const zhCN = {
     "agent.instruction": "操作指令",
     "agent.instructionPlaceholder": "用自然语言描述您想要执行的操作，例如：打开检测页面，上传两张影像并用 BIT 模型检测...",
     "agent.maxSteps": "最大步数",
+    "agent.attach": "附件（可选）",
+    "agent.attachHint": "上传的影像会作为附件交给 Agent；请在指令里说明哪张是前期、哪张是后期。",
     "agent.start": "开始执行",
     "agent.cancel": "取消执行",
     "agent.shortcutHint": "快速执行",

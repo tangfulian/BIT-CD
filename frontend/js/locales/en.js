@@ -331,6 +331,8 @@ export const en = {
     "agent.instruction": "Instruction",
     "agent.instructionPlaceholder": "Describe what you want in natural language, e.g. Open the detection page, upload two images and detect with BIT model...",
     "agent.maxSteps": "Max Steps",
+    "agent.attach": "Attachments (optional)",
+    "agent.attachHint": "Uploaded images are passed to the Agent as attachments; state in the instruction which is the earlier and which is the later image.",
     "agent.start": "Execute",
     "agent.cancel": "Cancel",
     "agent.shortcutHint": "Quick execute",

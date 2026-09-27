@@ -354,7 +354,29 @@ def _busy_result() -> dict[str, Any]:
     }
 
 
-async def execute_agent(instruction: str, max_steps: int) -> dict[str, Any]:
+def _attachment_block(file_paths: list[str]) -> str:
+    """把附件清单拼进提示词。
+
+    只给「路径 + 文件名 + 大小」，**不替模型判断哪个是前期、哪个是后期** ——
+    那属于用户指令该交代的事，系统替他猜反而会猜错且无从发现。
+    """
+    if not file_paths:
+        return ""
+    lines = ["\n\n【本次可用附件】（upload_file 时请使用下面列出的完整路径）"]
+    for p in file_paths:
+        try:
+            size_kb = os.path.getsize(p) / 1024
+            size = f"{size_kb:.1f} KB"
+        except OSError:
+            size = "大小未知"
+        lines.append(f"  {p}   （文件名 {os.path.basename(p)}，{size}）")
+    lines.append("哪个附件对应什么用途，以用户任务里的说明为准。")
+    return "\n".join(lines)
+
+
+async def execute_agent(
+    instruction: str, max_steps: int, file_paths: list[str] | None = None
+) -> dict[str, Any]:
     # 非阻塞抢锁：抢不到就直接告诉用户，不要排队 —— 排在后面的请求会等满
     # 10 分钟，而 Chrome 的单实例锁会让它们本来也起不来。
     if _agent_lock.locked():
@@ -362,11 +384,14 @@ async def execute_agent(instruction: str, max_steps: int) -> dict[str, Any]:
         return _busy_result()
 
     async with _agent_lock:
-        return await _execute_locked(instruction, max_steps)
+        return await _execute_locked(instruction, max_steps, file_paths or [])
 
 
-async def _execute_locked(instruction: str, max_steps: int) -> dict[str, Any]:
+async def _execute_locked(
+    instruction: str, max_steps: int, file_paths: list[str]
+) -> dict[str, Any]:
     task = AGENT_SYSTEM_CONTEXT.format(frontend_url=AGENT_FRONTEND_URL)
+    task += _attachment_block(file_paths)
     task += f"\n\n用户任务:\n{instruction}"
 
     proc = None
@@ -394,6 +419,11 @@ async def _execute_locked(instruction: str, max_steps: int) -> dict[str, Any]:
             # 躺着管理员 JWT，两者相遇就是一条令牌外发的通路。详见
             # AGENT_EXCLUDED_TOOLS 的说明。
             tools=Tools(exclude_actions=AGENT_EXCLUDED_TOOLS),
+            # 上传白名单。这是安全边界的一部分：实测 BrowserSession.is_local 为
+            # True（即使 cdp_url 只设在 profile 里），此时 upload_file 会强制校验
+            # 路径必须逐字符出现在这个列表里，否则直接报错。也就是说模型即使被
+            # 注入，也只能上传我们明确列出的这几个文件，拿不到 /app/.env 之类。
+            available_file_paths=file_paths,
             use_vision=True,
             flash_mode=False,
             max_failures=3,

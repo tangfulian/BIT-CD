@@ -26,6 +26,9 @@ export const Agent = {
             };
         }
 
+        const fileInput = document.getElementById("agentFiles");
+        if (fileInput) fileInput.onchange = () => this._renderFileList();
+
         const strip = document.getElementById("agentScreenshotStrip");
         if (strip) {
             strip.onclick = (e) => {
@@ -59,16 +62,21 @@ export const Agent = {
 
         try {
             const token = Utils.safeLocalStorage.getItem(CONFIG.TOKEN_KEY);
+
+            const fd = new FormData();
+            fd.append('instruction', instruction);
+            fd.append('max_steps', String(parseInt(maxStepsInput.value) || 25));
+            const fileInput = document.getElementById("agentFiles");
+            if (fileInput && fileInput.files) {
+                Array.from(fileInput.files).forEach((f) => fd.append('files', f));
+            }
+
             const res = await fetch(`${CONFIG.API_BASE_URL}/agent/execute`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    instruction,
-                    max_steps: parseInt(maxStepsInput.value) || 25,
-                }),
+                // 刻意不设 Content-Type：multipart 的 boundary 必须由浏览器生成，
+                // 手写这个头会让后端解析不到任何文件（收到空附件且不报错）。
+                headers: { "Authorization": `Bearer ${token}` },
+                body: fd,
                 signal: this._abortController.signal,
             });
 
@@ -94,6 +102,35 @@ export const Agent = {
             cancelBtn.classList.add("hidden");
             this._abortController = null;
         }
+    },
+
+    /** 渲染已选附件列表（只显示文件名与大小，不做预览也不上传） */
+    _renderFileList() {
+        const box = document.getElementById("agentFileList");
+        const input = document.getElementById("agentFiles");
+        if (!box || !input) return;
+        const files = Array.from(input.files || []);
+        if (!files.length) {
+            box.innerHTML = '';
+            return;
+        }
+        box.innerHTML = files.map((f, i) => {
+            const kb = (f.size / 1024).toFixed(1);
+            return `<div class="agent-file-item">
+                <span class="agent-file-name">${Utils.escapeHtml(f.name)}</span>
+                <span class="agent-file-size">${kb} KB</span>
+                <button type="button" class="agent-file-remove" data-idx="${i}">×</button>
+            </div>`;
+        }).join('');
+        box.querySelectorAll('.agent-file-remove').forEach((btn) => {
+            btn.onclick = () => {
+                const idx = parseInt(btn.dataset.idx, 10);
+                const dt = new DataTransfer();
+                files.forEach((f, i) => { if (i !== idx) dt.items.add(f); });
+                input.files = dt.files;
+                this._renderFileList();
+            };
+        });
     },
 
     cancel() {

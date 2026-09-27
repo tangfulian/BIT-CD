@@ -4678,3 +4678,39 @@ select.form-control {
     .series-upload-row { grid-template-columns: 24px 1fr; }
     .trend-cards { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ============================================================
+   Agent 附件
+   ============================================================ */
+.agent-attach-row { display: flex; align-items: center; gap: var(--space-sm); }
+.agent-file-input { padding: 6px 8px; font-size: var(--font-sm); }
+.agent-file-list { margin-top: var(--space-sm); display: flex; flex-direction: column; gap: 4px; }
+.agent-file-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 5px 10px;
+    font-size: var(--font-sm);
+    background: var(--bg-main);
+    border-radius: var(--radius-sm);
+}
+.agent-file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-primary);
+}
+.agent-file-size { color: var(--text-tertiary); font-size: var(--font-xs); flex-shrink: 0; }
+.agent-file-remove {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    line-height: 1;
+    border: none;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+}
+.agent-file-remove:hover { background: rgba(196, 69, 54, 0.12); color: var(--danger); }
