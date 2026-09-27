@@ -48,14 +48,10 @@ AMAP_API_BASE = "https://restapi.amap.com/v3"
 # --- AI Agent（Browser Use 操控前端） ---
 AGENT_FRONTEND_URL = os.getenv("AGENT_FRONTEND_URL", "http://localhost:5500")
 AGENT_USERNAME = os.getenv("AGENT_USERNAME", "admin")
-_agent_pwd = os.getenv("AGENT_PASSWORD")
-if not _agent_pwd:
-    _agent_pwd = secrets.token_urlsafe(16)
-    logger.warning(
-        "⚠️  AGENT_PASSWORD 未设置！已生成随机值。"
-        "请在 .env 中设置 AGENT_PASSWORD=<your-password>。"
-    )
-AGENT_PASSWORD = _agent_pwd
+# 不再需要 AGENT_PASSWORD：Agent 改为直接签发 token 并经 CDP 注入 localStorage
+# （见 agent_service._inject_auth），不再走「用账号密码登录表单」的老路。
+# 原先这里会读取 AGENT_PASSWORD，未设置时生成随机值并打警告——但那个值从来没有
+# 被任何代码读过，只会让每次启动都刷一条无意义的警告。故整块移除。
 AGENT_BROWSER_HEADLESS = os.getenv("AGENT_BROWSER_HEADLESS", "true").lower() == "true"
 AGENT_MAX_STEPS = int(os.getenv("AGENT_MAX_STEPS", "15"))
 
