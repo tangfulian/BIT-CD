@@ -46,7 +46,10 @@ AMAP_WEB_KEY = os.getenv("AMAP_WEB_KEY")
 AMAP_API_BASE = "https://restapi.amap.com/v3"
 
 # --- AI Agent（Browser Use 操控前端） ---
-AGENT_FRONTEND_URL = os.getenv("AGENT_FRONTEND_URL", "http://localhost:5500")
+# 默认 8000 而不是 5500：前端由本应用自己挂在 / 上（main.py 的 StaticFiles），
+# 端口就是 uvicorn 的端口。5500 是 JetBrains IDE 预览的历史残留，没有任何服务
+# 监听，用这个默认值会让 _inject_auth 的 page.goto 直接超时。
+AGENT_FRONTEND_URL = os.getenv("AGENT_FRONTEND_URL", "http://localhost:8000")
 AGENT_USERNAME = os.getenv("AGENT_USERNAME", "admin")
 # 不再需要 AGENT_PASSWORD：Agent 改为直接签发 token 并经 CDP 注入 localStorage
 # （见 agent_service._inject_auth），不再走「用账号密码登录表单」的老路。

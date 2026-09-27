@@ -152,7 +152,13 @@ export const Agent = {
         document.getElementById("agentDuration").textContent = `${data.duration_seconds || 0}s`;
 
         const content = document.getElementById("agentResultContent");
-        content.innerHTML = Utils.parseMarkdown(data.final_result || I18n.t('agent.noResult'));
+        // 必须先转义：这段文字是模型写的，而模型读过被浏览页面的内容，
+        // 页面里塞一句让模型照抄的 <img onerror=...> 就能在管理员浏览器里
+        // 以同源身份执行，进而读走 localStorage 里的管理员令牌。
+        // parseMarkdown 自身不做任何转义（只加 <strong>/<br>），所以顺序是
+        // 先 escapeHtml 再 parseMarkdown —— 后者插入的标签是我们自己的，安全。
+        content.innerHTML = Utils.parseMarkdown(
+            Utils.escapeHtml(data.final_result || I18n.t('agent.noResult')));
 
         this._screenshots = data.screenshots || [];
         if (this._screenshots.length > 0) {

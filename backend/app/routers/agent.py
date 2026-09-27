@@ -28,6 +28,8 @@ async def agent_execute(
         return {"code": 200, **result}
     except Exception as e:
         logger.exception("Agent执行失败: %s", e)
+        # 不回 str(e)：browser-use 的异常常带 base_url、模型名与服务器路径。
+        # 全局异常处理器（main.py）刻意只给异常类名，这里保持同一口径。
         return {
             "code": 500,
             "success": False,
@@ -36,6 +38,5 @@ async def agent_execute(
             "duration_seconds": 0,
             "screenshots": [],
             "visited_urls": [],
-            "errors": [str(e)],
-            "step_log": [],
+            "errors": [f"执行失败（{type(e).__name__}），详情见服务端日志"],
         }
