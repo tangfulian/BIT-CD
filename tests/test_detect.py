@@ -23,17 +23,25 @@ def _fake_score_map():
 
 class TestDetect:
     def test_detect_bit_model(self, client, auth_headers, monkeypatch):
-        from backend.app.routers import detect as detect_router
+        # /detect 的编排已下沉到 detection_service，它按**模块属性**调用
+        # detect_service.detect_change。所以桩必须打在 detect_service 这个
+        # 命名空间上；打在 routers.detect 上对 /detect 已经无效（那个名字
+        # 现在只被 /detect/compare 用）。
+        from backend.app.services import detect_service
 
         def mock_detect_change(img1, img2, threshold, model_type, unique_id):
             sm = _fake_score_map()
             mask = (sm > threshold).astype(np.uint8) * 255
             heatmap = np.zeros((256, 256, 3), dtype=np.uint8)
             fusion = np.zeros((256, 256, 3), dtype=np.uint8)
-            stats = {"total_pixel": 65536, "change_pixel": 2500, "ratio": 3.81, "threshold": threshold}
+            # 数值刻意与 conftest 的全局假桩（ratio 3.81）不同：这一处打桩
+            # 若再次静默失效，请求会落到全局假桩并返回 3.81，下面的断言
+            # 立刻失败。这是给「from X import y 导致桩失效、但测试照样通过」
+            # 那个坑留的探针。
+            stats = {"total_pixel": 65536, "change_pixel": 1234, "ratio": 7.77, "threshold": threshold}
             return sm, mask, heatmap, fusion, stats
 
-        monkeypatch.setattr(detect_router, "detect_change", mock_detect_change)
+        monkeypatch.setattr(detect_service, "detect_change", mock_detect_change)
 
         img1 = _fake_image()
         img2 = _fake_image()
@@ -63,7 +71,7 @@ class TestDetect:
         assert "mask" in data
         assert "heat" in data
         assert "fusion" in data
-        assert data["stats"]["ratio"] == 3.81
+        assert data["stats"]["ratio"] == 7.77
 
     def test_detect_requires_auth(self, client):
         resp = client.post("/detect", files=[], data={})

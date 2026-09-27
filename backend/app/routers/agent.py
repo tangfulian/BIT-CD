@@ -4,11 +4,14 @@ import shutil
 import tempfile
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from backend.app.core.limiter import get_user_key, limiter
-from backend.app.core.security import get_current_user
+from backend.app.core.security import get_current_user, get_db
 from backend.app.models.user import UserDB
 from backend.app.services.agent_service import execute_agent
+from backend.app.services.tool_agent_service import MAX_TOOL_ROUNDS, execute_tool_agent
 
 router = APIRouter(prefix="/agent", tags=["AI Agent"])
 logger = logging.getLogger(__name__)
@@ -112,6 +115,58 @@ async def agent_execute(
             "screenshots": [],
             "visited_urls": [],
             "errors": [f"执行失败（{type(e).__name__}），详情见服务端日志"],
+        }
+    finally:
+        if upload_dir:
+            shutil.rmtree(upload_dir, ignore_errors=True)
+
+
+@router.post("/execute-tools")
+@limiter.limit("10/minute", key_func=get_user_key)
+async def agent_execute_tools(
+    request: Request,
+    instruction: str = Form(..., min_length=1, max_length=2000),
+    max_rounds: int = Form(MAX_TOOL_ROUNDS, ge=1, le=MAX_TOOL_ROUNDS),
+    files: list[UploadFile] = File(default=[]),
+    current_user: UserDB = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """工具调用通道：模型用 function calling 直接调服务层，不驱动浏览器。
+
+    权限刻意比 /execute 低一档（只要登录，不要求 admin）。理由是这条通道的
+    权限面严格更小：它全程以调用者本人的身份执行，不启用管理员旁路，没有
+    Chrome、没有可执行任意 JS 的会话，能做的事与用户自己点界面完全相同，
+    因此不构成提权。仍复用同一套附件落盘与白名单校验。
+    """
+    upload_dir = None
+    try:
+        file_paths, upload_dir = await _save_uploads(files)
+        # 内部是网络往返 + CPU 推理，全是阻塞调用，必须离开事件循环
+        result = await run_in_threadpool(
+            execute_tool_agent,
+            instruction=instruction,
+            file_paths=file_paths,
+            user=current_user,
+            db=db,
+            base_url=str(request.base_url).rstrip("/"),
+            max_rounds=max_rounds,
+        )
+        return {"code": 200, **result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("工具通道执行失败: %s", e)
+        # 与 /execute 同一口径：不回 str(e)，避免把内部路径、模型名透给前端
+        return {
+            "code": 500,
+            "success": False,
+            "final_result": None,
+            "total_steps": 0,
+            "duration_seconds": 0,
+            "screenshots": [],
+            "visited_urls": [],
+            "errors": [f"执行失败（{type(e).__name__}），详情见服务端日志"],
+            "tool_trace": [],
         }
     finally:
         if upload_dir:

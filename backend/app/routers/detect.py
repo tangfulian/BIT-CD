@@ -1,22 +1,17 @@
-import hashlib
 import json
 import logging
-import os
 import uuid
-from io import BytesIO
 
 import cv2
 import numpy as np
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
-from PIL import Image
 from sqlalchemy.orm import Session
 
 from backend.app.core.limiter import get_user_key, limiter
 from backend.app.core.security import get_current_user, get_optional_user, get_db
 from backend.app.models.detection import DetectionResultDB
-from backend.app.models.series import ImageSeriesDB
 from backend.app.models.user import UserDB
 from backend.app.services.detect_service import (
     apply_threshold,
@@ -32,38 +27,20 @@ from backend.app.services.detect_service import (
     otsu_threshold,
     rebuild_fusion_from_score,
     recommend_threshold_from_images,
-    save_score_map,
+)
+from backend.app.services.detection_service import (
+    SUPPORTED_MODELS,
+    decode_image as _decode_image,
+    run_detection,
 )
 
 router = APIRouter(tags=["检测"])
 logger = logging.getLogger(__name__)
 
-SUPPORTED_MODELS = ["BIT", "DIFF", "FC_SIAM_DIFF", "SNUNET", "CHANGEFORMER", "AFCF3D", "BIT_LuojiaSET"]
-
 
 def _result_url(request: Request, filename: str) -> str:
     """构建绝对路径的结果图片 URL，兼容代理和直连场景"""
     return f"{str(request.base_url).rstrip('/')}/results/{filename}"
-
-
-def _decode_image(data: bytes, name: str = "影像", mode="RGB", size: int = 256):
-    """把上传的字节解码为模型输入。
-
-    非法图片此前会抛 UnidentifiedImageError 一路冒到外层，变成客户端无法解析的
-    裸 500 文本；这里统一拦截为 400 并给出可读原因。顺带收敛了原先散落在十余处的
-    重复解码代码。
-    """
-    try:
-        img = Image.open(BytesIO(data))
-        if mode:
-            img = img.convert(mode)
-        if size:
-            img = img.resize((size, size), Image.BILINEAR)
-        return img
-    except HTTPException:
-        raise
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"{name} 不是有效的图片文件") from exc
 
 
 def _imwrite(path, img):
@@ -75,16 +52,6 @@ def _url_to_path(url: str) -> str:
     """从结果 URL 提取文件系统路径（兼容绝对和相对 URL）"""
     filename = url.rsplit('/', 1)[-1]
     return f"results/{filename}"
-
-
-def _rewrite_url(request: Request, url: str | None) -> str:
-    """将数据库中可能存有旧域名的 URL 重写为当前请求的正确地址"""
-    if not url:
-        return ""
-    filename = url.rsplit("/", 1)[-1]
-    if not filename:
-        return url
-    return f"{str(request.base_url).rstrip('/')}/results/{filename}"
 
 
 @router.get("/detect/models")
@@ -129,120 +96,30 @@ async def detect(
     current_user = Depends(get_optional_user),
     db: Session = Depends(get_db),
 ):
-    if model not in SUPPORTED_MODELS:
-        raise HTTPException(status_code=400, detail=f"不支持的模型: {model}")
-
-    # 归属校验：不允许把检测挂到别人的序列上
-    if series_id:
-        if current_user is None:
-            raise HTTPException(status_code=401, detail="指定序列需要登录")
-        owns = db.query(ImageSeriesDB).filter(
-            ImageSeriesDB.id == series_id,
-            ImageSeriesDB.user_id == current_user.id,
-        ).first()
-        if not owns:
-            raise HTTPException(status_code=404, detail="序列不存在")
-
-    unique_id = str(uuid.uuid4())
     img1_bytes = await img1.read()
     img2_bytes = await img2.read()
 
-    # MD5 去重（仅登录用户）
-    if current_user is not None:
-        image_hash = hashlib.md5(img1_bytes + img2_bytes).hexdigest()
-        cached = db.query(DetectionResultDB).filter(
-            DetectionResultDB.image_pair_hash == image_hash,
-            DetectionResultDB.model == model,
-            DetectionResultDB.threshold == float(threshold),
-            DetectionResultDB.user_id == current_user.id,
-        ).first()
-        if cached and cached.score_url:
-            score_path = _url_to_path(cached.score_url)
-            if os.path.exists(score_path):
-                logger.info("命中缓存: image_hash=%s model=%s", image_hash, model)
-                return JSONResponse(content={
-                    "code": 200,
-                    "msg": "检测完成（缓存）",
-                    "model": model,
-                    "detection_id": cached.id,
-                    "mask": _rewrite_url(request, cached.mask_url),
-                    "heat": _rewrite_url(request, cached.heat_url),
-                    "fusion": _rewrite_url(request, cached.fusion_url),
-                    "score": _rewrite_url(request, cached.score_url),
-                    "stats": {
-                        "total_pixel": cached.total_pixel,
-                        "change_pixel": cached.change_pixel,
-                        "ratio": cached.ratio,
-                        "threshold": cached.threshold,
-                    },
-                })
-
-    img_t1 = _decode_image(img1_bytes, "T1 影像")
-    img_t2 = _decode_image(img2_bytes, "T2 影像")
-
-    # 模型推理是同步 CPU 重活：放进线程池，避免阻塞事件循环
-    score_map, change_mask, heatmap, fusion, stats = await run_in_threadpool(
-        detect_change, img_t1, img_t2, threshold, model, unique_id
+    # 编排整段（去重缓存、解码、落盘、建记录）已下沉到 detection_service，
+    # 因为工具通道需要在没有 HTTP 请求的情况下复用同一套语义 —— 留两份
+    # 实现必然漂移。模型推理是同步 CPU 重活，所以整体放进线程池。
+    result = await run_in_threadpool(
+        run_detection,
+        img1_bytes=img1_bytes,
+        img2_bytes=img2_bytes,
+        model=model,
+        threshold=threshold,
+        base_url=str(request.base_url).rstrip("/"),
+        db=db,
+        user_id=current_user.id if current_user is not None else None,
+        lat_lng=lat_lng,
+        location=location,
+        change_type=change_type,
+        t1_time=t1_time,
+        t2_time=t2_time,
+        series_id=series_id,
+        phase_index=phase_index,
     )
-
-    score_filename = f"{unique_id}_score.png"
-    mask_filename = f"{unique_id}_mask.png"
-    heat_filename = f"{unique_id}_heat.png"
-    fusion_filename = f"{unique_id}_fusion.png"
-    t2_filename = f"{unique_id}_t2.png"
-    save_score_map(score_map, f"results/{score_filename}")
-    _imwrite(f"results/{mask_filename}", change_mask)
-    _imwrite(f"results/{heat_filename}", heatmap)
-    _imwrite(f"results/{fusion_filename}", fusion)
-    # 留一份 T2（256×256，与掩膜同尺寸）供重调阈值时重建融合图。
-    # 融合图 = alpha 混合(T2, 掩膜)，没有 T2 就重建不出来——此前
-    # /detect/rethreshold 正是卡在这里，只能留下与掩膜自相矛盾的旧融合图。
-    # 用 PIL 保存而不是 cv2：cv2 按 BGR 解释数组，直接存 PIL 的 RGB 会红蓝互换。
-    img_t2.save(f"results/{t2_filename}")
-
-    detection_id = None
-    if current_user is not None:
-        detection = DetectionResultDB(
-            user_id=current_user.id,
-            model=model,
-            threshold=threshold,
-            ratio=stats["ratio"],
-            change_pixel=stats["change_pixel"],
-            total_pixel=stats["total_pixel"],
-            lat_lng=lat_lng,
-            location=location,
-            change_type=change_type,
-            t1_time=t1_time,
-            t2_time=t2_time,
-            mask_url=_result_url(request, mask_filename),
-            heat_url=_result_url(request, heat_filename),
-            fusion_url=_result_url(request, fusion_filename),
-            score_url=_result_url(request, score_filename),
-            image_pair_hash=image_hash,
-            series_id=series_id or None,
-            phase_index=phase_index if phase_index >= 0 else None,
-        )
-        db.add(detection)
-        db.commit()
-        db.refresh(detection)
-        detection_id = detection.id
-        logger.info("检测请求: model=%s threshold=%.2f user=%s", model, threshold, current_user.username)
-    else:
-        logger.info("游客检测: model=%s threshold=%.2f", model, threshold)
-
-    return JSONResponse(
-        content={
-            "code": 200,
-            "msg": "检测成功！",
-            "model": model,
-            "detection_id": detection_id,
-            "mask": _result_url(request, mask_filename),
-            "heat": _result_url(request, heat_filename),
-            "fusion": _result_url(request, fusion_filename),
-            "score": _result_url(request, score_filename),
-            "stats": stats,
-        }
-    )
+    return JSONResponse(content=result)
 
 
 @router.post("/recommend-threshold")
