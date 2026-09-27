@@ -74,3 +74,7 @@ verify_tmp.db
 
 # 本地密钥配置（不入库）
 frontend/js/config.local.js
+
+# 技能目录：实体文件在 .agents/（已入库），.claude/skills/ 下是它的 junction。
+# 不忽略的话，git add -A 会把同一份内容重复入库一遍。
+.claude/skills/frontend-design/
