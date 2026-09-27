@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bitcd-v8';
+const CACHE_NAME = 'bitcd-v9';
 
 const PRECACHE_URLS = [
   './',
@@ -24,6 +24,7 @@ const PRECACHE_URLS = [
   './js/bigscreen.js',
   './js/compare.js',
   './js/status.js',
+  './js/disaster.js',
   './js/annotator.js',
   './js/history.js',
   './js/chatbot.js',

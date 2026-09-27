@@ -31,6 +31,7 @@ from backend.app.routers import (
     auth,
     compare,
     detect,
+    disaster,
     history,
     plot,
     status,
@@ -95,6 +96,7 @@ def create_app() -> FastAPI:
         "/detect/otsu": "otsu", "/detect/ndvi": "ndvi",
         "/detect/check-registration": "registration",
         "/detect/area-stats": "area-stats", "/detect/export-geojson": "geojson",
+        "/disaster": "disaster",
         "/evaluate": "evaluate", "/annotation": "annotation",
         "/plots": "plots", "/admin": "admin", "/status": "status",
         "/profile": "profile", "/captcha": "captcha",
@@ -164,6 +166,7 @@ def create_app() -> FastAPI:
     app.include_router(ai.router)
     app.include_router(amap.router)
     app.include_router(compare.router)
+    app.include_router(disaster.router)
     app.include_router(annotation.router)
     app.include_router(admin.router)
     app.include_router(status.router)

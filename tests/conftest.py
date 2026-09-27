@@ -63,8 +63,12 @@ def admin_headers(client):
 
 @pytest.fixture(autouse=True)
 def mock_ai_chat(monkeypatch):
-    """Mock DashScope AI chat to return a fixed reply."""
-    def _fake_chat(user_input, history, system_prompt):
+    """Mock DashScope AI chat to return a fixed reply.
+
+    收 *args/**kwargs 是刻意的：调用方若给 chat 传了新关键字参数（如 temperature），
+    签名写死的假函数会 TypeError，而测试失败信息会指向假函数、掩盖真实原因。
+    """
+    def _fake_chat(user_input, history, system_prompt, *args, **kwargs):
         return "这是一条AI模拟回复。"
     monkeypatch.setattr("backend.app.routers.ai.chat", _fake_chat)
     monkeypatch.setattr("backend.app.services.ai_service.chat", _fake_chat)

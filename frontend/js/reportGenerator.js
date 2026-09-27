@@ -104,6 +104,69 @@ export const ReportGenerator = {
         container.innerHTML = '';
     },
 
+    /**
+     * 导出一份外部拼好的报告 HTML 为 PDF（灾害定损测算单等）。
+     *
+     * footer 刻意用 doc.text 逐页盖章，而不是写进 HTML：上面的分页是把同一张
+     * 长图反复平移叠加实现的，写进 HTML 的免责声明只会在正文里出现一次，
+     * 翻到第二页的人根本看不到。而定损单的免责声明必须每页都在。
+     *
+     * @param {string} html     完整报告 HTML（自带样式与字体声明）
+     * @param {string} filename
+     * @param {string} [footer] 每页底部固定文字
+     */
+    async generateDisasterReport(html, filename, footer) {
+        const container = document.getElementById('reportContainer');
+        if (!container) return;
+        container.innerHTML = html;
+
+        const images = container.querySelectorAll('img');
+        await Promise.all(Array.from(images).map(img => new Promise((resolve) => {
+            if (img.complete) resolve();
+            else { img.onload = resolve; img.onerror = resolve; }
+        })));
+
+        if (typeof html2canvas === 'undefined') {
+            console.error('html2canvas 未加载');
+            return;
+        }
+        const canvas = await html2canvas(container, {
+            scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff'
+        });
+        const imgData = canvas.toDataURL('image/png');
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const imgWidth = pageWidth - 20;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        let heightLeft = imgHeight;
+        let position = 10;
+        doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= (pageHeight - 20);
+        while (heightLeft > 0) {
+            position = -(imgHeight - (pageHeight - 20));
+            doc.addPage();
+            doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+            heightLeft -= (pageHeight - 20);
+        }
+
+        if (footer) {
+            const pages = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(196, 69, 54);
+                doc.text(footer, 10, pageHeight - 6);
+            }
+        }
+
+        doc.save(filename);
+        container.innerHTML = '';
+    },
+
     async generateBatchReport(batchResults) {
         const { jsPDF } = window.jspdf;
         if (!jsPDF) {

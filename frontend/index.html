@@ -169,6 +169,12 @@
                     <span data-i18n="nav.evaluate">模型评估</span>
                     <span class="lock-icon">🔒</span>
                 </button>
+                <!-- 灾害定损 -->
+                <button class="nav-item" data-page="disaster">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.9 4.9l2.8 2.8"/><path d="M16.3 16.3l2.8 2.8"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.9 19.1l2.8-2.8"/><path d="M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span data-i18n="nav.disaster">灾害定损</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
                 <!-- AI Agent 浏览器操控 -->
                 <button class="nav-item" data-page="agent">
                     <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="4"/><circle cx="9" cy="9" r="2"/><circle cx="15" cy="9" r="2"/><path d="M9 15c.83.67 1.83 1 3 1s2.17-.33 3-1"/><line x1="12" y1="13" x2="12" y2="17"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg>
@@ -1247,6 +1253,109 @@
                     <ul class="changelog-list">
                         <li><span class="changelog-ver">v1.0</span><span class="changelog-date">2026-05</span><span data-i18n="about.logV1">首个正式版本：单张/批量变化检测、多模型对比、AI智能解读、地块管理、标注系统、时序分析、GIS地图可视化、用户管理、Docker部署</span></li>
                     </ul>
+                </div>
+            </div>
+
+            <!-- ========== 灾害定损 ========== -->
+            <div id="page-disaster" class="page-content">
+                <div class="page-header">
+                    <h1 data-i18n="disaster.title">农业灾害定损</h1>
+                    <p data-i18n="disaster.subtitle">基于变化检测结果估算受灾面积与经济损失，并对比查勘成本</p>
+                </div>
+
+                <div class="card disaster-config">
+                    <h3 class="disaster-card-title" data-i18n="disaster.secConfig">测算参数</h3>
+                    <p class="disaster-warn" data-i18n="disaster.proxyWarn">受灾等级由模型变化置信度分级得到，是「变化强度」的代理，不是实测减产率。下方标注为假设的参数请按当地统计年鉴或保险条款替换。</p>
+
+                    <div class="disaster-form-grid">
+                        <div class="form-group">
+                            <label data-i18n="disaster.record">检测记录</label>
+                            <select id="disasterRecord" class="form-control"></select>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="disaster.area">地块总面积（亩）</label>
+                            <input type="number" id="disasterArea" class="form-control" min="0" step="0.01" placeholder="必填" data-i18n="disaster.areaPlaceholder">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="disaster.crop">种植作物</label>
+                            <select id="disasterCrop" class="form-control"></select>
+                        </div>
+                    </div>
+
+                    <h4 class="disaster-sub-title">
+                        <span data-i18n="disaster.secAssumed">假设参数</span>
+                        <span class="assumption-badge" data-i18n="disaster.assumptionBadge">假设，非实测</span>
+                    </h4>
+                    <div class="disaster-form-grid">
+                        <div class="form-group">
+                            <label data-i18n="disaster.yield">亩产（kg/亩）</label>
+                            <input type="number" id="disasterYield" class="form-control" min="0" step="0.1">
+                            <span class="field-hint" data-i18n="disaster.exampleHint">示例参考值，请替换</span>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="disaster.price">单价（元/kg）</label>
+                            <input type="number" id="disasterPrice" class="form-control" min="0" step="0.01">
+                            <span class="field-hint" data-i18n="disaster.exampleHint">示例参考值，请替换</span>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="disaster.rateMild">轻度减产比例（%）</label>
+                            <input type="number" id="disasterRateMild" class="form-control" min="0" max="100" step="1">
+                            <span class="field-hint" data-i18n="disaster.exampleHint">示例参考值，请替换</span>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="disaster.rateModerate">中度减产比例（%）</label>
+                            <input type="number" id="disasterRateModerate" class="form-control" min="0" max="100" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="disaster.rateSevere">重度减产比例（%）</label>
+                            <input type="number" id="disasterRateSevere" class="form-control" min="0" max="100" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="disaster.rateTotal">绝收减产比例（%）</label>
+                            <input type="number" id="disasterRateTotal" class="form-control" min="0" max="100" step="1">
+                        </div>
+                    </div>
+
+                    <h4 class="disaster-sub-title" data-i18n="disaster.secBounds">分级下界（变化置信度）</h4>
+                    <div class="disaster-form-grid">
+                        <div class="form-group">
+                            <label data-i18n="disaster.boundModerate">中度起（≥）</label>
+                            <input type="number" id="disasterBoundModerate" class="form-control" min="0" max="1" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="disaster.boundSevere">重度起（≥）</label>
+                            <input type="number" id="disasterBoundSevere" class="form-control" min="0" max="1" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="disaster.boundTotal">绝收起（≥）</label>
+                            <input type="number" id="disasterBoundTotal" class="form-control" min="0" max="1" step="0.01">
+                        </div>
+                    </div>
+
+                    <h4 class="disaster-sub-title" data-i18n="disaster.secSurvey">查勘成本（元/亩）</h4>
+                    <div class="disaster-form-grid">
+                        <div class="form-group">
+                            <label data-i18n="disaster.manualCost">人工踏勘</label>
+                            <input type="number" id="disasterManualCost" class="form-control" min="0" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="disaster.remoteCost">遥感定损</label>
+                            <input type="number" id="disasterRemoteCost" class="form-control" min="0" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="disaster-actions">
+                        <button class="btn-primary" id="disasterAssessBtn" data-i18n="disaster.assessBtn">开始定损测算</button>
+                        <button class="btn-gray" id="disasterResetBtn" data-i18n="disaster.resetBtn">恢复默认值</button>
+                    </div>
+                </div>
+
+                <div id="disasterResult" class="disaster-result hidden"></div>
+
+                <div class="disaster-actions" id="disasterExportBar">
+                    <button class="btn-secondary" id="disasterDraftBtn" data-i18n="disaster.draftBtn">生成说明草稿（AI）</button>
+                    <button class="btn-secondary" id="disasterExportCsv" data-i18n="disaster.exportCsv">导出 CSV</button>
+                    <button class="btn-secondary" id="disasterExportPdf" data-i18n="disaster.exportPdf">导出 PDF 测算单</button>
                 </div>
             </div>
 

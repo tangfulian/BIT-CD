@@ -7,6 +7,8 @@ import { Compare } from './compare.js';
 import { SystemStatus } from './status.js';
 import { MapViewer } from './mapViewer.js';
 import { UserManager } from './userManager.js';
+import { History } from './history.js';
+import { Disaster } from './disaster.js';
 
 export const Navigator = {
     _currentPage: null,
@@ -107,6 +109,14 @@ export const Navigator = {
         }
         if (page === 'usermgr') {
             setTimeout(function () { UserManager.render(); }, 50);
+        }
+        if (page === 'history') {
+            // 此前没有这一条：History.init() 只绑事件不拉数据，于是切回历史页
+            // 永远是上次的旧列表（别处新产生的检测看不到）。
+            setTimeout(function () { History.load(); }, 50);
+        }
+        if (page === 'disaster') {
+            setTimeout(function () { Disaster.render(); }, 50);
         }
         if (page === 'profile') {
             // 动态导入个人中心模块

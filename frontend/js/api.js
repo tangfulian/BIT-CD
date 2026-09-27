@@ -238,5 +238,43 @@ export const API = {
         });
         if (_handleAuthError(res)) throw new Error('Auth error');
         return await res.json();
+    },
+
+    // ---- 灾害定损 ----
+
+    /** 获取定损默认参数（含来源说明） */
+    async fetchDisasterParams() {
+        const res = await Utils.authFetch(`${CONFIG.API_BASE_URL}/disaster/params`);
+        if (_handleAuthError(res)) throw new Error('Auth error');
+        return await res.json();
+    },
+
+    /**
+     * 定损测算。纯算术，不调用大模型。
+     * @param {Object} payload - { detection_id, area_mu, crop_type, yield_per_mu, ... }
+     */
+    async assessDisaster(payload) {
+        const res = await Utils.authFetch(`${CONFIG.API_BASE_URL}/disaster/assess`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        if (_handleAuthError(res)) throw new Error('Auth error');
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || I18n.t('disaster.assessFailed', '定损测算失败'));
+        }
+        return await res.json();
+    },
+
+    /** 生成定损说明草稿（AI，需人工复核） */
+    async generateDisasterNarrative(payload) {
+        const res = await Utils.authFetch(`${CONFIG.API_BASE_URL}/disaster/narrative`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        if (_handleAuthError(res)) throw new Error('Auth error');
+        return await res.json();
     }
 };
