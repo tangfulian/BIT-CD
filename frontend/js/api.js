@@ -276,5 +276,71 @@ export const API = {
         });
         if (_handleAuthError(res)) throw new Error('Auth error');
         return await res.json();
+    },
+
+    // ---- 多时相序列 ----
+
+    async fetchSeriesList() {
+        const res = await Utils.authFetch(`${CONFIG.API_BASE_URL}/series`);
+        if (_handleAuthError(res)) return [];
+        if (!res.ok) return [];
+        const data = await res.json();
+        return data.code === 200 ? data.data : [];
+    },
+
+    async createSeries(payload) {
+        const res = await Utils.authFetch(`${CONFIG.API_BASE_URL}/series`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        if (_handleAuthError(res)) throw new Error('Auth error');
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || I18n.t('series.createFailed', '创建序列失败'));
+        }
+        return await res.json();
+    },
+
+    async fetchSeriesDetail(id) {
+        const res = await Utils.authFetch(`${CONFIG.API_BASE_URL}/series/${id}`);
+        if (_handleAuthError(res)) throw new Error('Auth error');
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || I18n.t('series.loadFailed', '序列加载失败'));
+        }
+        return await res.json();
+    },
+
+    async attachSeriesRecords(id, records) {
+        const res = await Utils.authFetch(`${CONFIG.API_BASE_URL}/series/${id}/records`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ records }),
+        });
+        if (_handleAuthError(res)) throw new Error('Auth error');
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || I18n.t('series.attachFailed', '挂载记录失败'));
+        }
+        return await res.json();
+    },
+
+    async deleteSeries(id) {
+        const res = await Utils.authFetch(`${CONFIG.API_BASE_URL}/series/${id}`, {
+            method: 'DELETE',
+        });
+        if (_handleAuthError(res)) throw new Error('Auth error');
+        return await res.json();
+    },
+
+    async fetchSeriesTrend(id) {
+        const res = await Utils.authFetch(`${CONFIG.API_BASE_URL}/series/${id}/trend`);
+        if (_handleAuthError(res)) throw new Error('Auth error');
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || I18n.t('series.trendFailed', '趋势分析失败'));
+        }
+        return await res.json();
     }
 };

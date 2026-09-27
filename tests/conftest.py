@@ -17,6 +17,17 @@ from fastapi.testclient import TestClient
 
 from backend.app.models.database import Base, SessionLocal, engine
 
+# 显式导入全部模型模块，让 Base.metadata 在 setup_db 之前就完整。
+# models/__init__.py 是空的，导入不会自动带出这些类；而 setup_db 是 autouse，
+# 早于 client fixture 里对 backend.app.main 的导入，所以不能指望那时候已经注册。
+# 少导一个的后果：create_all 建不出该表，且带外键的模型会抛
+# NoReferencedTableError。alembic/env.py 出于同样原因维护着一份同样的清单。
+import backend.app.models.user  # noqa: E402, F401
+import backend.app.models.detection  # noqa: E402, F401
+import backend.app.models.annotation  # noqa: E402, F401
+import backend.app.models.plot  # noqa: E402, F401
+import backend.app.models.series  # noqa: E402, F401
+
 
 @pytest.fixture(autouse=True)
 def setup_db():

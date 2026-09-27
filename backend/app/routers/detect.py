@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from backend.app.core.limiter import get_user_key, limiter
 from backend.app.core.security import get_current_user, get_optional_user, get_db
 from backend.app.models.detection import DetectionResultDB
+from backend.app.models.series import ImageSeriesDB
 from backend.app.models.user import UserDB
 from backend.app.services.detect_service import (
     apply_threshold,
@@ -122,11 +123,25 @@ async def detect(
     change_type: str = Form(""),
     t1_time: str = Form(""),
     t2_time: str = Form(""),
+    # 多时相序列归属，可选。不传即维持原有行为（独立的一次检测）。
+    series_id: int = Form(0),
+    phase_index: int = Form(-1),
     current_user = Depends(get_optional_user),
     db: Session = Depends(get_db),
 ):
     if model not in SUPPORTED_MODELS:
         raise HTTPException(status_code=400, detail=f"不支持的模型: {model}")
+
+    # 归属校验：不允许把检测挂到别人的序列上
+    if series_id:
+        if current_user is None:
+            raise HTTPException(status_code=401, detail="指定序列需要登录")
+        owns = db.query(ImageSeriesDB).filter(
+            ImageSeriesDB.id == series_id,
+            ImageSeriesDB.user_id == current_user.id,
+        ).first()
+        if not owns:
+            raise HTTPException(status_code=404, detail="序列不存在")
 
     unique_id = str(uuid.uuid4())
     img1_bytes = await img1.read()
@@ -204,6 +219,8 @@ async def detect(
             fusion_url=_result_url(request, fusion_filename),
             score_url=_result_url(request, score_filename),
             image_pair_hash=image_hash,
+            series_id=series_id or None,
+            phase_index=phase_index if phase_index >= 0 else None,
         )
         db.add(detection)
         db.commit()

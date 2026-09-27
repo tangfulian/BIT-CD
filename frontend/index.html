@@ -826,24 +826,55 @@
             <!-- ========== 时序分析 ========== -->
             <div id="page-timeline" class="page-content">
                 <div class="page-header">
-                    <h1 data-i18n="timeline.title">多期变化时间轴</h1>
-                    <p data-i18n="timeline.subtitle">选择地块，查看多次检测的变化趋势</p>
+                    <h1 data-i18n="timeline.title">多时相时序分析</h1>
+                    <p data-i18n="timeline.subtitle">把同一地块的多期影像组织成序列，按影像日期分析变化速率与趋势</p>
                 </div>
+
                 <div class="card">
-                    <div class="form-group">
-                        <label class="form-label" data-i18n="timeline.selectPlot">选择地块</label>
-                        <select id="timelinePlot" class="form-control"></select>
+                    <div class="series-toolbar">
+                        <div class="form-group" style="flex:1; margin-bottom:0;">
+                            <label class="form-label" data-i18n="timeline.selectSeries">选择序列</label>
+                            <select id="timelineSeries" class="form-control"></select>
+                        </div>
+                        <button class="btn-primary" id="timelineCreateBtn" style="width:auto; padding:10px 18px;" data-i18n="series.createBtn">新建序列</button>
+                        <button class="btn-gray" id="timelineDeleteBtn" style="width:auto; padding:10px 18px;" data-i18n="series.deleteBtn">删除序列</button>
                     </div>
-                    <div class="card-header">
-                        <h3 class="card-title">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                            <span data-i18n="timeline.changeTrend">变化比例趋势</span>
-                        </h3>
+                    <div id="timelineEmpty" class="timeline-empty hidden">
+                        <p data-i18n="series.emptyHint">还没有任何序列。一个序列代表同一地块的若干期影像；创建后系统会对相邻两期逐一检测，并给出变化速率与趋势。</p>
                     </div>
-                    <div style="position: relative; height: 400px; width: 100%;">
-                        <div id="timelineChart" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;"></div>
+                </div>
+
+                <div id="timelineBody" class="hidden">
+                    <div id="timelineSeriesInfo" class="timeline-plot-info hidden"></div>
+                    <div id="timelineTrendCards" class="trend-cards hidden"></div>
+                    <div id="timelineBreakpoints" class="breakpoint-box hidden"></div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                <span data-i18n="series.perIntervalChart">每期变化量</span>
+                            </h3>
+                        </div>
+                        <div style="position: relative; height: 300px; width: 100%;">
+                            <div id="timelineChart" style="position: absolute; left:0; top:0; width:100%; height:100%;"></div>
+                        </div>
                     </div>
-                    <div id="timelinePlotInfo" class="timeline-plot-info hidden"></div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title" data-i18n="series.cumulativeChart">累计变化比例</h3>
+                        </div>
+                        <div style="position: relative; height: 300px; width: 100%;">
+                            <div id="timelineCumChart" style="position: absolute; left:0; top:0; width:100%; height:100%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header"><h3 class="card-title" data-i18n="series.phaseTable">期次明细</h3></div>
+                        <div id="timelinePhaseTable"></div>
+                    </div>
+
                     <div class="timeline-strip-section hidden" id="timelineStripSection">
                         <div class="timeline-strip-header">
                             <h4 data-i18n="timeline.detectionHistory">各期检测详情</h4>
@@ -864,6 +895,8 @@
                             <div id="timelineStrip" class="timeline-strip"></div>
                         </div>
                     </div>
+
+                    <div id="timelineCaveats" class="caveat-box"></div>
                 </div>
             </div>
 

@@ -26,4 +26,10 @@ class DetectionResultDB(Base):
     fusion_url = Column(String)
     score_url = Column(String, default="")
     image_pair_hash = Column(String(64), default="")
+    # 多时相序列归属。两者都可空 —— 绝大多数记录不属于任何序列，
+    # 且既有记录在加这两列之前就已存在。
+    series_id = Column(
+        Integer, ForeignKey("image_series.id"), nullable=True, index=True
+    )
+    phase_index = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

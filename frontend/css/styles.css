@@ -4499,3 +4499,182 @@ select.form-control {
     .disaster-cost-grid { grid-template-columns: 1fr; }
     .disaster-chart { height: 200px; }
 }
+
+/* ============================================================
+   多时相序列
+   ============================================================ */
+.series-toolbar {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+.timeline-empty {
+    padding: var(--space-lg);
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: var(--font-sm);
+    line-height: 1.7;
+    background: var(--bg-main);
+    border-radius: var(--radius-md);
+    margin-top: var(--space-md);
+}
+
+.trend-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+.trend-card {
+    padding: var(--space-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+.trend-card-value {
+    font-size: var(--font-2xl);
+    font-weight: 600;
+    color: var(--primary);
+    line-height: 1.2;
+}
+.trend-card-unit {
+    font-size: var(--font-sm);
+    font-weight: 400;
+    color: var(--text-tertiary);
+    margin-left: 4px;
+}
+.trend-card-label {
+    margin-top: 4px;
+    font-size: var(--font-xs);
+    color: var(--text-tertiary);
+    line-height: 1.5;
+}
+.trend-card-warn { border-color: var(--accent); background: var(--accent-surface); }
+.trend-card-warn .trend-card-value { color: var(--accent-dark, #8f5f1e); }
+.trend-card-muted { opacity: 0.75; }
+
+/* 突变点是启发式判定，样式上与确定结论区分开 */
+.breakpoint-box {
+    padding: var(--space-md);
+    margin-bottom: var(--space-lg);
+    background: var(--accent-surface);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-md);
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+}
+.breakpoint-item { margin-top: 6px; line-height: 1.6; }
+
+.caveat-box {
+    margin-top: var(--space-lg);
+    padding: var(--space-md);
+    background: var(--bg-main);
+    border-radius: var(--radius-md);
+}
+.caveat-item {
+    position: relative;
+    padding-left: 14px;
+    margin-bottom: 6px;
+    font-size: var(--font-xs);
+    line-height: 1.7;
+    color: var(--text-tertiary);
+}
+.caveat-item::before {
+    content: '·';
+    position: absolute;
+    left: 4px;
+    font-weight: 700;
+}
+.series-skip-note {
+    margin-top: var(--space-sm);
+    font-size: var(--font-xs);
+    line-height: 1.7;
+    color: var(--accent-dark, #8f5f1e);
+}
+
+.series-create-box { max-width: 780px; }
+.series-form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: var(--space-md);
+}
+.series-tabs {
+    display: flex;
+    gap: var(--space-sm);
+    margin: var(--space-lg) 0 var(--space-md);
+    border-bottom: 1px solid var(--border);
+}
+.series-tab {
+    padding: 8px 14px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    font-size: var(--font-base);
+    cursor: pointer;
+}
+.series-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: 600;
+}
+.series-record-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+.series-record-row {
+    display: grid;
+    grid-template-columns: 1fr 130px 130px;
+    gap: var(--space-sm);
+    align-items: center;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border-light);
+}
+.series-record-row:last-child { border-bottom: none; }
+.series-record-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--font-sm);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.series-upload-row {
+    display: grid;
+    grid-template-columns: 32px 1fr 150px 36px;
+    gap: var(--space-sm);
+    align-items: center;
+    margin-bottom: var(--space-sm);
+}
+.series-upload-idx {
+    font-size: var(--font-sm);
+    color: var(--text-tertiary);
+    text-align: center;
+}
+.series-create-msg {
+    margin-top: var(--space-md);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-sm);
+}
+.series-create-msg.error {
+    color: var(--danger);
+    background: rgba(196, 69, 54, 0.08);
+    border-left: 3px solid var(--danger);
+}
+.series-create-msg.info {
+    color: var(--text-secondary);
+    background: var(--bg-main);
+    border-left: 3px solid var(--primary);
+}
+
+@media (max-width: 768px) {
+    .series-toolbar { flex-direction: column; align-items: stretch; }
+    .series-record-row { grid-template-columns: 1fr; }
+    .series-upload-row { grid-template-columns: 24px 1fr; }
+    .trend-cards { grid-template-columns: repeat(2, 1fr); }
+}

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bitcd-v9';
+const CACHE_NAME = 'bitcd-v10';
 
 const PRECACHE_URLS = [
   './',
