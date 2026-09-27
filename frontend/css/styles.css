@@ -229,203 +229,205 @@ body {
 /* ============================================================
    登录页 — 地理科学专业平台风格
    ============================================================ */
+/* ============================ 登录 / 注册 ============================
+   配色取自黑土地物性：母质层/耕作层/土粒边界/秸秆/作物，而非通用的绿色科技风。
+   ==================================================================== */
 .auth-container {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #0e1612 0%, #122018 30%, #0e1a12 60%, #0e1612 100%);
-    background-size: 400% 400%;
-    animation: authBgShift 20s ease-in-out infinite;
+    padding: 24px;
+    background: #1E1710;
+    /* 极淡的等距横线，暗示耕层剖面 */
+    background-image: repeating-linear-gradient(0deg, rgba(201,162,77,0.028) 0 1px, transparent 1px 52px);
     position: relative;
+    z-index: 1000;
+}
+
+.auth-overlay-close {
+    position: absolute;
+    top: 22px; right: 26px;
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent;
+    border: 1px solid #453626;
+    border-radius: 3px;
+    color: #948A7C;
+    font-size: 20px; line-height: 1;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+}
+.auth-overlay-close:hover { color: #E9E5DC; border-color: #C9A24D; }
+
+/* 主面板：一块完整的土壤板，左右分区用细线切开，不做卡片堆 */
+.auth-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: min(880px, 100%);
+    background: #2C2318;
+    border: 1px solid #453626;
+    border-radius: 4px;
     overflow: hidden;
 }
 
-/* 装饰：坐标系网格线 (GIS风格) */
-.auth-container::before {
-    content: '';
-    position: absolute; inset: 0;
-    background-image:
-        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
-    background-size: 60px 60px;
-    mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 30%, transparent 70%);
-    -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 30%, transparent 70%);
-}
-
-/* 装饰：暖色微光 */
-.auth-container::after {
-    content: '';
-    position: absolute;
-    width: 640px; height: 640px;
-    background: radial-gradient(circle, rgba(60,122,88,0.12) 0%, transparent 70%);
-    top: 20%; right: -160px;
-    border-radius: 50%;
-    animation: authGlow 30s ease-in-out infinite;
-}
-
-@keyframes authGlow {
-    0%, 100% { transform: translate(0, 0); }
-    33%      { transform: translate(-60px, 30px); }
-    66%      { transform: translate(30px, -20px); }
-}
-
-@keyframes authBgShift {
-    0%, 100% { background-position: 0% 50%; }
-    25%      { background-position: 100% 0%; }
-    50%      { background-position: 100% 100%; }
-    75%      { background-position: 0% 100%; }
-}
-
-@keyframes authCardEnter {
-    from {
-        opacity: 0;
-        transform: translateY(24px) scale(0.96);
-        filter: blur(4px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-        filter: blur(0);
-    }
-}
-
-.auth-card {
-    background: rgba(255,255,255,0.94);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    padding: 48px 44px;
-    border-radius: var(--radius-xl);
-    box-shadow:
-        0 0 0 1px rgba(255,255,255,0.15),
-        0 32px 64px rgba(0,0,0,0.3),
-        0 8px 16px rgba(0,0,0,0.15);
-    width: 100%; max-width: 440px;
-    position: relative; z-index: 10;
-    animation: authCardEnter 0.8s var(--ease-spring) both;
-}
-
+/* ---- 左侧：系统标识 ---- */
 .auth-logo {
-    text-align: center;
-    margin-bottom: 36px;
+    padding: 48px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background:
+        repeating-linear-gradient(90deg, rgba(201,162,77,0.035) 0 1px, transparent 1px 40px),
+        #241C14;
+    border-right: 1px solid #453626;
 }
-
 .auth-logo img {
-    margin: 0 auto 20px;
+    width: 56px; height: 56px;
+    margin: 0 0 20px;
     display: block;
 }
-
 .auth-logo h1 {
-    font-size: var(--font-2xl);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: var(--primary-dark);
-    margin-bottom: 6px;
+    font-size: 23px;
+    font-weight: 600;
+    line-height: 1.45;
+    letter-spacing: .01em;
+    color: #E9E5DC;
+    margin: 0 0 12px;
 }
-
 .auth-logo p {
-    font-size: var(--font-sm);
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
+    font-size: 13px;
+    line-height: 1.75;
+    color: #948A7C;
+    margin: 0;
+    max-width: 22em;
 }
 
-.auth-form .form-group { margin-bottom: 20px; }
+/* ---- 右侧：表单 ---- */
+.auth-form { padding: 44px 40px; }
+.auth-form.hidden { display: none; }
+.auth-form .form-group { margin-bottom: 18px; }
 
 .auth-form label {
     display: block;
-    font-size: var(--font-sm);
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    color: var(--text-secondary);
-    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .04em;
+    color: #948A7C;
+    margin-bottom: 7px;
 }
 
+/* 输入框：左缘那条 2px 竖线是"田埂"，聚焦时转为作物绿 */
 .auth-form input {
     width: 100%;
-    padding: 13px 16px;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-md);
-    font-size: var(--font-base);
+    min-height: 44px;
+    padding: 11px 13px;
+    background: #241C15;
+    border: 1px solid #453626;
+    border-left: 2px solid #5A4630;
+    border-radius: 3px;
+    color: #E9E5DC;
+    font-size: 15px;
     font-family: inherit;
-    letter-spacing: -0.01em;
-    background: var(--bg-main);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    transition: border-color .15s, background .15s;
 }
-
-.auth-form input:focus {
-    outline: 2px solid transparent;
-    border-color: var(--primary);
-    background: white;
-    box-shadow: 0 0 0 3px rgba(44,94,68,0.12), 0 0 20px rgba(44,94,68,0.06);
-}
+.auth-form input::placeholder { color: #6B6155; }
+.auth-form input:hover { border-left-color: #7A5F3E; }
+.auth-form input:focus,
 .auth-form input:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
+    outline: none;
+    border-color: #453626;
+    border-left-color: #7BA05B;
+    background: #221A12;
 }
 
-/* ---- 验证码 ---- */
-.captcha-group { margin-bottom: 20px; }
-
-.captcha-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
+/* 验证码 */
+.captcha-group { margin-bottom: 22px; }
+.captcha-row { display: flex; gap: 10px; align-items: stretch; }
 .captcha-img {
-    height: 44px;
-    width: 120px;
-    border-radius: var(--radius-sm);
-    border: 1.5px solid var(--border);
+    width: 116px; height: 44px;
+    flex-shrink: 0;
+    border: 1px solid #453626;
+    border-left: 2px solid #5A4630;
+    border-radius: 3px;
+    background: #E9E5DC;
     cursor: pointer;
-    flex-shrink: 0;
-    background: var(--bg-main);
-    transition: border-color var(--transition-fast);
+    transition: border-color .15s;
 }
-
-.captcha-img:hover { border-color: var(--primary); }
-
-.captcha-input {
-    flex: 1;
-    padding: 11px 14px;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-md);
-    font-size: var(--font-base);
-    font-family: inherit;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-align: center;
-    background: var(--bg-main);
-    max-width: 140px;
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-    text-transform: uppercase;
-}
-
-.captcha-input:focus {
-    outline: 2px solid transparent;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(44,94,68,0.12);
-}
-
+.captcha-img:hover { border-left-color: #C9A24D; }
+.captcha-input { flex: 1; min-width: 96px; }
 .captcha-refresh {
-    width: 40px; height: 40px;
-    flex-shrink: 0;
+    width: 44px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     background: transparent;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-md);
+    border: 1px solid #453626;
+    border-radius: 3px;
+    color: #948A7C;
     cursor: pointer;
-    color: var(--text-tertiary);
-    transition: all var(--transition-fast);
     padding: 0;
+    transition: color .15s, border-color .15s;
+}
+.captcha-refresh:hover { color: #C9A24D; border-color: #C9A24D; }
+
+/* 主按钮用秸秆金：从黑土地里长出来的颜色，避开通用的绿色主按钮 */
+.auth-form .btn-primary {
+    width: 100%;
+    min-height: 46px;
+    margin-top: 6px;
+    background: #C9A24D;
+    color: #1E1710;
+    border: none;
+    border-radius: 3px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    letter-spacing: .02em;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background .15s;
+}
+.auth-form .btn-primary::after { display: none; }
+.auth-form .btn-primary:hover { background: #D8B45F; }
+.auth-form .btn-primary:active { background: #B8933F; }
+.auth-form .btn-primary:disabled { background: #5A4A2E; color: #948A7C; cursor: not-allowed; }
+
+.auth-form .btn-secondary {
+    width: 100%;
+    min-height: 42px;
+    margin-top: 10px;
+    background: transparent;
+    color: #948A7C;
+    border: 1px solid #453626;
+    border-radius: 3px;
+    font-size: 13.5px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+}
+.auth-form .btn-secondary:hover { color: #E9E5DC; border-color: #7A5F3E; }
+
+/* 窄屏：标识折到顶部。
+   不用 flex 横排 —— 标题与说明会被挤成窄条，改为块级堆叠 */
+@media (max-width: 760px) {
+    .auth-card { grid-template-columns: 1fr; }
+    .auth-logo {
+        display: block;
+        padding: 22px 22px 18px;
+        border-right: none;
+        border-bottom: 1px solid #453626;
+    }
+    .auth-logo img { width: 36px; height: 36px; margin: 0 0 10px; }
+    .auth-logo h1 { font-size: 16px; margin: 0 0 4px; }
+    .auth-logo p { font-size: 12px; max-width: none; }
+    .auth-form { padding: 24px 22px; }
 }
 
-.captcha-refresh:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    background: var(--primary-surface);
+/* 极窄屏：验证码行允许换行，避免输入框被压到看不清 */
+@media (max-width: 400px) {
+    .captcha-row { flex-wrap: wrap; }
+    .captcha-img { width: 104px; }
+    .captcha-input { flex: 1 1 100%; min-width: 0; order: 3; }
+    .captcha-refresh { order: 2; margin-left: auto; }
 }
 
 /* ---- 按钮 ---- */

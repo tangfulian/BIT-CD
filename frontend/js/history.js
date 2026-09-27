@@ -34,7 +34,7 @@ export var History = {
         if (Auth.isGuest()) return;
         try {
             // 拉取全部数据，客户端分页+筛选
-            var res = await Utils.authFetch(CONFIG.API_BASE_URL + '/history?limit=5000');
+            var res = await Utils.authFetch(CONFIG.API_BASE_URL + '/history?limit=500');
             if (!res.ok) return;
             var json = await res.json();
             if (json.code === 200) {

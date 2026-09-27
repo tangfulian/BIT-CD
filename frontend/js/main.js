@@ -112,8 +112,13 @@ window.onload = () => {
     });
 
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js', { scope: './' }).then(reg => {
+        // 带版本参数注册：否则浏览器不会重新下载 sw.js，
+        // 改了缓存策略与 CACHE_NAME 也无法生效（曾导致旧 JS 长期驻留）。
+        // 每次改动 sw.js 时把这个版本号一起 +1。
+        navigator.serviceWorker.register('sw.js?v=8', { scope: './' }).then(reg => {
             console.log('SW registered:', reg.scope);
+            // 新 SW 就绪后立即接管，不必等所有标签页关闭
+            if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }).catch(() => {});
     }
 

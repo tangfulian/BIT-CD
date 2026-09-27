@@ -1,0 +1,118 @@
+\setcounter{table}{0}
+\renewcommand{\thetable}{B-\arabic{table}}
+
+\section{附录 B　项目成果数据汇总}
+
+本附录汇总项目在检测精度、运行效率、应用成效、系统规模与知识产权等方面形成的成果数据。其中性能与应用成效数据口径与正文一致；模型训练指标取自项目训练日志的实测记录，可逐轮复核。
+
+\subsection{B.1 核心性能指标}
+
+\begin{table}[htbp]
+    \centering
+    \caption{项目核心性能指标}
+    \label{tab:perf}
+    \small
+    \begin{tabular}{|p{2.6cm}|p{4.4cm}|p{3.6cm}|p{3.2cm}|}
+        \hline
+        \textbf{指标类别} & \textbf{指标} & \textbf{指标值} & \textbf{说明} \\
+        \hline
+        检测精度 & 黑土地变化识别精确率 & 70\% & 试点应用验证结果 \\
+        \hline
+        运行成本 & 算力成本 & 较传统深度学习方案降低 69\% & 相较同类高算力方案 \\
+        \hline
+        监测时效 & 单次监测任务周期 & 较人工/常规遥感方法缩短 33\% & 指单次作业周期（不含影像重访等待时间）；成果更新频次为周级 \\
+        \hline
+    \end{tabular}
+    \par\vspace{2pt}
+    {\footnotesize 注：检测精度指黑土地变化类别的识别精确率，与模型训练过程中在公开基准数据集上测得的 mF1 指标口径不同，二者不应直接比较（见 B.4）。}
+\end{table}
+
+\subsection{B.2 应用成效}
+
+\begin{table}[htbp]
+    \centering
+    \caption{项目应用成效}
+    \label{tab:effect}
+    \small
+    \begin{tabular}{|p{3.0cm}|p{4.4cm}|p{3.0cm}|p{3.4cm}|}
+        \hline
+        \textbf{成效类别} & \textbf{指标} & \textbf{数值} & \textbf{说明} \\
+        \hline
+        农业帮扶 & 服务农户 & 500+ 户 & 免费推送撂荒与违法占用预警 \\
+        \hline
+        农业帮扶 & 覆盖耕地面积 & 10 万亩 & 提供“监测—诊断—措施”全链条服务 \\
+        \hline
+        带动就业 & 新增智能监测岗位 & 30+ 个 & 培训基层农技员与返乡青年 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\subsection{B.3 系统规模}
+
+\begin{table}[htbp]
+    \centering
+    \caption{系统建设规模}
+    \label{tab:scale}
+    \small
+    \begin{tabular}{|p{5.4cm}|p{2.6cm}|p{6.4cm}|}
+        \hline
+        \textbf{项目} & \textbf{数量} & \textbf{说明} \\
+        \hline
+        集成变化检测模型 & 7 种 & 含 BIT、SNUNET、CHANGEFORMER、AFCF3D 等 \\
+        \hline
+        后端 API 端点 & 40+ 个 & 覆盖认证、检测、AI、历史、地块等模块 \\
+        \hline
+        前端功能页面 & 16 个 & 单页应用，支持中英双语与深浅主题 \\
+        \hline
+        系统测试用例 & 54 项 & 通过 53 项，通过率 98.1\% \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\subsection{B.4 模型训练指标（实测记录）}
+
+\begin{table}[htbp]
+    \centering
+    \caption{变化检测模型训练配置与实测指标}
+    \label{tab:train}
+    \small
+    \begin{tabular}{|p{3.4cm}|p{4.6cm}|p{2.4cm}|p{4.0cm}|}
+        \hline
+        \textbf{项目} & \textbf{配置/指标} & \textbf{数值} & \textbf{说明} \\
+        \hline
+        训练数据集 & SYSU-CD 公开基准数据集 & — & 用于模型结构验证 \\
+        \hline
+        模型结构 & 改进 BIT 双时相 Transformer & — & ResNet18 为 CNN 骨干 \\
+        \hline
+        输入尺寸 / 批次 & $256 \times 256$ / 4 & — & 二分类（变化/不变） \\
+        \hline
+        优化器 / 学习率 & SGD / 0.001（线性衰减） & — & 交叉熵损失，100 轮 \\
+        \hline
+        训练集 mF1 & 首轮 0.699 $\rightarrow$ 末轮 0.907 & — & 逐轮上升，收敛平稳 \\
+        \hline
+        验证集最佳 mF1 & \textbf{0.8868} & 第 97 轮 & 最佳权重予以固化 \\
+        \hline
+        末轮验证集指标 & mF1 0.881 / Acc 0.924 / mIoU 0.795 & — & 第 100 轮 \\
+        \hline
+    \end{tabular}
+    \par\vspace{2pt}
+    {\footnotesize 注：表中指标为模型在公开基准数据集上的实测结果，取自项目训练日志；正文所述“识别精确率 70\%”为黑土地试点场景下的业务口径指标，两者评价对象与数据来源不同。}
+\end{table}
+
+\subsection{B.5 知识产权成果}
+
+\begin{table}[htbp]
+    \centering
+    \caption{项目知识产权成果}
+    \label{tab:ip}
+    \small
+    \begin{tabular}{|p{3.4cm}|p{2.0cm}|p{3.0cm}|p{6.0cm}|}
+        \hline
+        \textbf{成果类型} & \textbf{数量} & \textbf{状态} & \textbf{说明} \\
+        \hline
+        计算机软件著作权 & 3 项 & 已登记 & 覆盖影像预处理、算法运算与成果可视化全流程 \\
+        \hline
+        实用新型专利 & 1 项 & 已授权 & 《一种用于图像采集的遥感无人机》；专利号 ZL 2025 2 2047856.0，2026 年 7 月 17 日授权公告 \\
+        \hline
+    \end{tabular}
+\end{table}

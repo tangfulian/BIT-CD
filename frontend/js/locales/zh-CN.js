@@ -41,7 +41,7 @@ export const zhCN = {
 
     // 认证
     "auth.title": "黑土地遥感变化检测系统",
-    "auth.subtitle": "BLACKLAND CD · 黑土地保护智能平台",
+    "auth.subtitle": "上传两期卫星影像，自动识别耕地变化位置与面积",
     "auth.username": "用户名",
     "auth.password": "密码",
     "auth.login": "登录系统",

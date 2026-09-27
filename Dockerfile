@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrender-dev \
     libgomp1 \
     chromium \
+    fonts-wqy-microhei \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

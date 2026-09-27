@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bitcd-v7';
+const CACHE_NAME = 'bitcd-v8';
 
 const PRECACHE_URLS = [
   './',
@@ -71,7 +71,10 @@ self.addEventListener('fetch', event => {
 
   event.respondWith(
     caches.match(req).then(cached => {
-      return fetch(req).then(response => {
+      // cache: 'no-cache' = 每次都带 ETag 向服务端协商，有更新就取新的。
+      // 后端静态文件没有 Cache-Control 头，浏览器会按 Last-Modified 走启发式缓存，
+      // 导致改过的 JS 长时间不生效（曾因此出现「历史/看板空白」的假故障）。
+      return fetch(req, { cache: 'no-cache' }).then(response => {
         if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(req, clone));

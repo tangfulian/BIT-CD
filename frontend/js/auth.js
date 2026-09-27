@@ -26,6 +26,10 @@ export const Auth = {
             this._isGuest = false;
             state.currentUserRole = Utils.safeLocalStorage.getItem(CONFIG.LOGIN_KEY + '_role') || 'user';
             this.enterSystem(savedUser);
+            // 本地只校验了 exp，但服务端数据重置、用户被删除、JWT 密钥轮换都会让
+            // token 实际失效 —— 那种情况下界面显示"已登录"、各接口却全 401，
+            // 表现为检测历史/数据看板等页面点开空白无内容。故向后端确认一次。
+            this._verifySession();
         } else {
             if (token) {
                 // Token 过期或无效，清除
@@ -303,6 +307,32 @@ export const Auth = {
 
     isLoggedIn() {
         return !!Utils.safeLocalStorage.getItem(CONFIG.TOKEN_KEY);
+    },
+
+    /**
+     * 向后端确认会话仍然有效。
+     * 仅在明确收到 401 时清理登录态并提示；网络异常一律放行，
+     * 避免接口抖动或离线时把用户无故踢出登录。
+     */
+    async _verifySession() {
+        try {
+            const res = await fetch(`${CONFIG.API_BASE_URL}/profile`, {
+                headers: {
+                    Authorization: `Bearer ${Utils.safeLocalStorage.getItem(CONFIG.TOKEN_KEY)}`,
+                },
+            });
+            if (res.status === 401) {
+                Utils.safeLocalStorage.removeItem(CONFIG.TOKEN_KEY);
+                Utils.safeLocalStorage.removeItem(CONFIG.LOGIN_KEY);
+                this._isGuest = true;
+                this.enterGuestMode();
+                Modal.alert(I18n.t('auth.sessionExpired',
+                    '登录状态已失效（服务端数据可能已重置），请重新登录'));
+                this.showAuthOverlay('login');
+            }
+        } catch (e) {
+            // 网络问题不作处理，交由各页面的请求自行提示
+        }
     },
 
     checkLogin() {

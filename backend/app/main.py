@@ -43,6 +43,20 @@ def create_app() -> FastAPI:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+    @app.middleware("http")
+    async def add_static_cache_control(request: Request, call_next):
+        """给前端静态资源加 no-cache。
+
+        后端此前不发 Cache-Control，浏览器会按 Last-Modified 做启发式缓存，
+        改过的 JS/CSS 可能长时间不生效（表现为"功能没改"甚至"页面空白"）。
+        no-cache 仍允许缓存，只是每次都带 ETag 向服务端确认，代价是一次 304。
+        """
+        response = await call_next(request)
+        path = request.url.path
+        if path == "/" or path.endswith((".js", ".css", ".html", ".webmanifest")):
+            response.headers["Cache-Control"] = "no-cache"
+        return response
+
     @app.exception_handler(ModelNotAvailableError)
     async def _model_unavailable(request: Request, exc: ModelNotAvailableError):
         """模型权重缺失：返回 503 并说明原因，避免把未训练网络的输出当结果展示"""

@@ -41,7 +41,7 @@ export const API = {
         const token = Utils.safeLocalStorage.getItem(CONFIG.TOKEN_KEY);
         if (!token) return [];
         try {
-            const res = await Utils.authFetch(`${CONFIG.API_BASE_URL}/history?limit=5000`);
+            const res = await Utils.authFetch(`${CONFIG.API_BASE_URL}/history?limit=500`);
             if (_handleAuthError(res)) return [];
             const data = await res.json();
             return data.code === 200 ? data.data : [];

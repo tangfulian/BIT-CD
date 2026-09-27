@@ -38,8 +38,10 @@ def _rewrite_url(request: Request, url: str | None) -> str:
 def get_user_history(
     request: Request,
     page: int = Query(1, ge=1),
-    # 加上界：此前无上界，limit 传很大即可一次拉走全部记录
-    limit: int = Query(20, ge=1, le=100),
+    # 加上界：此前无上界，limit 传很大即可一次拉走全部记录。
+    # 取 500 而非 100 —— 前端为「一次拉全、客户端分页筛选」的设计，
+    # 上界过小会让它的 /history?limit=5000 直接 422，列表与看板双双空白。
+    limit: int = Query(20, ge=1, le=500),
     current_user: UserDB = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
