@@ -23,7 +23,7 @@ def _fake_score_map():
 
 class TestDetect:
     def test_detect_bit_model(self, client, auth_headers, monkeypatch):
-        # /detect 的编排已下沉到 detection_service，它按**模块属性**调用
+        # /detect 的编排已下沉到 detection_pipeline，它按**模块属性**调用
         # detect_service.detect_change。所以桩必须打在 detect_service 这个
         # 命名空间上；打在 routers.detect 上对 /detect 已经无效（那个名字
         # 现在只被 /detect/compare 用）。

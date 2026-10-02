@@ -9,9 +9,11 @@ class TestHistory:
         resp = client.get("/history")
         assert resp.status_code == 401
 
-    def test_history_with_data(self, client, auth_headers, monkeypatch):
-        from backend.app.routers import detect as detect_router
-        from backend.app.routers import history as history_router
+    def test_history_with_data(self, client, auth_headers):
+        # 检测本身由 conftest 的 autouse 夹具 mock_detect_service 打桩，这里不必再打。
+        # 此处原先还留着一份自己的桩，打在 detect_router.detect_change 上 ——
+        # /detect 的编排下沉到 detection_pipeline 之后，那个名字已经不被调用了，
+        # 而那份桩的返回值又与全局假桩一模一样，所以它失效了也看不出来。
 
         # Insert a detection record through the detect endpoint (mocked)
         import io
@@ -26,17 +28,6 @@ class TestHistory:
             img.save(buf, format="PNG")
             buf.seek(0)
             return buf
-
-        def mock_detect_change(img1, img2, threshold, model_type, unique_id):
-            sm = np.zeros((256, 256), dtype=np.float32)
-            sm[50:100, 50:100] = 0.9
-            mask = (sm > threshold).astype(np.uint8) * 255
-            heatmap = np.zeros((256, 256, 3), dtype=np.uint8)
-            fusion = np.zeros((256, 256, 3), dtype=np.uint8)
-            stats = {"total_pixel": 65536, "change_pixel": 2500, "ratio": 3.81, "threshold": threshold}
-            return sm, mask, heatmap, fusion, stats
-
-        monkeypatch.setattr(detect_router, "detect_change", mock_detect_change)
 
         # Create 2 detections
         for _ in range(2):

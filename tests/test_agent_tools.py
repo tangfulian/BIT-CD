@@ -305,3 +305,241 @@ class TestLoopBounds:
         trace = resp.json()["tool_trace"]
         assert trace[0]["ok"] is False
         assert "没有名为" in trace[0]["summary"]
+
+
+def _summary_of(resp) -> str:
+    """取第一次工具调用的结果文本。
+
+    轨迹里的 summary 被截到 300 字符，所以断言一律用子串匹配，不做 JSON 解析 ——
+    定损的结果有上千字符，解析必然失败。
+    """
+    trace = resp.json()["tool_trace"]
+    assert trace, "应当至少有一次工具调用"
+    return trace[0]["summary"]
+
+
+class TestAssessDisaster:
+    def test_assesses_owned_record(self, client, auth_headers, monkeypatch, detection_record):
+        did = detection_record["detection_id"]
+        _patch_llm(
+            monkeypatch,
+            [
+                _tool_call("assess_disaster", {"detection_id": did, "area_mu": 100, "crop_type": "玉米"}),
+                {"content": "算完了"},
+            ],
+        )
+        resp = client.post(
+            "/agent/execute-tools", data={"instruction": "给这条记录做定损"}, headers=auth_headers
+        )
+        summary = _summary_of(resp)
+        assert '"plot_area_mu": 100' in summary, summary
+        assert '"detection_id": %d' % did in summary, summary
+
+    def test_warns_when_economic_params_missing(self, client, auth_headers, monkeypatch, detection_record):
+        """未给亩产/单价时总损失必然是 0。原响应对此毫无提示，模型极易据此
+        汇报「无损失」—— 警告必须出现，且要排在结果最前面以免被截掉。"""
+        _patch_llm(
+            monkeypatch,
+            [
+                _tool_call("assess_disaster", {"detection_id": detection_record["detection_id"], "area_mu": 100}),
+                {"content": "算完了"},
+            ],
+        )
+        resp = client.post(
+            "/agent/execute-tools", data={"instruction": "定损"}, headers=auth_headers
+        )
+        summary = _summary_of(resp)
+        assert "不代表没有损失" in summary, summary
+        # 必须排在第一位：轨迹里的结果被截到 300 字符，而 levels 一项就占掉大半，
+        # 警告若排在后面会被截掉，模型与人都看不到。
+        assert summary.startswith('{"warning"'), summary
+
+    def test_warns_when_only_one_economic_param_is_zero(
+        self, client, auth_headers, monkeypatch, detection_record
+    ):
+        """损失 = 面积 × 亩产 × 单价 × 减产比例，**任一项为 0 结果就是 0**。
+
+        判据若写成「亩产与单价全都为 0」，只填了一个的情况就会漏掉：
+        亩产 0、单价 2.4 时 any() 为真，告警被抑制，而 total_loss 仍是 0，
+        模型照样会向用户汇报「无损失」。这条是那个漏网的回归测试。
+        """
+        _patch_llm(
+            monkeypatch,
+            [
+                _tool_call(
+                    "assess_disaster",
+                    {
+                        "detection_id": detection_record["detection_id"],
+                        "area_mu": 100,
+                        "yield_per_mu": 0,
+                        "price_per_kg": 2.4,
+                    },
+                ),
+                {"content": "算完了"},
+            ],
+        )
+        resp = client.post(
+            "/agent/execute-tools", data={"instruction": "定损"}, headers=auth_headers
+        )
+        summary = _summary_of(resp)
+        assert summary.startswith('{"warning"'), summary
+        # 警告里要点名是哪个参数缺了，否则用户不知道该补什么
+        assert "亩产" in summary, summary
+
+    def test_no_warning_when_params_given(self, client, auth_headers, monkeypatch, detection_record):
+        _patch_llm(
+            monkeypatch,
+            [
+                _tool_call(
+                    "assess_disaster",
+                    {
+                        "detection_id": detection_record["detection_id"],
+                        "area_mu": 100,
+                        "yield_per_mu": 500,
+                        "price_per_kg": 2.4,
+                    },
+                ),
+                {"content": "算完了"},
+            ],
+        )
+        resp = client.post(
+            "/agent/execute-tools", data={"instruction": "定损"}, headers=auth_headers
+        )
+        summary = _summary_of(resp)
+        assert "不代表没有损失" not in summary, summary
+
+    def test_rejects_other_users_record(self, client, admin_headers, monkeypatch, detection_record):
+        _patch_llm(
+            monkeypatch,
+            [
+                _tool_call("assess_disaster", {"detection_id": detection_record["detection_id"]}),
+                {"content": "查不到"},
+            ],
+        )
+        resp = client.post(
+            "/agent/execute-tools", data={"instruction": "定损"}, headers=admin_headers
+        )
+        trace = resp.json()["tool_trace"]
+        assert trace[0]["ok"] is False
+        # 不区分「不存在」与「不属于你」
+        assert "检测记录不存在" in trace[0]["summary"]
+
+
+class TestSeriesTrend:
+    def _make_series(self, client, auth_headers, detection_id, area_mu=100):
+        created = client.post(
+            "/series",
+            json={"name": "绥化北林区玉米", "location": "黑龙江省绥化市", "area_mu": area_mu},
+            headers=auth_headers,
+        )
+        assert created.status_code == 200, created.text
+        series_id = created.json()["series"]["id"]
+        attached = client.post(
+            f"/series/{series_id}/records",
+            json={"records": [{"detection_id": detection_id, "t1_time": "2024-05", "t2_time": "2024-09"}]},
+            headers=auth_headers,
+        )
+        assert attached.status_code == 200, attached.text
+        return series_id
+
+    def test_returns_trend_for_owned_series(self, client, auth_headers, monkeypatch, detection_record):
+        series_id = self._make_series(client, auth_headers, detection_record["detection_id"])
+        _patch_llm(
+            monkeypatch,
+            [
+                _tool_call("get_series_trend", {"series_id": series_id}),
+                {"content": "看完了"},
+            ],
+        )
+        resp = client.post(
+            "/agent/execute-tools", data={"instruction": "这个序列变化快不快"}, headers=auth_headers
+        )
+        summary = _summary_of(resp)
+        assert "interval_count" in summary, summary
+
+    def test_rejects_series_not_owned(self, client, admin_headers, monkeypatch, auth_headers, detection_record):
+        series_id = self._make_series(client, auth_headers, detection_record["detection_id"])
+        _patch_llm(
+            monkeypatch,
+            [
+                _tool_call("get_series_trend", {"series_id": series_id}),
+                {"content": "查不到"},
+            ],
+        )
+        resp = client.post(
+            "/agent/execute-tools", data={"instruction": "看趋势"}, headers=admin_headers
+        )
+        trace = resp.json()["tool_trace"]
+        assert trace[0]["ok"] is False
+        assert "序列不存在" in trace[0]["summary"]
+
+    def test_list_series_reports_member_count(self, client, auth_headers, monkeypatch, detection_record):
+        series_id = self._make_series(client, auth_headers, detection_record["detection_id"])
+        _patch_llm(
+            monkeypatch,
+            [_tool_call("list_series", {}), {"content": "列完了"}],
+        )
+        resp = client.post(
+            "/agent/execute-tools", data={"instruction": "我有哪些序列"}, headers=auth_headers
+        )
+        summary = _summary_of(resp)
+        assert '"member_count": 1' in summary, summary
+        assert '"series_id": %d' % series_id in summary, summary
+
+    def test_list_series_is_user_scoped(self, client, admin_headers, monkeypatch, auth_headers, detection_record):
+        """管理员查别人的序列必须查不到 —— 与 list_detections 同一条规矩。"""
+        self._make_series(client, auth_headers, detection_record["detection_id"])
+        _patch_llm(
+            monkeypatch,
+            [_tool_call("list_series", {}), {"content": "列完了"}],
+        )
+        resp = client.post(
+            "/agent/execute-tools", data={"instruction": "我有哪些序列"}, headers=admin_headers
+        )
+        summary = _summary_of(resp)
+        assert '"count": 0' in summary, summary
+
+    def test_list_series_announces_truncation(self, client, auth_headers, monkeypatch):
+        """截断必须说出来，而且排在最前面。
+
+        这个工具的**唯一**用途是把用户嘴里的序列名字换成 series_id；
+        静默截断会让模型在列表里找不到目标，进而向用户断言「没有这个序列」——
+        那是错误的结论，不是「没查到」。排在最后则会被 300 字符的轨迹截没。
+        """
+        # 直接落库而不是走接口：POST /series 限流 20/分钟，造 25 个会被拦
+        from backend.app.models.database import SessionLocal
+        from backend.app.models.series import ImageSeriesDB
+        from backend.app.models.user import UserDB
+
+        db = SessionLocal()
+        try:
+            uid = db.query(UserDB).filter(UserDB.username == "testuser").first().id
+            for i in range(25):
+                db.add(ImageSeriesDB(user_id=uid, name=f"序列{i:02d}"))
+            db.commit()
+        finally:
+            db.close()
+
+        _patch_llm(monkeypatch, [_tool_call("list_series", {}), {"content": "列完了"}])
+        resp = client.post(
+            "/agent/execute-tools", data={"instruction": "我有哪些序列"}, headers=auth_headers
+        )
+        summary = _summary_of(resp)
+        assert summary.startswith('{"truncated"'), summary
+        assert "25" in summary, summary
+        assert '"count": 20' in summary, summary
+
+    def test_rejects_missing_series(self, client, auth_headers, monkeypatch):
+        _patch_llm(
+            monkeypatch,
+            [
+                _tool_call("get_series_trend", {"series_id": 999999}),
+                {"content": "查不到"},
+            ],
+        )
+        resp = client.post(
+            "/agent/execute-tools", data={"instruction": "看趋势"}, headers=auth_headers
+        )
+        trace = resp.json()["tool_trace"]
+        assert trace[0]["ok"] is False
+        assert "序列不存在" in trace[0]["summary"]

@@ -8,11 +8,11 @@ series_id 与 phase_index，因此检测、结果图、重调阈值这些能力�
 同一个 404，避免泄露存在性。
 """
 import logging
-from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from backend.app.core.limiter import get_user_key, limiter
 from backend.app.core.security import get_current_user, get_db
@@ -20,23 +20,29 @@ from backend.app.models.detection import DetectionResultDB
 from backend.app.models.series import ImageSeriesDB
 from backend.app.models.user import UserDB
 from backend.app.schemas.series import SeriesAttachRequest, SeriesCreate
-from backend.app.services.series_service import analyze_trend, build_intervals, parse_month
+# 序列的取用与趋势编排已下沉到 series_trend，使工具通道能共用同一套语义 ——
+# 两份实现必然漂移。导入时改名，本文件既有的调用点一行都不用动。
+# parse_month 这里仍在直接用（attach_records 校期次日期）。
+from backend.app.services.record_access import find_owned_detection, rewrite_url
+from backend.app.services.series_service import parse_month
+from backend.app.services.series_trend import (
+    get_owned_series as _get_series,
+    ordered_members as _ordered_members,
+    trend_for_series,
+)
 
 router = APIRouter(tags=["时序序列"])
 logger = logging.getLogger(__name__)
 
 
-def _get_series(series_id: int, current_user: UserDB, db: Session) -> ImageSeriesDB:
-    series = db.query(ImageSeriesDB).filter(
-        ImageSeriesDB.id == series_id,
-        ImageSeriesDB.user_id == current_user.id,
-    ).first()
-    if not series:
-        raise HTTPException(status_code=404, detail="序列不存在")
-    return series
+def _record_payload(rec: DetectionResultDB, base_url: str) -> dict:
+    """序列成员的对外表示。
 
-
-def _record_payload(rec: DetectionResultDB) -> dict:
+    URL 必须先重写再返回：库里存的是**检测当时**的绝对地址，服务器换过
+    域名/IP、或曾经用 127.0.0.1 访问过，旧记录里就是过期主机名。
+    history.py 早就为此打过补丁，而这里一直漏着 —— 结果是同一份数据在
+    历史页显示正常、在时序页整片裂图，排查时会往错误方向找。
+    """
     return {
         "detection_id": rec.id,
         "phase_index": rec.phase_index,
@@ -49,22 +55,11 @@ def _record_payload(rec: DetectionResultDB) -> dict:
         "change_type": rec.change_type or "",
         "t1_time": rec.t1_time or "",
         "t2_time": rec.t2_time or "",
-        "mask": rec.mask_url,
-        "heat": rec.heat_url,
-        "fusion": rec.fusion_url,
-        "score": rec.score_url or "",
+        "mask": rewrite_url(base_url, rec.mask_url),
+        "heat": rewrite_url(base_url, rec.heat_url),
+        "fusion": rewrite_url(base_url, rec.fusion_url),
+        "score": rewrite_url(base_url, rec.score_url),
     }
-
-
-def _ordered_members(series_id: int, db: Session):
-    """取序列成员并按影像日期排序（不是按挂载顺序、更不是按检测时间）。"""
-    members = db.query(DetectionResultDB).filter(
-        DetectionResultDB.series_id == series_id
-    ).all()
-    members.sort(key=lambda r: (
-        parse_month(r.t1_time) or parse_month(r.t2_time) or date.max
-    ))
-    return members
 
 
 @router.post("/series")
@@ -127,6 +122,7 @@ async def get_series(
 ):
     series = _get_series(series_id, current_user, db)
     members = _ordered_members(series_id, db)
+    base_url = str(request.base_url).rstrip("/")
     return JSONResponse(content={
         "code": 200,
         "series": {
@@ -136,7 +132,7 @@ async def get_series(
             "lat_lng": series.lat_lng or "",
             "area_mu": series.area_mu or 0,
         },
-        "records": [_record_payload(r) for r in members],
+        "records": [_record_payload(r, base_url) for r in members],
     })
 
 
@@ -158,10 +154,7 @@ async def attach_records(
 
     to_attach = []
     for item in payload.records:
-        rec = db.query(DetectionResultDB).filter(
-            DetectionResultDB.id == item.detection_id,
-            DetectionResultDB.user_id == current_user.id,
-        ).first()
+        rec = find_owned_detection(db, current_user.id, item.detection_id)
         if not rec:
             raise HTTPException(
                 status_code=404, detail=f"检测记录 {item.detection_id} 不存在"
@@ -251,22 +244,7 @@ async def series_trend(
     current_user: UserDB = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    series = _get_series(series_id, current_user, db)
-    members = _ordered_members(series_id, db)
-
-    records = [{
-        "detection_id": r.id,
-        "t1_time": r.t1_time or "",
-        "t2_time": r.t2_time or "",
-        "ratio": r.ratio,
-        "change_pixel": r.change_pixel,
-        "total_pixel": r.total_pixel,
-        "model": r.model,
-        "change_type": r.change_type or "",
-    } for r in members]
-
-    intervals, skipped = build_intervals(records, area_mu=series.area_mu or 0.0)
-    trend = analyze_trend(intervals, area_mu=series.area_mu or 0.0)
-    trend["skipped"] = skipped
-    trend["series"] = {"id": series.id, "name": series.name}
+    # 编排整段下沉到 series_trend —— 工具通道要在没有 HTTP 的情况下复用同一套
+    # 语义。查库与最小二乘拟合都是同步阻塞的，放进线程池避免阻塞事件循环。
+    trend = await run_in_threadpool(trend_for_series, series_id, current_user, db)
     return JSONResponse(content={"code": 200, "trend": trend})

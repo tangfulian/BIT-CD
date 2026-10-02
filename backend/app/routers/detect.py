@@ -28,30 +28,30 @@ from backend.app.services.detect_service import (
     rebuild_fusion_from_score,
     recommend_threshold_from_images,
 )
-from backend.app.services.detection_service import (
+from backend.app.services.detection_pipeline import (
     SUPPORTED_MODELS,
     decode_image as _decode_image,
     run_detection,
 )
+from backend.app.services.record_access import find_owned_detection, result_url
+from backend.app.services.record_access import url_to_path as _url_to_path
 
 router = APIRouter(tags=["检测"])
 logger = logging.getLogger(__name__)
 
 
 def _result_url(request: Request, filename: str) -> str:
-    """构建绝对路径的结果图片 URL，兼容代理和直连场景"""
-    return f"{str(request.base_url).rstrip('/')}/results/{filename}"
+    """构建绝对路径的结果图片 URL，兼容代理和直连场景。
+
+    Request -> base_url 的适配留在这里；URL 约定本身在 record_access，
+    全系统只有那一份。
+    """
+    return result_url(str(request.base_url).rstrip("/"), filename)
 
 
 def _imwrite(path, img):
     if not cv2.imwrite(path, img):
         raise RuntimeError(f"无法写入文件: {path}")
-
-
-def _url_to_path(url: str) -> str:
-    """从结果 URL 提取文件系统路径（兼容绝对和相对 URL）"""
-    filename = url.rsplit('/', 1)[-1]
-    return f"results/{filename}"
 
 
 @router.get("/detect/models")
@@ -99,7 +99,7 @@ async def detect(
     img1_bytes = await img1.read()
     img2_bytes = await img2.read()
 
-    # 编排整段（去重缓存、解码、落盘、建记录）已下沉到 detection_service，
+    # 编排整段（去重缓存、解码、落盘、建记录）已下沉到 detection_pipeline，
     # 因为工具通道需要在没有 HTTP 请求的情况下复用同一套语义 —— 留两份
     # 实现必然漂移。模型推理是同步 CPU 重活，所以整体放进线程池。
     result = await run_in_threadpool(
@@ -237,10 +237,7 @@ async def rethreshold(
     db: Session = Depends(get_db),
 ):
     """基于已有 score_map 和新的阈值重新生成 mask/heatmap/fusion。"""
-    detection = db.query(DetectionResultDB).filter(
-        DetectionResultDB.id == detection_id,
-        DetectionResultDB.user_id == current_user.id,
-    ).first()
+    detection = find_owned_detection(db, current_user.id, detection_id)
     if not detection:
         raise HTTPException(status_code=404, detail="检测记录不存在")
     if not detection.score_url:
@@ -308,10 +305,7 @@ async def compute_otsu(
     db: Session = Depends(get_db),
 ):
     """对已有检测结果的 score_map 计算 Otsu 最优阈值。"""
-    detection = db.query(DetectionResultDB).filter(
-        DetectionResultDB.id == detection_id,
-        DetectionResultDB.user_id == current_user.id,
-    ).first()
+    detection = find_owned_detection(db, current_user.id, detection_id)
     if not detection:
         raise HTTPException(status_code=404, detail="检测记录不存在")
     if not detection.score_url:
@@ -337,10 +331,7 @@ async def export_geojson(
     db: Session = Depends(get_db),
 ):
     """导出变化掩膜为 GeoJSON 多边形。"""
-    detection = db.query(DetectionResultDB).filter(
-        DetectionResultDB.id == detection_id,
-        DetectionResultDB.user_id == current_user.id,
-    ).first()
+    detection = find_owned_detection(db, current_user.id, detection_id)
     if not detection or not detection.mask_url:
         raise HTTPException(status_code=404, detail="检测记录不存在或无掩膜")
 
@@ -403,10 +394,7 @@ async def compute_area_stats(
     db: Session = Depends(get_db),
 ):
     """计算变化区域的面积统计（支持传入空间分辨率 m/px）。"""
-    detection = db.query(DetectionResultDB).filter(
-        DetectionResultDB.id == detection_id,
-        DetectionResultDB.user_id == current_user.id,
-    ).first()
+    detection = find_owned_detection(db, current_user.id, detection_id)
     if not detection or not detection.mask_url:
         raise HTTPException(status_code=404, detail="检测记录不存在或无掩膜")
 

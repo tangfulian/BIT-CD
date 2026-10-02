@@ -10,6 +10,8 @@
 """
 import pytest
 
+from backend.app.models.database import SessionLocal
+from backend.app.models.detection import DetectionResultDB
 from backend.app.services.series_service import (
     _linear_fit,
     analyze_trend,
@@ -317,3 +319,70 @@ class TestSeriesEndpoints:
             headers={"Authorization": f"Bearer {tok}"},
         )
         assert resp.status_code == 404
+
+
+class TestSeriesDetailRewritesUrls:
+    """GET /series/{id} 必须重写结果 URL。
+
+    库里存的是**检测当时**的绝对地址。服务器换过域名/IP、或曾经用
+    127.0.0.1 访问过，旧记录里就是过期主机名 —— 不重写就会裂图。
+    history.py 早就为此打过补丁，而 series 一直漏着：同一份数据在历史页
+    显示正常、在时序页整片裂图，排查时会往错误方向找。
+    """
+
+    def _series_with_member(self, client, auth_headers, detection_id):
+        sid = client.post(
+            "/series", json={"name": "绥化北林区", "area_mu": 100}, headers=auth_headers
+        ).json()["series"]["id"]
+        attached = client.post(
+            f"/series/{sid}/records",
+            json={"records": [{"detection_id": detection_id,
+                               "t1_time": "2024-05", "t2_time": "2024-09"}]},
+            headers=auth_headers,
+        )
+        assert attached.status_code == 200, attached.text
+        return sid
+
+    def test_stale_urls_are_rewritten(self, client, auth_headers, detection_record):
+        sid = self._series_with_member(client, auth_headers, detection_record["detection_id"])
+
+        # 模拟「记录是很久以前写的，那时服务器还是另一个地址」
+        db = SessionLocal()
+        try:
+            rec = (
+                db.query(DetectionResultDB)
+                .filter(DetectionResultDB.id == detection_record["detection_id"])
+                .first()
+            )
+            rec.mask_url = "http://127.0.0.1:9999/results/stale_mask.png"
+            db.commit()
+        finally:
+            db.close()
+
+        resp = client.get(f"/series/{sid}", headers=auth_headers)
+        assert resp.status_code == 200, resp.text
+        records = resp.json()["records"]
+        assert len(records) == 1
+        assert records[0]["mask"].endswith("/results/stale_mask.png")
+        # 过期主机名必须已经被换掉
+        assert "127.0.0.1:9999" not in records[0]["mask"], records[0]["mask"]
+
+    def test_missing_urls_stay_empty(self, client, auth_headers, detection_record):
+        """没有 score/fusion 的记录不该因为重写变成 "None" 之类的字符串。"""
+        sid = self._series_with_member(client, auth_headers, detection_record["detection_id"])
+        db = SessionLocal()
+        try:
+            rec = (
+                db.query(DetectionResultDB)
+                .filter(DetectionResultDB.id == detection_record["detection_id"])
+                .first()
+            )
+            rec.score_url = None
+            rec.fusion_url = None
+            db.commit()
+        finally:
+            db.close()
+
+        records = client.get(f"/series/{sid}", headers=auth_headers).json()["records"]
+        assert records[0]["score"] == ""
+        assert records[0]["fusion"] == ""

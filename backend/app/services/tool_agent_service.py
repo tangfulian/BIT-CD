@@ -26,13 +26,18 @@ import os
 import time
 
 import httpx
+from pydantic import ValidationError
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend.app.core.config import DASHSCOPE_API_KEY
 from backend.app.models.detection import DetectionResultDB
+from backend.app.models.series import ImageSeriesDB
 from backend.app.models.user import UserDB
-from backend.app.services import detection_service
+from backend.app.schemas.disaster import DisasterAssessRequest
+from backend.app.services import detection_pipeline, disaster_assessment, series_trend
 from backend.app.services.detect_service import model_availability
+from backend.app.services.record_access import find_owned_detection, query_owned_records
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +141,63 @@ def _tool_schemas(file_paths: list[str]) -> list[dict]:
                 },
             },
         },
+        {
+            "type": "function",
+            "function": {
+                "name": "assess_disaster",
+                "description": (
+                    "对一条已有检测记录做受灾定损测算，按变化置信度分四级给出受灾面积，"
+                    "并测算经济损失。要求该记录带概率图（score_map）—— 模型对比检测建的"
+                    "记录不带，会明确报错。"
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "detection_id": {"type": "integer", "description": "检测记录 ID"},
+                        "area_mu": {
+                            "type": "number",
+                            "description": "地块总面积（亩）。不传则各级面积按 0 计，只能看占比",
+                        },
+                        "crop_type": {
+                            "type": "string",
+                            "description": "作物类型，用于取默认亩产与单价，例如 玉米、大豆",
+                        },
+                        "yield_per_mu": {"type": "number", "description": "亩产（kg/亩），不传则用该作物示例值"},
+                        "price_per_kg": {"type": "number", "description": "单价（元/kg），不传则用该作物示例值"},
+                    },
+                    "required": ["detection_id"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "list_series",
+                "description": (
+                    "列出当前用户的多时相序列（名称、地块、期数）。"
+                    "get_series_trend 需要 series_id，而用户通常只说序列名字，"
+                    "所以问趋势之前先用它把 ID 找出来。"
+                ),
+                "parameters": {"type": "object", "properties": {}, "required": []},
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_series_trend",
+                "description": (
+                    "取一个多时相序列的变化速率与趋势：拟合斜率、R²、突变点、以及被剔除的"
+                    "期次说明。用来回答「这几年变化快不快」这类问题。"
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "series_id": {"type": "integer", "description": "时序序列 ID"},
+                    },
+                    "required": ["series_id"],
+                },
+            },
+        },
     ]
 
 
@@ -190,7 +252,7 @@ def _run_detection(args: dict, ctx: dict) -> dict:
     with open(args["image2"], "rb") as fh:
         img2_bytes = fh.read()
 
-    result = detection_service.run_detection(
+    result = detection_pipeline.run_detection(
         img1_bytes=img1_bytes,
         img2_bytes=img2_bytes,
         model=str(args.get("model") or "BIT"),
@@ -225,14 +287,13 @@ def _list_detections(args: dict, ctx: dict) -> dict:
     # 工具侧放这么大等于一次往模型上下文里灌 500 条记录。
     limit = max(1, min(limit, 50))
 
-    query = ctx["db"].query(DetectionResultDB).filter(
-        # 只按 user_id 过滤，不给管理员旁路：Agent 历史上以 admin 运行，
-        # 一旦放行就会把全库用户的记录交给模型。
-        DetectionResultDB.user_id == ctx["user"].id
+    # is_admin 走默认的 False：Agent 历史上以 admin 身份运行，一旦放行
+    # 就会把全库所有用户的记录交给模型。工具层连这个参数都不暴露。
+    query = query_owned_records(
+        ctx["db"],
+        ctx["user"].id,
+        model=str(args.get("model") or "").strip() or None,
     )
-    model = str(args.get("model") or "").strip()
-    if model:
-        query = query.filter(DetectionResultDB.model == model)
 
     records = query.order_by(DetectionResultDB.id.desc()).limit(limit).all()
     return {
@@ -262,15 +323,7 @@ def _get_detection(args: dict, ctx: dict) -> dict:
     except (KeyError, TypeError, ValueError):
         raise ToolError("detection_id 必须是整数") from None
 
-    record = (
-        ctx["db"]
-        .query(DetectionResultDB)
-        .filter(
-            DetectionResultDB.id == detection_id,
-            DetectionResultDB.user_id == ctx["user"].id,
-        )
-        .first()
-    )
+    record = find_owned_detection(ctx["db"], ctx["user"].id, detection_id)
     if not record:
         # 不区分"不存在"与"不属于本人"，避免把他人记录的存在性透出去。
         raise ToolError(f"没有找到 ID 为 {detection_id} 的检测记录（或它不属于你）")
@@ -291,11 +344,146 @@ def _get_detection(args: dict, ctx: dict) -> dict:
     }
 
 
+def _assess_disaster(args: dict, ctx: dict) -> dict:
+    try:
+        detection_id = int(args["detection_id"])
+    except (KeyError, TypeError, ValueError):
+        raise ToolError("detection_id 必须是整数") from None
+
+    def _num(key):
+        raw = args.get(key)
+        if raw is None or raw == "":
+            return None
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            raise ToolError(f"{key} 必须是数字") from None
+
+    try:
+        payload = DisasterAssessRequest(
+            detection_id=detection_id,
+            area_mu=_num("area_mu") or 0.0,
+            crop_type=str(args.get("crop_type") or ""),
+            yield_per_mu=_num("yield_per_mu"),
+            price_per_kg=_num("price_per_kg"),
+        )
+    except ValidationError as exc:
+        first = (exc.errors() or [{}])[0]
+        raise ToolError(f"参数不合法：{first.get('msg', '')}") from None
+
+    # run_assess 内部按 user_id 过滤，顺带完成归属校验；
+    # 记录缺概率图时它会抛 400，由 _run_tool 收敛成模型能读的一句话。
+    result = disaster_assessment.run_assess(payload, ctx["user"], ctx["db"])
+
+    # 假设项只留标签、数值、单位 —— 原文每条都带一长串 note，八条加起来会把
+    # 上下文吃掉一大块，而那些 note 是给界面展示用的，模型不需要。
+    assumptions = [
+        {"label": a.get("label"), "value": a.get("value"), "unit": a.get("unit")}
+        for a in result.get("assumptions", [])
+    ]
+    # 未给亩产与单价时，总损失会被算成 0，而原响应里对此没有任何提示 ——
+    # 模型看到一个光秃秃的 0，极可能直接汇报「无损失」。
+    # 这条警告刻意排在结果最前面：它比任何数字都更该被先看到，
+    # 也让它在轨迹被截断时依然可见。
+    # 损失 = 面积 × 亩产 × 单价 × 减产比例，**任一项为 0 结果就是 0**。
+    # 所以判据是「有哪一项为 0」，不是「全都为 0」—— 后者会漏掉只填了一个的情况：
+    # 亩产 0、单价 2.4 时 any() 为真，告警被抑制，而 total_loss 仍是 0，
+    # 模型照样会向用户汇报「无损失」。实测确认过这个漏网。
+    economic = [a for a in assumptions if a.get("label") in ("亩产", "单价")]
+    zero_params = [a["label"] for a in economic if not a.get("value")]
+    out = {}
+    if zero_params:
+        out["warning"] = (
+            f"{'、'.join(zero_params)}为 0，因此 total_loss_yuan 为 0 —— 这**不代表没有损失**，"
+            "而是缺少经济参数。请如实告知用户：需要同时提供亩产与单价才能算出金额。"
+        )
+    out.update({
+        "detection_id": result["detection"]["id"],
+        "model": result["detection"]["model"],
+        "change_ratio_percent": result["detection"]["ratio"],
+        "plot_area_mu": result["plot_area_mu"],
+        "affected_area_mu": result["affected_area_mu"],
+        "levels": result["levels"],
+        "total_loss_yuan": result["total_loss_yuan"],
+        "assumptions": assumptions,
+        "disclaimer": result["disclaimer"],
+    })
+    return out
+
+
+def _get_series_trend(args: dict, ctx: dict) -> dict:
+    try:
+        series_id = int(args["series_id"])
+    except (KeyError, TypeError, ValueError):
+        raise ToolError("series_id 必须是整数") from None
+
+    trend = series_trend.trend_for_series(series_id, ctx["user"], ctx["db"])
+
+    intervals = trend.get("intervals") or []
+    out = dict(trend)
+    # 期次多时 intervals 会很长。截断但必须说明截了多少 —— 静默截断会被
+    # 读成「就这些期」，那是错误的结论。
+    if len(intervals) > 12:
+        out["intervals"] = intervals[:12]
+        out["intervals_truncated"] = f"共 {len(intervals)} 期，此处只列前 12 期"
+    # caveats 与 skipped 原样保留：前者说明这套分析不外推未来、突变点是启发式
+    # 而非统计检验；后者是被剔除的期次，不能被当成「没有变化」。
+    return out
+
+
+def _list_series(args: dict, ctx: dict) -> dict:
+    """列出当前用户的时序序列。
+
+    只按 user_id 过滤，不给管理员旁路。成员数用一次 group by 取回来，
+    逐个序列 count 会变成 N+1（设计上明确要求别这么写）。
+    """
+    db = ctx["db"]
+    limit = 20
+    base = db.query(ImageSeriesDB).filter(ImageSeriesDB.user_id == ctx["user"].id)
+    total = base.count()
+    rows = base.order_by(ImageSeriesDB.created_at.desc()).limit(limit).all()
+    if not rows:
+        return {"count": 0, "items": []}
+
+    ids = [s.id for s in rows]
+    counts = dict(
+        db.query(DetectionResultDB.series_id, func.count(DetectionResultDB.id))
+        .filter(DetectionResultDB.series_id.in_(ids))
+        .group_by(DetectionResultDB.series_id)
+        .all()
+    )
+    # 截断必须说出来，且排在最前面。这个工具的**唯一**用途是把用户嘴里的
+    # 序列名字换成 series_id —— 静默截断会让模型在列表里找不到那个序列，
+    # 进而向用户断言「没有这个序列」，那是错误的结论而不是「没查到」。
+    # 排最前还有一个原因：轨迹里的结果被截到 300 字符，排在 items 后面会被截没。
+    out = {}
+    if total > len(rows):
+        out["truncated"] = (
+            f"该用户共有 {total} 个序列，此处只列出最近 {limit} 个。"
+            f"若目标序列不在列表中，请如实告知用户列表被截断，不要断言它不存在。"
+        )
+    out["count"] = len(rows)
+    out["items"] = [
+        {
+            "series_id": s.id,
+            "name": s.name,
+            "location": s.location or "",
+            "area_mu": s.area_mu or 0,
+            "member_count": counts.get(s.id, 0),
+        }
+        for s in rows
+    ]
+    return out
+
+
 _DISPATCH = {
     "list_models": _list_models,
     "run_detection": _run_detection,
     "list_detections": _list_detections,
     "get_detection": _get_detection,
+    "assess_disaster": _assess_disaster,
+    "list_series": _list_series,
+    "get_series_trend": _get_series_trend,
 }
 
 

@@ -19,14 +19,11 @@ import uuid
 from io import BytesIO
 
 import cv2
-import numpy as np
 from fastapi import HTTPException
 from PIL import Image
 from sqlalchemy.orm import Session
-from starlette.concurrency import run_in_threadpool
 
 from backend.app.models.detection import DetectionResultDB
-from backend.app.models.series import ImageSeriesDB
 
 # 刻意 import 模块而不是 `from ... import detect_change`。
 #
@@ -37,6 +34,13 @@ from backend.app.models.series import ImageSeriesDB
 # 那样桩会静默失效，测试会真的去跑一遍模型推理，而且**仍然通过**，
 # 只是测的东西已经不是原来那个了。按模块属性调用才能让打桩始终生效。
 from backend.app.services import detect_service
+from backend.app.services.record_access import (
+    RESULTS_DIR,
+    find_owned_series,
+    result_url,
+    rewrite_url,
+    url_to_path,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +53,6 @@ SUPPORTED_MODELS = [
     "AFCF3D",
     "BIT_LuojiaSET",
 ]
-
-RESULTS_DIR = "results"
 
 
 def decode_image(data: bytes, name: str = "影像", mode: str | None = "RGB", size: int = 256):
@@ -70,26 +72,6 @@ def decode_image(data: bytes, name: str = "影像", mode: str | None = "RGB", si
         raise
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"{name} 不是有效的图片文件") from exc
-
-
-def url_to_path(url: str) -> str:
-    """从结果 URL 提取文件系统路径（兼容绝对和相对 URL）"""
-    filename = url.rsplit("/", 1)[-1]
-    return f"{RESULTS_DIR}/{filename}"
-
-
-def result_url(base_url: str, filename: str) -> str:
-    return f"{base_url.rstrip('/')}/{RESULTS_DIR}/{filename}"
-
-
-def rewrite_url(base_url: str, url: str | None) -> str:
-    """把数据库里可能存着旧域名的 URL 重写为当前的正确地址"""
-    if not url:
-        return ""
-    filename = url.rsplit("/", 1)[-1]
-    if not filename:
-        return url
-    return result_url(base_url, filename)
 
 
 def _imwrite(path, img) -> None:
@@ -129,11 +111,7 @@ def run_detection(
     if series_id:
         if user_id is None:
             raise HTTPException(status_code=401, detail="指定序列需要登录")
-        owns = db.query(ImageSeriesDB).filter(
-            ImageSeriesDB.id == series_id,
-            ImageSeriesDB.user_id == user_id,
-        ).first()
-        if not owns:
+        if not find_owned_series(db, user_id, series_id):
             raise HTTPException(status_code=404, detail="序列不存在")
 
     unique_id = str(uuid.uuid4())

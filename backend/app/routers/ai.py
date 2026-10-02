@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from backend.app.core.limiter import get_user_key, limiter
 from backend.app.core.security import get_current_user, get_db
-from backend.app.models.detection import DetectionResultDB
 from backend.app.models.user import UserDB
 from backend.app.schemas.common import ChatRequest
 from backend.app.schemas.detection import (
@@ -15,6 +14,7 @@ from backend.app.schemas.detection import (
     UpdateChangeTypeRequest,
 )
 from backend.app.services.ai_service import chat, classify_change
+from backend.app.services.record_access import find_owned_detection
 
 router = APIRouter(prefix="/ai", tags=["AI"])
 logger = logging.getLogger(__name__)
@@ -90,10 +90,7 @@ async def ai_classify_change(
 
         # 如果提供了 detection_id，持久化 AI 分类结果
         if classify_req.detection_id > 0:
-            detection = db.query(DetectionResultDB).filter(
-                DetectionResultDB.id == classify_req.detection_id,
-                DetectionResultDB.user_id == current_user.id,
-            ).first()
+            detection = find_owned_detection(db, current_user.id, classify_req.detection_id)
             if detection:
                 detection.ai_change_type = change_type
                 detection.ai_confidence = confidence
@@ -120,10 +117,7 @@ async def update_change_type(
     current_user: UserDB = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    detection = db.query(DetectionResultDB).filter(
-        DetectionResultDB.id == req.detection_id,
-        DetectionResultDB.user_id == current_user.id,
-    ).first()
+    detection = find_owned_detection(db, current_user.id, req.detection_id)
     if not detection:
         raise HTTPException(status_code=404, detail="检测记录不存在")
     detection.change_type = req.change_type
