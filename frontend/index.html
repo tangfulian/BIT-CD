@@ -743,7 +743,7 @@
                             </div>
                             <div class="tech-stat-body">
                                 <div class="tech-stat-value" id="bsTotalDetections">0</div>
-                                <div class="tech-stat-label">检测总次数</div>
+                                <div class="tech-stat-label" data-i18n="bigscreen.totalDetections">检测总次数</div>
                             </div>
                         </div>
                         <div class="tech-stat-card">
@@ -753,7 +753,9 @@
                             </div>
                             <div class="tech-stat-body">
                                 <div class="tech-stat-value" id="bsTotalChangeArea">0<span class="tech-unit">万</span></div>
-                                <div class="tech-stat-label">累计变化像素</div>
+                                <!-- 单位「万」由上面的 .tech-unit span 单独渲染，所以 locale 里那个键
+                                     不带单位（此前它写成「累计变化像素 (万)」且没人引用，接上会重复）。 -->
+                                <div class="tech-stat-label" data-i18n="bigscreen.totalChangeArea">累计变化像素</div>
                             </div>
                         </div>
                         <div class="tech-stat-card">
@@ -763,7 +765,7 @@
                             </div>
                             <div class="tech-stat-body">
                                 <div class="tech-stat-value" id="bsTodayDetections">0</div>
-                                <div class="tech-stat-label">今日检测</div>
+                                <div class="tech-stat-label" data-i18n="bigscreen.todayDetections">今日检测</div>
                             </div>
                         </div>
                         <div class="tech-stat-card">
@@ -773,7 +775,7 @@
                             </div>
                             <div class="tech-stat-body">
                                 <div class="tech-stat-value" id="bsActivePlots">0</div>
-                                <div class="tech-stat-label">活跃地块</div>
+                                <div class="tech-stat-label" data-i18n="bigscreen.activePlots">活跃地块</div>
                             </div>
                         </div>
                     </div>
@@ -783,14 +785,14 @@
                         <div class="tech-chart-panel">
                             <div class="tech-panel-header">
                                 <span class="tech-panel-dot"></span>
-                                <h3>变化类型分布</h3>
+                                <h3 data-i18n="bigscreen.typeChart">变化类型分布</h3>
                             </div>
                             <div id="bsTypeChart" class="tech-chart"></div>
                         </div>
                         <div class="tech-chart-panel">
                             <div class="tech-panel-header">
                                 <span class="tech-panel-dot"></span>
-                                <h3>模型使用统计</h3>
+                                <h3 data-i18n="bigscreen.modelChart">模型使用统计</h3>
                             </div>
                             <div id="bsModelChart" class="tech-chart"></div>
                         </div>
@@ -799,14 +801,14 @@
                         <div class="tech-chart-panel tech-chart-wide">
                             <div class="tech-panel-header">
                                 <span class="tech-panel-dot"></span>
-                                <h3>近7天检测趋势</h3>
+                                <h3 data-i18n="bigscreen.trendChart">近7天检测趋势</h3>
                             </div>
                             <div id="bsTrendChart" class="tech-chart" style="height:300px;"></div>
                         </div>
                         <div class="tech-chart-panel">
                             <div class="tech-panel-header">
                                 <span class="tech-panel-dot"></span>
-                                <h3>最新检测记录</h3>
+                                <h3 data-i18n="bigscreen.recentList">最新检测记录</h3>
                             </div>
                             <div id="bsRecentList" class="tech-recent-list"></div>
                         </div>
@@ -956,6 +958,10 @@
                     <div class="card" style="padding:0;overflow:hidden;flex:1;">
                         <div id="mapviewerMap" style="width:100%;height:600px;position:relative;">
                             <div id="mapEmptyHint" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:10;pointer-events:none;">
+                                <!-- 这两条**不接** map.noGeoData / map.noGeoHint：键确实存在，但键值与
+                                     页面文案不是同一句话 —— noGeoHint 键说的是「请先在地块信息配置中
+                                     设置经纬度」，而页面说的是「在检测时填写经纬度（如 126.63, 45.75）」，
+                                     是两套不同的操作指引。接上等于顺手改掉中文文案，需要产品先定用哪套。 -->
                                 <p style="font-size:15px;color:var(--text-secondary);margin-bottom:6px;">📍 暂无带坐标的检测记录</p>
                                 <p style="font-size:12px;color:var(--text-tertiary);">在检测时填写经纬度（如 126.63, 45.75），记录将在此地图上展示</p>
                             </div>

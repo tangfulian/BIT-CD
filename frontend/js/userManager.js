@@ -22,7 +22,7 @@ export var UserManager = {
         if (!page || !page.classList.contains('active')) return;
         if (state.currentUserRole !== 'admin') {
             document.getElementById('umTableBody').innerHTML =
-                '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--danger);">需要管理员权限</td></tr>';
+                '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--danger);">' + I18n.t('auth.insufficientPermission', '需要管理员权限') + '</td></tr>';
             return;
         }
         await this.loadUsers();
@@ -30,12 +30,12 @@ export var UserManager = {
 
     loadUsers: async function () {
         var tbody = document.getElementById('umTableBody');
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;">加载中...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;">' + I18n.t('common.loading', '加载中...') + '</td></tr>';
         try {
             var res = await Utils.authFetch(CONFIG.API_BASE_URL + '/admin/users?page=' + this._currentPage + '&limit=' + PAGE_SIZE);
             var data;
             try { data = await res.json(); } catch (e) { throw new Error('响应格式错误'); }
-            if (data.code !== 200) throw new Error(data.detail || '获取失败');
+            if (data.code !== 200) throw new Error(data.detail || I18n.t('history.requestFailed', '获取失败'));
             this._users = data.data || [];
             this._totalCount = data.total || 0;
             this.renderTable();
@@ -59,13 +59,13 @@ export var UserManager = {
         }
         tbody.innerHTML = users.map(function (u) {
             var disabledStyle = u.disabled ? 'style="opacity:0.5;"' : '';
-            var adminTag = u.role === 'admin' ? ' <span style="color:var(--primary);font-size:12px;">(管理员)</span>' : '';
+            var adminTag = u.role === 'admin' ? ' <span style="color:var(--primary);font-size:12px;">(' + I18n.t('usermgr.adminBadge', '管理员') + ')</span>' : '';
             var toggleText = u.disabled ? I18n.t('usermgr.enable') : I18n.t('usermgr.disable');
             return '<tr ' + disabledStyle + '>' +
                 '<td>' + u.id + '</td>' +
                 '<td><strong>' + u.username + '</strong>' + adminTag + '</td>' +
                 '<td>' + u.role + '</td>' +
-                '<td>' + u.detection_count + ' 次</td>' +
+                '<td>' + u.detection_count + ' ' + I18n.t('status.countUnit', '次') + '</td>' +
                 '<td>' + u.created_at + '</td>' +
                 '<td>' +
                     '<button class="btn-small-action toggle-btn" data-id="' + u.id + '" data-disabled="' + u.disabled + '">' + toggleText + '</button>' +

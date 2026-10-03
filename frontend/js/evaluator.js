@@ -72,7 +72,7 @@ export const Evaluator = {
             try { lH = lH || await rootHandle.getDirectoryHandle('Label'); } catch(e) {}
             try { lH = lH || await rootHandle.getDirectoryHandle('LABEL'); } catch(e) {}
 
-            if (!aH || !bH) return Modal.alert('未找到 A/ 或 B/ 文件夹。请选择 SUSY-CD 数据集根目录。');
+            if (!aH || !bH) return Modal.alert(I18n.t('detect.susycdNoDir', '未找到 A/ 或 B/ 文件夹。请选择 SUSY-CD 数据集根目录。'));
 
             const aFiles = []; const bFiles = []; const lFiles = new Set();
             for await (const [n] of aH.entries()) { if (/\.(png|jpg|jpeg|tif|tiff|bmp)$/i.test(n)) aFiles.push(n); }
@@ -81,7 +81,7 @@ export const Evaluator = {
 
             const bSet = new Set(bFiles.map(f => f.toLowerCase()));
             const pairs = aFiles.filter(f => bSet.has(f.toLowerCase()));
-            if (pairs.length === 0) return Modal.alert('A/ 和 B/ 中没有同名文件。');
+            if (pairs.length === 0) return Modal.alert(I18n.t('detect.susycdNoMatch', 'A/ 和 B/ 中没有同名文件。'));
 
             // Store handles and pairs
             this._handles = { aH, bH, lH };
@@ -101,7 +101,7 @@ export const Evaluator = {
     async _start() {
         if (this._pairs.length === 0) return Modal.alert('请先选择数据集文件夹');
         const selectedModels = this._getSelectedModels();
-        if (selectedModels.length === 0) return Modal.alert('请至少选择一个模型');
+        if (selectedModels.length === 0) return Modal.alert(I18n.t('eval.selectModel', '请至少选择一个模型'));
 
         this._running = true;
         this._cancelled = false;
@@ -418,7 +418,7 @@ export const Evaluator = {
         const worst3 = scored.slice(-3).reverse();
 
         const renderGroup = (title, items) => {
-            if (items.length === 0) return '<p style="color:var(--text-tertiary);">暂无数据</p>';
+            if (items.length === 0) return `<p style="color:var(--text-tertiary);">${I18n.t('common.noData', '暂无数据')}</p>`;
             return `<h4 style="margin-bottom:8px;color:var(--text-primary);">${title}</h4>
                 <div style="display:flex;gap:12px;flex-wrap:wrap;">${items.map(item => {
                     const r = this._results.find(r => r.name === item.name);
@@ -431,7 +431,7 @@ export const Evaluator = {
                         <div style="font-size:13px;font-weight:600;color:var(--primary);margin-bottom:4px;">Avg F1: ${item.avgF1.toFixed(1)}%</div>
                         ${models.map(m => `<div style="font-size:11px;color:var(--text-secondary);">${m}: F1=${r[m]?.f1 ?? '--'}% IoU=${r[m]?.iou ?? '--'}%</div>`).join('')}
                         <div id="${caseId}" style="display:flex;gap:4px;margin-top:8px;overflow-x:auto;">
-                            <div style="width:60px;height:60px;background:var(--bg-tertiary);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-tertiary);flex-shrink:0;">加载中...</div>
+                            <div style="width:60px;height:60px;background:var(--bg-tertiary);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-tertiary);flex-shrink:0;">${I18n.t('common.loading', '加载中...')}</div>
                         </div>
                     </div>`;
                 }).join('')}</div>`;

@@ -24,6 +24,7 @@ export const en = {
     "common.preview": "Preview",
     "common.compare": "Compare",
     "common.noData": "No Data",
+    "common.edit": "Edit",
     "common.search": "Search",
     "common.filter": "Filter",
     "common.reset": "Reset",
@@ -42,6 +43,10 @@ export const en = {
     "auth.username": "Username",
     "auth.password": "Password",
     "auth.login": "Login",
+    // 见 zh-CN.js 同处注释：这 5 个键此前缺失，界面一直用代码里的中文兜底
+    "auth.insufficientPermission": "Insufficient permission. Contact an administrator.",
+    "auth.serverError": "Server error. Please try again later.",
+    "auth.sessionExpired": "Authentication failed. Please sign in again.",
     "auth.register": "Register",
     "auth.goRegister": "No account? Register",
     "auth.goLogin": "Have an account? Login",
@@ -222,7 +227,7 @@ export const en = {
 
     "bigscreen.title": "Big Screen",
     "bigscreen.totalDetections": "Total Detections",
-    "bigscreen.totalChangeArea": "Change Area (10k px)",
+    "bigscreen.totalChangeArea": "Changed Pixels",
     "bigscreen.todayDetections": "Today",
     "bigscreen.activePlots": "Active Plots",
     "bigscreen.typeChart": "By Change Type",
@@ -451,6 +456,8 @@ export const en = {
     "report.exportTime": "Export Time",
     "report.resultImages": "Result Images",
 
+    "annotate.corsError": "Image blocked by CORS, cannot save. Contact an administrator.",
+    "annotate.saveFailed": "Failed to save annotation",
     "annotate.title": "Annotate Mask",
     "annotate.draw": "Draw (Add)",
     "annotate.erase": "Erase (Remove)",

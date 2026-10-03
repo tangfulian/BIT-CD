@@ -26,6 +26,7 @@ export const zhCN = {
     "common.preview": "预览",
     "common.compare": "对比查看",
     "common.noData": "暂无数据",
+    "common.edit": "编辑",
     "common.search": "搜索",
     "common.filter": "筛选",
     "common.reset": "重置",
@@ -45,6 +46,12 @@ export const zhCN = {
     "auth.username": "用户名",
     "auth.password": "密码",
     "auth.login": "登录系统",
+    // 以下 5 个键此前被前端引用但**两份 locale 都没有**，界面一直在用代码里的
+    // 中文兜底（I18n.t(key, '兜底')）—— 所以英文模式下这几条也是中文。
+    // scripts/check_i18n_keys.py 会把这类缺失扫出来。
+    "auth.insufficientPermission": "权限不足，请联系管理员",
+    "auth.serverError": "服务器异常，请稍后重试",
+    "auth.sessionExpired": "认证失败，请重新登录",
     "auth.register": "注册账号",
     "auth.goRegister": "没有账号？去注册",
     "auth.goLogin": "已有账号？去登录",
@@ -236,7 +243,9 @@ export const zhCN = {
     // 数字大屏
     "bigscreen.title": "数字大屏",
     "bigscreen.totalDetections": "检测总次数",
-    "bigscreen.totalChangeArea": "累计变化像素 (万)",
+    // 单位「万」不写进标签：它由 .tech-unit span 单独渲染，写进来会重复。
+    // 此前这条值是「累计变化像素 (万)」且**没有任何地方引用**，所以问题没暴露。
+    "bigscreen.totalChangeArea": "累计变化像素",
     "bigscreen.todayDetections": "今日检测",
     "bigscreen.activePlots": "活跃地块",
     "bigscreen.typeChart": "变化类型分布",
@@ -474,6 +483,8 @@ export const zhCN = {
     "report.resultImages": "检测结果图片",
 
     // 标注
+    "annotate.corsError": "图片跨域导致无法保存，请联系管理员",
+    "annotate.saveFailed": "标注保存失败",
     "annotate.title": "修正掩膜",
     "annotate.draw": "绘制(添加)",
     "annotate.erase": "擦除(移除)",

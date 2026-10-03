@@ -1,4 +1,5 @@
 import { eventBus } from './eventBus.js';
+import { I18n } from './i18n.js';
 
 let _permitted = false;
 let _audioCtx = null;
@@ -38,15 +39,15 @@ export const Notify = {
 
     detectComplete(result) {
         _notify(
-            '检测完成',
-            `变化率 ${result.change_area_ratio?.toFixed(2)}%，变化区域 ${result.change_pixel} 像素`,
+            I18n.t('notify.detectComplete', '检测完成'),
+            `${I18n.t('notify.detectCompleteBody', '变化率')} ${result.change_area_ratio?.toFixed(2)}%，变化区域 ${result.change_pixel} 像素`,
             () => eventBus.emit('navigate', 'single')
         );
     },
 
     batchComplete(total, doneCount, errCount) {
         _notify(
-            '批量检测完成',
+            I18n.t('notify.batchComplete', '批量检测完成'),
             `共 ${total} 张：${doneCount} 成功${errCount > 0 ? '，' + errCount + ' 失败' : ''}`,
             () => eventBus.emit('navigate', 'batch')
         );
@@ -54,7 +55,7 @@ export const Notify = {
 
     aiReply(preview) {
         _notify(
-            'AI 分析已生成',
+            I18n.t('notify.aiReply', 'AI 分析已生成'),
             preview?.substring(0, 60) || '点击查看分析结果',
             () => eventBus.emit('navigate', 'single')
         );
