@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from backend.app.core.config import USER_RESET_PASSWORD
 from backend.app.core.limiter import get_user_key, limiter
 from backend.app.core.security import get_current_user, get_db, hash_password
+from backend.app.core.timefmt import to_local
 from backend.app.models.annotation import AnnotationDB
 from backend.app.models.detection import DetectionResultDB
 from backend.app.models.plot import PlotDB
@@ -45,7 +46,7 @@ def list_users(
                 "username": u.username,
                 "role": u.role,
                 "disabled": bool(u.disabled),
-                "created_at": u.created_at.strftime("%Y-%m-%d %H:%M:%S")
+                "created_at": to_local(u.created_at)
                 if u.created_at
                 else "",
                 "detection_count": det_count,

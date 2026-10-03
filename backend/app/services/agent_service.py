@@ -16,9 +16,9 @@ from backend.app.core.config import (
     AGENT_FRONTEND_URL,
     AGENT_USERNAME,
     AGENT_BROWSER_HEADLESS,
-    AGENT_MAX_STEPS,
 )
 from backend.app.core.security import create_access_token
+from backend.app.services.agent_common import attachment_lines
 
 logger = logging.getLogger(__name__)
 
@@ -372,19 +372,14 @@ def _busy_result() -> dict[str, Any]:
 def _attachment_block(file_paths: list[str]) -> str:
     """把附件清单拼进提示词。
 
-    只给「路径 + 文件名 + 大小」，**不替模型判断哪个是前期、哪个是后期** ——
-    那属于用户指令该交代的事，系统替他猜反而会猜错且无从发现。
+    每行的格式来自 agent_common.attachment_lines（与工具通道共用，且被
+    测试的正则依赖）；首尾的措辞是本通道特有的 —— 这里点名的工具是
+    upload_file，工具通道那边是 run_detection，两边不应该被磨平成一个。
     """
     if not file_paths:
         return ""
     lines = ["\n\n【本次可用附件】（upload_file 时请使用下面列出的完整路径）"]
-    for p in file_paths:
-        try:
-            size_kb = os.path.getsize(p) / 1024
-            size = f"{size_kb:.1f} KB"
-        except OSError:
-            size = "大小未知"
-        lines.append(f"  {p}   （文件名 {os.path.basename(p)}，{size}）")
+    lines.extend(attachment_lines(file_paths))
     lines.append("哪个附件对应什么用途，以用户任务里的说明为准。")
     return "\n".join(lines)
 

@@ -18,7 +18,6 @@ import os
 import uuid
 from io import BytesIO
 
-import cv2
 from fastapi import HTTPException
 from PIL import Image
 from sqlalchemy.orm import Session
@@ -72,11 +71,6 @@ def decode_image(data: bytes, name: str = "影像", mode: str | None = "RGB", si
         raise
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"{name} 不是有效的图片文件") from exc
-
-
-def _imwrite(path, img) -> None:
-    if not cv2.imwrite(path, img):
-        raise RuntimeError(f"无法写入文件: {path}")
 
 
 def run_detection(
@@ -159,9 +153,9 @@ def run_detection(
     fusion_filename = f"{unique_id}_fusion.png"
     t2_filename = f"{unique_id}_t2.png"
     detect_service.save_score_map(score_map, f"{RESULTS_DIR}/{score_filename}")
-    _imwrite(f"{RESULTS_DIR}/{mask_filename}", change_mask)
-    _imwrite(f"{RESULTS_DIR}/{heat_filename}", heatmap)
-    _imwrite(f"{RESULTS_DIR}/{fusion_filename}", fusion)
+    detect_service.imwrite(f"{RESULTS_DIR}/{mask_filename}", change_mask)
+    detect_service.imwrite(f"{RESULTS_DIR}/{heat_filename}", heatmap)
+    detect_service.imwrite(f"{RESULTS_DIR}/{fusion_filename}", fusion)
     # 留一份 T2（256×256，与掩膜同尺寸）供重调阈值时重建融合图。
     # 融合图 = alpha 混合(T2, 掩膜)，没有 T2 就重建不出来——此前
     # /detect/rethreshold 正是卡在这里，只能留下与掩膜自相矛盾的旧融合图。

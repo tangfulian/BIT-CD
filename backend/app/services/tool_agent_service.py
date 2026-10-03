@@ -22,7 +22,6 @@
 """
 import json
 import logging
-import os
 import time
 
 import httpx
@@ -36,6 +35,7 @@ from backend.app.models.series import ImageSeriesDB
 from backend.app.models.user import UserDB
 from backend.app.schemas.disaster import DisasterAssessRequest
 from backend.app.services import detection_pipeline, disaster_assessment, series_trend
+from backend.app.services.agent_common import attachment_lines
 from backend.app.services.detect_service import model_availability
 from backend.app.services.record_access import find_owned_detection, query_owned_records
 
@@ -202,16 +202,17 @@ def _tool_schemas(file_paths: list[str]) -> list[dict]:
 
 
 def _attachment_block(file_paths: list[str]) -> str:
-    """把附件清单拼进提示词。只给路径与文件名，不替模型判断哪张是前期。"""
+    """把附件清单拼进提示词。
+
+    每行的格式来自 agent_common.attachment_lines（与浏览器通道共用，且被
+    测试的正则依赖）。措辞是本通道特有的：这里必须点名「不得改写」，因为
+    run_detection 的参数会做逐字符白名单比对；无附件时也不能像浏览器通道
+    那样返回空串 —— 得明说没有，否则模型会去猜路径然后被拒。
+    """
     if not file_paths:
         return "\n\n【本次可用附件】无。用户若要求跑检测，先请他用附件上传影像。"
     lines = ["\n\n【本次可用附件】（run_detection 只能使用下列路径，不得改写）"]
-    for p in file_paths:
-        try:
-            size = f"{os.path.getsize(p) / 1024:.1f} KB"
-        except OSError:
-            size = "大小未知"
-        lines.append(f"  {p}   （文件名 {os.path.basename(p)}，{size}）")
+    lines.extend(attachment_lines(file_paths))
     lines.append("哪张是前期、哪张是后期，以用户任务里的说明为准。")
     return "\n".join(lines)
 

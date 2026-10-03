@@ -15,6 +15,7 @@ from backend.app.core.security import (
     verify_password,
 )
 from backend.app.core.limiter import get_user_key, limiter
+from backend.app.core.timefmt import to_local
 from backend.app.models.detection import DetectionResultDB
 from backend.app.models.plot import PlotDB
 from backend.app.models.user import UserDB
@@ -99,14 +100,14 @@ def get_profile(
         .order_by(DetectionResultDB.id.desc())
         .first()
     )
-    last_active = last.created_at.strftime("%Y-%m-%d %H:%M") if last else None
+    last_active = to_local(last.created_at, "%Y-%m-%d %H:%M") if last else None
 
     return {
         "code": 200,
         "data": {
             "username": current_user.username,
             "role": current_user.role,
-            "created_at": current_user.created_at.strftime("%Y-%m-%d %H:%M") if current_user.created_at else None,
+            "created_at": to_local(current_user.created_at, "%Y-%m-%d %H:%M"),
             "detection_count": detection_count,
             "plot_count": plot_count,
             "avg_ratio": avg_ratio,

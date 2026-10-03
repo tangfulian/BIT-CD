@@ -56,7 +56,9 @@ AGENT_USERNAME = os.getenv("AGENT_USERNAME", "admin")
 # 原先这里会读取 AGENT_PASSWORD，未设置时生成随机值并打警告——但那个值从来没有
 # 被任何代码读过，只会让每次启动都刷一条无意义的警告。故整块移除。
 AGENT_BROWSER_HEADLESS = os.getenv("AGENT_BROWSER_HEADLESS", "true").lower() == "true"
-AGENT_MAX_STEPS = int(os.getenv("AGENT_MAX_STEPS", "15"))
+# 此处曾有 AGENT_MAX_STEPS，已移除：全仓库只有 agent_service import 了它、
+# 从未使用，步数实际由 /agent/execute 的表单参数决定（默认 25）。留着会让
+# .env 里的设置看起来生效而实际无效——与上面 AGENT_PASSWORD 同一类问题。
 
 # --- CORS：逗号分隔的允许来源列表，默认限制 localhost ---
 ALLOWED_ORIGINS = os.getenv(

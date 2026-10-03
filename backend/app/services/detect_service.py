@@ -14,7 +14,7 @@ from PIL import Image
 logger = logging.getLogger(__name__)
 
 
-def _imwrite(path, img):
+def imwrite(path, img):
     if not cv2.imwrite(path, img):
         raise RuntimeError(f"无法写入文件: {path}")
 
@@ -222,7 +222,7 @@ def detect_change(img1_pil, img2_pil, threshold, model_type, unique_id):
 def save_score_map(score_map, path):
     """将 score_map 保存为 PNG（0-1 float → 0-255 uint8），供前端重新调阈值。"""
     score_uint8 = (np.clip(score_map, 0, 1) * 255).astype(np.uint8)
-    _imwrite(path, score_uint8)
+    imwrite(path, score_uint8)
 
 
 def load_score_map(path):
@@ -490,7 +490,7 @@ def evaluate_models(img1_pil, img2_pil, label_pil, model_list, threshold=0.5, sa
 
         if save_masks:
             uid = str(uuid.uuid4())[:8]
-            _imwrite(f"results/eval_{model_name}_{uid}_mask.png", pred_mask)
+            imwrite(f"results/eval_{model_name}_{uid}_mask.png", pred_mask)
             metrics["mask_url"] = f"/results/eval_{model_name}_{uid}_mask.png"
 
         results[model_name] = metrics

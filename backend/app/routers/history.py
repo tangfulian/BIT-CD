@@ -1,27 +1,19 @@
 import logging
-from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from backend.app.core.limiter import get_user_key, limiter
 from backend.app.core.security import get_current_user, get_db
+# 时间换算已收进 core/timefmt：这里原先自己有一份 _to_local，而 compare/admin/auth
+# 各自直接 strftime，导致同一个系统里不同页面的时间差 8 小时。
+from backend.app.core.timefmt import to_local
 from backend.app.models.detection import DetectionResultDB
 from backend.app.models.user import UserDB
 from backend.app.services.record_access import query_owned_records, rewrite_url
 
 router = APIRouter(tags=["历史记录"])
 logger = logging.getLogger(__name__)
-
-CST = timezone(timedelta(hours=8))
-
-
-def _to_local(dt: datetime | None) -> str:
-    if dt is None:
-        return ""
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(CST).strftime("%Y-%m-%d %H:%M:%S")
 
 
 @router.get("/history")
@@ -67,7 +59,7 @@ def get_user_history(
             "score": rewrite_url(base_url, r.score_url) or "",
             "ai_change_type": r.ai_change_type or "",
             "ai_confidence": r.ai_confidence or 0.0,
-            "time": _to_local(r.created_at),
+            "time": to_local(r.created_at),
         }
         for r in items
     ]
