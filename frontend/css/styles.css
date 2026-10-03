@@ -179,10 +179,8 @@ body {
 }
 .fade-in { animation: fadeIn 0.5s var(--ease-out); }
 
-@keyframes toastSlideUp {
-    from { opacity: 0; transform: translateX(-50%) translateY(16px); }
-    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
+/* @keyframes toastSlideUp 已删除：它只被旧的那份 .toast 定义（底部居中胶囊）
+   使用，而那份已被文件后部的「Toast 通知」段完全取代。 */
 @keyframes modalScaleIn {
     from { opacity: 0; transform: scale(0.92) translateY(16px); }
     to   { opacity: 1; transform: scale(1) translateY(0); }
@@ -191,23 +189,10 @@ body {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-@keyframes skeletonPulse {
-    0%   { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-}
-
-/* ---- 骨架屏 ---- */
-.skeleton {
-    background: linear-gradient(90deg, var(--border-light) 25%, var(--bg-main) 50%, var(--border-light) 75%);
-    background-size: 200% 100%;
-    animation: skeletonPulse 1.5s ease-in-out infinite;
-    border-radius: var(--radius-sm);
-}
-.skeleton-text { height: 14px; width: 60%; margin-bottom: 8px; }
-.skeleton-title { height: 22px; width: 40%; margin-bottom: 16px; }
-.skeleton-card { height: 120px; width: 100%; border-radius: var(--radius-md); }
-.skeleton-avatar { width: 40px; height: 40px; border-radius: var(--radius-full); }
-.skeleton-loading { padding: 8px 0; }
+/* ---- 骨架屏 ----
+   规则本体在文件后部的「Skeleton 骨架屏」段（那里还带暗色主题覆盖）。
+   此处原先另有一份完整定义，两份同时生效且取值不同，而**后一份赢** ——
+   留两份只会让人以为改这里有效。已合并，勿在此处再加。 */
 
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -216,7 +201,9 @@ body {
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
-    .skeleton { animation: none; background: var(--border-light); }
+    /* 注意：.skeleton 的降级规则**不在这里**。它原本在此，但被文件后部那份
+       重复的 .skeleton 定义盖掉（同特异性、后者在后），等于对开启
+       prefers-reduced-motion 的用户完全失效。已移到骨架屏定义之后。 */
 }
 
 .theme-transitioning * {
@@ -843,30 +830,14 @@ body {
     display: inline;
 }
 
-/* ---- Auth Overlay 关闭按钮 ---- */
-.auth-overlay-close {
-    position: fixed;
-    top: 24px;
-    right: 24px;
-    z-index: 100;
-    width: 40px; height: 40px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 50%;
-    color: rgba(255,255,255,0.6);
-    font-size: 22px;
-    line-height: 1;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.auth-overlay-close:hover {
-    background: rgba(255,255,255,0.12);
-    color: rgba(255,255,255,0.9);
-}
+/* ---- Auth Overlay 关闭按钮 ----
+   规则本体在文件前部的「登录 / 注册」段（.auth-container 那一节）。
+   此处原先另有一份完整定义，两份同时生效 —— 这一份排在后面，用固定定位、
+   圆形、40px 把前一份的位置与形状都盖掉了，只有 hover 的 border-color
+   因为这份没写而漏出来，于是按钮实际是「旧底座 + 新金色描边」的混合体。
+   已删除。保留前一份：方角 3px、深棕描边，与浮层的「土壤板」语言一致；
+   且父元素 .auth-container 本就是 position:relative，absolute 定位正确，
+   不需要这里的 fixed + z-index。 */
 
 /* ---- 主内容区 ---- */
 .main-content {
@@ -1374,30 +1345,18 @@ select.form-control {
     text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
-/* ---- Toast 通知 ---- */
-.toast {
-    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
-    padding: 12px 28px; border-radius: var(--radius-full);
-    font-size: var(--font-sm); font-weight: var(--weight-medium);
-    z-index: 99999; pointer-events: none;
-    animation: toastSlideUp 0.35s var(--ease-spring);
-    letter-spacing: var(--tracking-tight);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-}
-.toast-info {
-    background: rgba(44,94,68,0.88); color: white;
-    box-shadow: 0 4px 20px rgba(44,94,68,0.25);
-}
-.toast-success {
-    background: rgba(16,185,129,0.88); color: white;
-    box-shadow: 0 4px 20px rgba(16,185,129,0.25);
-}
-.toast-error {
-    background: rgba(239,68,68,0.88); color: white;
-    box-shadow: 0 4px 20px rgba(239,68,68,0.25);
-}
+/* ---- Toast 通知 ----
+   规则本体在文件后部的「Toast 通知」段（.toast-container + .toast + 四个类型）。
+   此处原先另有一份完整定义（底部居中胶囊），几乎全是死代码：
+   它的 .toast-info/.toast-success/.toast-error 背景色被后面那份 .toast 的
+   background 盖掉（同特异性、后者在后），@keyframes toastSlideUp 也只被它用。
+
+   但它有几条**没有**被覆盖，而且正在破坏布局：position:fixed / bottom:32px /
+   left:50% 。toast.js 是按「右上角纵向排列」写的（.toast-container），于是每条
+   toast 都被钉在视口底部正中 —— 同时弹三条时它们完全重叠在同一坐标，用户只看得见
+   最后一条。实测：三条的 y 均为 872px。
+
+   已整段删除。 */
 
 /* ---- 弹窗 ---- */
 .modal-overlay {
@@ -1554,15 +1513,11 @@ select.form-control {
     padding: 16px 20px;
     display: flex; align-items: center; justify-content: space-between;
 }
-    position: absolute;
-    right: 0; bottom: 0;
-    width: 18px; height: 18px;
-    cursor: nwse-resize;
-    background: linear-gradient(135deg, transparent 40%, var(--border) 40%, var(--border) 60%, transparent 60%);
-    opacity: 0;
-    transition: opacity 0.2s;
-}
 
+/* 此处原有一段丢了选择器的声明（7 行缩放手柄属性 + 一个游离的 `}`）——
+   是下面 .chatbot-resize-handle 的重复副本，属性一个不少，被解析器整段
+   丢弃，所以缩放手柄一直工作正常。删掉是因为那个游离 `}` 让全文件的括号
+   不平衡（-1），压缩器 / linter / 按括号切分的工具都会因此出错。 */
 .chatbot-resize-handle {
     position: absolute;
     right: 0; bottom: 0;
@@ -2046,10 +2001,13 @@ select.form-control {
     background: #00e599;
     border-radius: 50%;
     box-shadow: 0 0 8px #00e599, 0 0 16px rgba(0,229,153,0.4);
-    animation: pulse-dot 2s ease-in-out infinite;
+    /* 名字必须与侧边栏访客点那个 pulse-dot 区分开：两者原来同名，而这份
+       排在文件更后面，于是同特异性下把访客点那条只有 opacity 的 keyframes
+       整个盖掉 —— 琥珀色（#f59e0b）的访客点因此戴了一圈绿色光晕。 */
+    animation: pulse-glow 2s ease-in-out infinite;
 }
 
-@keyframes pulse-dot {
+@keyframes pulse-glow {
     0%, 100% { opacity: 1; box-shadow: 0 0 8px #00e599, 0 0 16px rgba(0,229,153,0.4); }
     50%      { opacity: 0.5; box-shadow: 0 0 4px #00e599, 0 0 8px rgba(0,229,153,0.2); }
 }
@@ -3409,18 +3367,15 @@ select.form-control {
 [data-theme="dark"] .compare-result-grid img { background: #161f1a; border-color: var(--border); }
 [data-theme="dark"] .compare-selectors .btn-primary { background: var(--primary); }
 
-/* ---- 暗色模式下 select 箭头适配 ---- */
-[data-theme="dark"] select.form-control {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2365706a' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
-}
+/* ---- 暗色模式下 select 箭头适配 ----
+   箭头（fill #65706a）已删除：「dark mode: form controls」那份把同一个
+   background-image 覆盖成了更亮的 #99a89f，这里一直是死的。 */
 
 /* ---- 暗色滚动条 ---- */
 [data-theme="dark"] ::-webkit-scrollbar-thumb       { background: rgba(255,255,255,0.1); }
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover  { background: rgba(255,255,255,0.18); }
-/* 暗色 toast */
-[data-theme="dark"] .toast-info { background: rgba(78,168,119,0.9); }
-[data-theme="dark"] .toast-success { background: rgba(16,185,129,0.9); }
-[data-theme="dark"] .toast-error { background: rgba(239,68,68,0.9); }
+/* 暗色 toast 的背景覆盖已随旧的那份 .toast 定义一并删除：它们改的是被盖掉的
+   背景色，从未生效；当前的暗色 toast 由文件后部的 [data-theme="dark"] .toast 负责。 */
 
 /* 暗色卡片玻璃效果 */
 [data-theme="dark"] .card {
@@ -3443,15 +3398,12 @@ select.form-control {
 }
 [data-theme="dark"] .hamburger-line { background: var(--text-primary); }
 
-/* 暗色表单深化 */
-[data-theme="dark"] .form-control {
-    background: #1c2822;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
-}
-[data-theme="dark"] .form-control:focus {
-    background: #1f2c26;
-    box-shadow: var(--state-focus-ring);
-}
+/* 暗色表单：原有一份在这附近的定义（background: #1c2822 + inset 阴影），
+   背景被后面「dark mode: form controls」那份盖掉，只有 inset 阴影还生效 ——
+   已把它并进那份，此处不再重复定义。 */
+/* [data-theme="dark"] .form-control:focus 的 background 已删除：
+   被「dark mode: form controls」那份覆盖成 #1a2420（与上方 .form-control 同样的
+   模式）。其中 box-shadow（焦点环）在那份里没有，已并过去。 */
 [data-theme="dark"] .form-control::placeholder { color: #4a5a50; }
 
 /* 暗色上传区 */
@@ -3459,10 +3411,9 @@ select.form-control {
     background: linear-gradient(135deg, rgba(26,38,29,0.8), rgba(15,22,18,0.6));
 }
 
-/* 暗色骨架屏 */
-[data-theme="dark"] .skeleton {
-    background: linear-gradient(90deg, var(--border) 25%, #1a2420 50%, var(--border) 75%);
-}
+/* 暗色骨架屏：定义已随亮色那份一起归到「Skeleton 骨架屏」段（那里紧跟着
+   一份 [data-theme="dark"] .skeleton，且 background 与 background-size 都覆盖了
+   这里原先的值，所以这段一直是死的）。 */
 
 /* 暗色分享视图 */
 [data-theme="dark"] .share-stat { background: #161f1a; }
@@ -3534,7 +3485,8 @@ select.form-control {
 .sidebar-backdrop.visible { display: block; }
 
 /* ---- 安全区适配 ---- */
-.toast { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+/* .toast 的 padding-bottom 补偿已删除：它是给「贴在屏幕底部」的旧 toast 用的，
+   而现在的 toast 在右上角，底部留白只会让它上下不对称。 */
 .chatbot-window { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* ============================================================
@@ -3674,7 +3626,8 @@ select.form-control {
     transition: color 0.2s;
 }
 .app-footer a:hover { color: var(--primary); }
-[data-theme="dark"] .app-footer { border-color: var(--border); }
+/* [data-theme="dark"] .app-footer 的 border-color 已删除：页脚只有 border-top
+   一条边框，而「dark mode: footer」那份用同样的值设了 border-top-color，重复。 */
 
 @media (max-width: 768px) {
     .app-footer { flex-direction: column; gap: 6px; text-align: center; }
@@ -3683,16 +3636,24 @@ select.form-control {
 /* ============================================================
    Skeleton 骨架屏
    ============================================================ */
+/* 骨架屏的唯一定义。文件前部原有一份重复定义，已合并到这里 ——
+   合并是逐属性核对「谁在赢」做的，不是留一份删一份：前一份有几条这里没有的
+   属性（.skeleton-text 的 width、.skeleton-card 的 width/border-radius、
+   .skeleton-loading 的 padding）必须保留，否则会静默改变渲染。 */
 .skeleton {
     background: linear-gradient(90deg, var(--bg-main) 25%, #e8e5e0 50%, var(--bg-main) 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
     border-radius: var(--radius-sm);
 }
-.skeleton-text  { height: 16px; margin-bottom: 10px; }
+.skeleton-text  { height: 16px; width: 60%; margin-bottom: 10px; }
 .skeleton-title { height: 24px; margin-bottom: 14px; width: 60%; }
 .skeleton-avatar { width: 48px; height: 48px; border-radius: 50%; }
-.skeleton-card   { min-height: 120px; }
+/* 用 height 而不是 min-height：调用方一律靠内联 style 指定高度
+   （如 style="height:56px"），而 **min-height 不受内联 height 约束** ——
+   原来的 min-height:120px 会把检测历史页那三条 56px 的骨架条顶成 120px。 */
+.skeleton-card   { height: 120px; width: 100%; border-radius: var(--radius-md); }
+.skeleton-loading { padding: 8px 0; }
 .skeleton-row    { display: flex; gap: 12px; }
 .skeleton-cell   { flex: 1; height: 14px; }
 .skeleton-img    { width: 100%; height: 200px; }
@@ -3700,6 +3661,12 @@ select.form-control {
 @keyframes skeleton-shimmer {
     0%   { background-position: 200% 0; }
     100% { background-position: -200% 0; }
+}
+
+/* 必须排在 .skeleton 之后：同特异性下靠后者生效，排前面等于没有。
+   （原先它在前部的 media query 里，被上面这份定义盖掉，一直失效。） */
+@media (prefers-reduced-motion: reduce) {
+    .skeleton { animation: none; background: var(--border-light); }
 }
 
 [data-theme="dark"] .skeleton {
@@ -3927,9 +3894,8 @@ select.form-control {
     color: var(--text-tertiary);
     margin-left: 12px;
 }
-[data-theme="dark"] .pagination-btn {
-    background: var(--bg-toolbar);
-}
+/* [data-theme="dark"] .pagination-btn 的 background 已删除：
+   「dark mode: history page」那份把它覆盖成了 #161f1a，这里一直是死的。 */
 
 /* ============================================================
    Profile 个人中心
@@ -4016,9 +3982,13 @@ select.form-control {
 [data-theme="dark"] .form-control {
     background: #161f1a;
     color: var(--text-primary);
+    /* 由旧的重复定义并入：背景那条被这份盖掉，只有这个 inset 阴影还生效 */
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
 }
 [data-theme="dark"] .form-control:focus {
     background: #1a2420;
+    /* 由旧的重复定义并入：背景那条被这份盖掉，只有焦点环还生效 */
+    box-shadow: var(--state-focus-ring);
 }
 [data-theme="dark"] select.form-control {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2399a89f' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
