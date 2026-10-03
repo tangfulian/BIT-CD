@@ -25,9 +25,11 @@ from backend.app.services.detect_service import (
     mask_to_geojson,
     model_availability,
     otsu_threshold,
+    save_score_map,
     rebuild_fusion_from_score,
     recommend_threshold_from_images,
 )
+from backend.app.services.detect_service import imwrite
 from backend.app.services.detection_pipeline import (
     SUPPORTED_MODELS,
     decode_image as _decode_image,
@@ -47,11 +49,6 @@ def _result_url(request: Request, filename: str) -> str:
     全系统只有那一份。
     """
     return result_url(str(request.base_url).rstrip("/"), filename)
-
-
-def _imwrite(path, img):
-    if not cv2.imwrite(path, img):
-        raise RuntimeError(f"无法写入文件: {path}")
 
 
 @router.get("/detect/models")
@@ -171,26 +168,38 @@ async def detect_compare(
 
     for i, model_name in enumerate(model_list):
         model_uid = f"{unique_id}_{model_name}"
-        _, change_mask, heatmap, fusion, stats = await run_in_threadpool(
+        score_map, change_mask, heatmap, fusion, stats = await run_in_threadpool(
             detect_change, img_t1, img_t2, threshold, model_name, model_uid
         )
 
         mask_filename = f"{model_uid}_mask.png"
         heat_filename = f"{model_uid}_heat.png"
         fusion_filename = f"{model_uid}_fusion.png"
-        _imwrite(f"results/{mask_filename}", change_mask)
-        _imwrite(f"results/{heat_filename}", heatmap)
-        _imwrite(f"results/{fusion_filename}", fusion)
+        score_filename = f"{model_uid}_score.png"
+        imwrite(f"results/{mask_filename}", change_mask)
+        imwrite(f"results/{heat_filename}", heatmap)
+        imwrite(f"results/{fusion_filename}", fusion)
+        # 概率图必须落盘。此前这里把 detect_change 返回的第一位丢掉了（写成 `_,`），
+        # 于是对比检测建的记录永远缺 score_url，在**灾害定损 / Otsu / 重调阈值**
+        # 三条路径上全被拒（「该记录缺少概率图」）—— 单张检测一直是对的，只有这条
+        # 路径漏了。这就是手抄一份编排的代价：抄的时候少抄了一行。
+        save_score_map(score_map, f"results/{score_filename}")
 
         results[model_name] = {
             "mask": _result_url(request, mask_filename),
             "heat": _result_url(request, heat_filename),
             "fusion": _result_url(request, fusion_filename),
+            "score": _result_url(request, score_filename),
             "stats": stats,
         }
 
         # 第一个模型的结果写入 DB 作为主记录（仅登录用户）
         if i == 0 and current_user is not None:
+            # T2 只为落库的那一条存：/detect/rethreshold 由 score 路径推出
+            # {uid}_t2.png 来重建融合图，缺了就重建不出来。其余模型不落库，
+            # 存了没人用，而 results/ 已经堆了几千个文件。
+            # 用 PIL 保存而不是 cv2：cv2 按 BGR 解释数组，会红蓝互换。
+            img_t2.save(f"results/{model_uid}_t2.png")
             detection = DetectionResultDB(
                 user_id=current_user.id,
                 model=model_name,
@@ -206,6 +215,7 @@ async def detect_compare(
                 mask_url=_result_url(request, mask_filename),
                 heat_url=_result_url(request, heat_filename),
                 fusion_url=_result_url(request, fusion_filename),
+                score_url=_result_url(request, score_filename),
             )
             db.add(detection)
             db.commit()
@@ -258,13 +268,13 @@ async def rethreshold(
     unique_id = str(uuid.uuid4())[:8]
     mask_filename = f"rethresh_{detection_id}_{unique_id}_mask.png"
     heat_filename = f"rethresh_{detection_id}_{unique_id}_heat.png"
-    _imwrite(f"results/{mask_filename}", change_mask)
-    _imwrite(f"results/{heat_filename}", heatmap)
+    imwrite(f"results/{mask_filename}", change_mask)
+    imwrite(f"results/{heat_filename}", heatmap)
 
     fusion_filename = f"rethresh_{detection_id}_{unique_id}_fusion.png"
     fusion = rebuild_fusion_from_score(score_path, change_mask)
     if fusion is not None:
-        _imwrite(f"results/{fusion_filename}", fusion)
+        imwrite(f"results/{fusion_filename}", fusion)
 
     detection.threshold = round(threshold, 4)
     detection.ratio = ratio

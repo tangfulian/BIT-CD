@@ -5,8 +5,10 @@ from sqlalchemy.orm import Session
 
 from backend.app.core.limiter import get_user_key, limiter
 from backend.app.core.security import get_current_user, get_db
+from backend.app.core.timefmt import to_local
 from backend.app.models.detection import DetectionResultDB
 from backend.app.models.user import UserDB
+from backend.app.services.record_access import rewrite_url
 
 router = APIRouter(tags=["对比"])
 logger = logging.getLogger(__name__)
@@ -30,7 +32,13 @@ def compare_results(
     ):
         raise HTTPException(status_code=403, detail="无权访问")
 
+    base_url = str(request.base_url).rstrip("/")
+
     def _format(r):
+        # URL 必须重写、时间必须转东八区 —— 这两条约定收在 record_access 与
+        # core/timefmt 里。本文件原先各写了一份，于是同一个系统里结果对比页的
+        # 图片可能裂（库里存的是检测当时的绝对地址，服务器换过域名就失效）、
+        # 时间比其他页面早 8 小时。history.py 与 series.py 都已接过去。
         return {
             "id": r.id,
             "model": r.model,
@@ -45,10 +53,10 @@ def compare_results(
             "t2_time": r.t2_time or "",
             "ai_change_type": r.ai_change_type or "",
             "ai_confidence": r.ai_confidence or 0.0,
-            "mask": r.mask_url,
-            "heat": r.heat_url,
-            "fusion": r.fusion_url,
-            "time": r.created_at.strftime("%Y-%m-%d %H:%M:%S") if r.created_at else "",
+            "mask": rewrite_url(base_url, r.mask_url),
+            "heat": rewrite_url(base_url, r.heat_url),
+            "fusion": rewrite_url(base_url, r.fusion_url),
+            "time": to_local(r.created_at),
         }
 
     return {"code": 200, "data": {"result1": _format(r1), "result2": _format(r2)}}
