@@ -5,7 +5,7 @@
 # ============================================================
 set -e
 
-GITHUB_REPO="https://github.com/<你的用户名>/BIT_CD.git"
+GITHUB_REPO="https://github.com/tangfulian/BIT-CD.git"
 APP_DIR="/opt/BIT_CD"
 
 echo "=== [1/4] 安装 Docker ==="

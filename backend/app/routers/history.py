@@ -104,6 +104,16 @@ def clear_all_history(
     current_user: UserDB = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """清空历史记录。
+
+    ★ 管理员分支删的是**全库所有用户**的记录，不只是自己的。这是有意的
+      ——管理员口径在本文件里一贯如此（列表、单条删除也都带旁路），且前端
+      有二次确认（history.confirmClearAll）挡着，不是一键误触。
+
+      但改动这里之前必须想清楚影响面：没有软删除、没有回收站、没有备份，
+      一次请求即不可逆。相比之下 plot.py 全程按 user_id 过滤、没有旁路，
+      两个模块口径不一致 —— 这是现状，不是遗漏，动它需要单独决定。
+    """
     if current_user.role == "admin":
         db.query(DetectionResultDB).delete()
     else:
