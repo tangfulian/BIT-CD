@@ -157,6 +157,13 @@ export const zhCN = {
     "batch.detecting": "批量检测中...",
     "batch.complete": "批量检测完成！",
     "batch.progress": "进度",
+    // 批量汇总条的三个标签。此前 HTML 里写了 data-i18n="batch.sumTotal" 等，
+    // 但两份 locale 都没有这些键，而 _translateElement 在找不到键时会把**原始
+    // key 写进 textContent**（`key in dict ? dict[key] : key`），HTML 里的中文
+    // 兜底被覆盖 —— 汇总条于是显示「batch.sumTotal」这种字符串，中英都一样坏。
+    "batch.sumTotal": "总数",
+    "batch.sumDone": "已完成",
+    "batch.sumFailed": "失败",
     "batch.queued": "排队中",
     "batch.running": "检测中",
     "batch.done": "完成",
@@ -570,6 +577,12 @@ export const zhCN = {
     "modelCompare.lowest": "最低",
     "modelCompare.detectionFailed": "检测失败",
     "modelCompare.threshold": "阈值",
+    // 模型展示名的唯一定义处。此前这四行散在 6 个地方且写法各不相同
+    // （BIT 有「…（推荐）」/「…」/裸名三种），见 js/models.js 的说明。
+    "model.BIT.label": "BIT 变化检测模型（推荐）",
+    "model.DIFF.label": "传统差分模型（基准对比）",
+    "model.AFCF3D.label": "AFCF3D-Net 3D卷积模型",
+    "model.BIT_LuojiaSET.label": "BIT LuojiaSET（珞珈数据集）",
 
     // 批量恢复
     "batch.restoreBanner": "检测到未完成的批量任务（已完成 {done}/{total}），是否恢复？",

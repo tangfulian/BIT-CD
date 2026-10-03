@@ -269,12 +269,22 @@ export const Detector = {
         const landData = LandInfo.getData();
         const changeType = landData.change_type_define || "黑土层变薄退化";
 
-        // Model comparison: if multiple checkboxes checked, run compare mode
+        // 勾选 2 个以上走对比模式（复选框自己的提示语就是这么写的）
         const selectedModels = this._getSelectedCompareModels();
         if (selectedModels.length >= 2) {
             return this._startCompare(file1, file2, btn, status, landData, changeType);
         }
-        const modelName = selectedModels.length === 1 ? selectedModels[0] : document.getElementById("model_type").value;
+        // 单张检测的模型**一律取下拉**。
+        //
+        // 这里原来是 `selectedModels.length === 1 ? selectedModels[0] : 下拉`，
+        // 即「恰好勾 1 个时复选框赢，下拉被完全忽略」。而 BIT 复选框默认就是勾选
+        // 状态，也没有任何代码在下拉变化时同步复选框 —— 于是用户在下拉里选
+        // AFCF3D 再点开始检测，实际跑的是 BIT，通知/历史/导出报告里也都写 BIT。
+        // 界面显示的与真正执行的不一致，是那种「看起来正常、结果全错」的 bug。
+        //
+        // 按控件的自我声明收敛：下拉叫「选择检测模型」，复选框的提示语是
+        // 「勾选 2 个以上模型可进行对比」—— 所以复选框只在 ≥2 时参与，单张看下拉。
+        const modelName = document.getElementById("model_type").value;
 
         const fd = new FormData();
         fd.append("img1", file1);

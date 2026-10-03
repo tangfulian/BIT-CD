@@ -377,12 +377,9 @@
                             <div class="config-row">
                                 <div class="form-group" style="flex:2;">
                                     <label class="form-label" data-i18n="detect.selectModel">选择检测模型</label>
-                                    <select id="model_type" class="form-control">
-                                        <option value="BIT">BIT 变化检测模型（推荐）</option>
-                                        <option value="DIFF">传统差分模型（基准对比）</option>
-                                        <option value="AFCF3D">AFCF3D-Net 3D卷积模型</option>
-                                        <option value="BIT_LuojiaSET">BIT LuojiaSET（珞珈数据集）</option>
-                                    </select>
+                                    <!-- 选项由 js/models.js 统一渲染。此处原先有一份手抄清单，
+                                         与另外 5 份的模型展示名已经漂开（BIT 三种写法、DIFF 四种） -->
+                                    <select id="model_type" class="form-control"></select>
                                 </div>
                                 <div class="form-group" style="flex:1;">
                                     <label class="form-label" data-i18n="detect.threshold">置信度阈值</label>
@@ -399,10 +396,9 @@
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                                     <span data-i18n="modelCompare.selectHint">勾选 2 个以上模型可进行对比</span>
                                 </span>
-                                <label class="model-check-label"><input type="checkbox" class="model-compare-check" value="BIT" checked> BIT <small class="model-tag-ai">AI模型</small></label>
-                                <label class="model-check-label"><input type="checkbox" class="model-compare-check" value="DIFF"> DIFF <small class="model-tag-basic">基准方法</small></label>
-                                <label class="model-check-label"><input type="checkbox" class="model-compare-check" value="AFCF3D"> AFCF3D <small class="model-tag-ai">AI模型</small></label>
-                                <label class="model-check-label"><input type="checkbox" class="model-compare-check" value="BIT_LuojiaSET"> BIT_LuojiaSET <small class="model-tag-ai">AI模型</small></label>
+                                <!-- 复选框由 js/models.js 渲染；标签文案走 locale 的
+                                     modelCompare.aiModel / modelCompare.basicMethod
+                                     （原先这里硬编码「基准方法」，与 locale 的「基础方法」各写各的） -->
                             </div>
 
                             <div class="form-group">
@@ -602,12 +598,8 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label" data-i18n="detect.selectModel">选择检测模型</label>
-                            <select id="batch_model" class="form-control">
-                                <option value="BIT">BIT 变化检测模型</option>
-                                <option value="DIFF">传统差分模型</option>
-                                <option value="AFCF3D">AFCF3D-Net 3D卷积模型</option>
-                                <option value="BIT_LuojiaSET">BIT LuojiaSET（珞珈数据集）</option>
-                            </select>
+                            <!-- 选项由 js/models.js 统一渲染（此处原为第 3 份手抄副本） -->
+                            <select id="batch_model" class="form-control"></select>
                         </div>
                         <div class="form-group"><label class="form-label" data-i18n="batch.t1Label">T1 时相影像（批量）</label><input type="file" id="batch_t1" multiple accept="image/*" class="form-control"></div>
                         <div class="form-group"><label class="form-label" data-i18n="batch.t2Label">T2 时相影像（批量）</label><input type="file" id="batch_t2" multiple accept="image/*" class="form-control"></div>
@@ -690,12 +682,11 @@
                             <option value="耕地非粮化（种树/挖塘）">耕地非粮化</option>
                             <option value="黑土层变薄退化">黑土层变薄退化</option>
                         </select>
+                        <!-- 只保留「所有模型」占位：具体模型由 history.js 按**实际出现过的记录**
+                             重建（updateModelOptions）。此处原先另抄了一份静态清单，顺序与
+                             展示名都和动态版不一样，加载前/请求失败时会闪回这份过期的手抄版。 -->
                         <select id="historyModelFilter" class="form-control" style="flex: 1; min-width: 120px;">
                             <option value="all" data-i18n="history.allModels">所有模型</option>
-                            <option value="BIT">BIT</option>
-                            <option value="BIT_LuojiaSET">BIT_LuojiaSET</option>
-                            <option value="AFCF3D">AFCF3D</option>
-                            <option value="DIFF">传统差分</option>
                         </select>
                         <button class="btn-gray" id="historyFilterBtn" style="flex: 0 0 auto; padding: 8px 16px;">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
@@ -1062,12 +1053,8 @@
 
                 <div class="card" style="margin-bottom:20px;">
                     <h4 style="margin-bottom:8px;" data-i18n="eval.models">选择评估模型</h4>
-                    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
-                        <label class="model-check-label"><input type="checkbox" class="eval-model-check" value="BIT" checked> BIT</label>
-                        <label class="model-check-label"><input type="checkbox" class="eval-model-check" value="DIFF" checked> DIFF</label>
-                        <label class="model-check-label"><input type="checkbox" class="eval-model-check" value="AFCF3D" checked> AFCF3D</label>
-                        <label class="model-check-label"><input type="checkbox" class="eval-model-check" value="BIT_LuojiaSET" checked> BIT_LuojiaSET</label>
-                    </div>
+                    <!-- 复选框由 js/models.js 渲染（此处原为第 5 份手抄副本，默认全勾） -->
+                    <div id="evalModelChecks" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;"></div>
                     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
                         <label style="font-size:13px;color:var(--text-secondary);" data-i18n="detect.threshold">阈值：</label>
                         <input type="number" id="evalThreshold" value="0.5" min="0.1" max="0.99" step="0.01" class="form-control" style="width:80px;">

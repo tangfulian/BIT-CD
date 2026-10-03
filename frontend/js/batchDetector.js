@@ -218,7 +218,7 @@ export const BatchDetector = {
                     statusCell.textContent = I18n.t('batch.done');
                     statusCell.style.color = "#4ade80";
                     tr.querySelector('.action-cell').innerHTML = '';
-                    state.batchResult.push({
+                    _putBatchResult({
                         name: t1Files[index].name,
                         ratio: json.stats.ratio,
                         changePixel: json.stats.change_pixel,
@@ -239,7 +239,7 @@ export const BatchDetector = {
                 } catch (e) {
                     statusCell.textContent = e.name === 'AbortError' ? I18n.t('batch.cancelled') : I18n.t('batch.failed', '失败');
                     statusCell.style.color = '#f87171';
-                    state.batchResult.push({
+                    _putBatchResult({
                         name: t1Files[index].name,
                         ratio: null,
                         changePixel: null,
@@ -416,7 +416,7 @@ export const BatchDetector = {
                     <td class="action-cell" style="padding:8px 10px;border-bottom:1px solid var(--border);"></td>
                     <td class="status-cell" style="padding:14px 16px;border-bottom:1px solid var(--border);color:#4ade80;">${I18n.t('batch.done')}</td>
                 `;
-                state.batchResult.push({
+                _putBatchResult({
                     name: task.fileName, ratio: r.stats.ratio,
                     changePixel: r.stats.change_pixel, totalPixel: r.stats.total_pixel,
                     model: task.modelName, threshold: task.threshold,
@@ -478,7 +478,7 @@ export const BatchDetector = {
                     statusCell.textContent = I18n.t('batch.done');
                     statusCell.style.color = "#4ade80";
                     tr.querySelector('.action-cell').innerHTML = '';
-                    state.batchResult.push({
+                    _putBatchResult({
                         name: task.fileName, ratio: json.stats.ratio,
                         changePixel: json.stats.change_pixel, totalPixel: json.stats.total_pixel,
                         model: modelName, threshold: threshold, time: new Date().toLocaleString(),
@@ -492,7 +492,7 @@ export const BatchDetector = {
                 } catch (e) {
                     statusCell.textContent = e.name === 'AbortError' ? I18n.t('batch.cancelled') : I18n.t('batch.failed', '失败');
                     statusCell.style.color = '#f87171';
-                    state.batchResult.push({
+                    _putBatchResult({
                         name: task.fileName, ratio: null,
                         changePixel: null, totalPixel: null,
                         model: modelName, threshold: threshold, time: new Date().toLocaleString(),
@@ -578,19 +578,25 @@ function _retryTask(oldId) {
             statusCell.textContent = I18n.t('batch.done');
             statusCell.style.color = "#4ade80";
             tr.querySelector('.action-cell').innerHTML = '';
-            state.batchResult.push({
+            _putBatchResult({
                 name: name, ratio: json.stats.ratio,
                 changePixel: json.stats.change_pixel, totalPixel: json.stats.total_pixel,
                 model: modelName, threshold: threshold, time: new Date().toLocaleString(),
                 status: 'done', maskUrl: json.mask, heatUrl: json.heat, fusionUrl: json.fusion,
                 t1Url: t1Url, t2Url: t2Url, actualArea: actualArea
             });
+            // 与上面两条路径（开始执行 / 恢复）保持一致。
+            // 注：_batchDone 实际只在开头拼一次 "(N/M)" 标签时被读，执行中的真实
+            // 计数一律由 state.batchResult 重算（见 _updateBatchSummary 与
+            // Notify.batchComplete 的 doneCount），所以这里补不补都不影响界面 ——
+            // 补上是为了三条路径对称，免得下次有人照抄某一条时又少一行。
+            _batchDone++;
             state.persist();
             return json;
         } catch (e) {
             statusCell.textContent = e.name === 'AbortError' ? I18n.t('batch.cancelled') : I18n.t('batch.failed', '失败');
             statusCell.style.color = '#f87171';
-            state.batchResult.push({
+            _putBatchResult({
                 name: name, ratio: null,
                 changePixel: null, totalPixel: null,
                 model: modelName, threshold: threshold, time: new Date().toLocaleString(),
@@ -607,6 +613,24 @@ function _retryTask(oldId) {
 }
 
 // 仅在确实完成时由 task-progress 事件调用，onBatchComplete 已置 null 防重入
+/**
+ * 写入一条结果，同一张图**替换**而不是追加。
+ *
+ * 三条执行路径原先都直接 push。对「开始执行 / 恢复」没问题（一张图只跑一次），
+ * 但**重试**会让同一张图留下两条：旧的 status:'error' 不删，新的 status:'done'
+ * 又追加上去。后果有两处：
+ *   1. 汇总条把同一张图同时算进「已完成」和「失败」—— N 张图统计出 N+1 条；
+ *   2. 导出的 CSV / PDF 报告里这张图出现两次，一次记失败、一次记成功。
+ *
+ * 用 t1Url 作键：它是每张图各自的对象 URL（blob:），同一张图在三份 meta 里
+ * 是同一个值；而重名文件各有各的 URL，不会互相误删。
+ */
+function _putBatchResult(entry) {
+    var i = state.batchResult.findIndex(function (r) { return r.t1Url === entry.t1Url; });
+    if (i >= 0) state.batchResult[i] = entry;
+    else state.batchResult.push(entry);
+}
+
 function _finishBatch() {
     if (!_onBatchComplete) return;
     var cb = _onBatchComplete;

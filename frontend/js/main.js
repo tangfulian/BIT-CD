@@ -18,6 +18,7 @@ import { UserManager } from './userManager.js';
 import { Profile } from './profile.js';
 import { Notify } from './notify.js';
 import { I18n } from './i18n.js';
+import { ModelRegistry } from './models.js';
 import { eventBus } from './eventBus.js';
 import { state } from './state.js';
 import { Shortcuts } from './shortcuts.js';
@@ -60,6 +61,12 @@ window.onload = () => {
     safeInit('Uploader', () => Uploader.init());
     safeInit('GPSLocator', () => GPSLocator.init());
     safeInit('LandInfo', () => LandInfo.init());
+    // 必须排在 Detector / BatchDetector / Evaluator / History 之前：
+    // 模型下拉与复选框由它渲染，而那几个模块的 init 会读写这些控件 ——
+    // Detector._restoreSettings 有 `option[value=...]` 的存在性守卫，
+    // 控件还没渲染时守卫失败，用户上次选的模型会**静默丢失**。
+    // （I18n.t 在模块加载时就可用，不需要等 I18n.init。）
+    safeInit('ModelRegistry', () => ModelRegistry.init());
     safeInit('Detector', () => Detector.init());
     safeInit('BatchDetector', () => BatchDetector.init());
     safeInit('Chatbot', () => Chatbot.init());

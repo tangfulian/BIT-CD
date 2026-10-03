@@ -611,7 +611,13 @@ export const Timeline = {
             const fd = new FormData();
             fd.append('img1', phases[i].file);
             fd.append('img2', phases[i + 1].file);
-            fd.append('model', $('seriesModel')?.value || 'BIT');
+            // 模型与阈值在这里是**写死的**。
+            // 原代码是 `$('seriesModel')?.value || 'BIT'` —— 但全前端没有任何
+            // 元素的 id 是 seriesModel（建序列弹窗里只有 name/location/area 与
+            // 上传行）。可选链让 undefined 静默退化成 'BIT'，看起来可配置、
+            // 实际一直跑 BIT。要让它可配，得先在弹窗里加选择器；在那之前，
+            // 与其留一个查不到的元素假装可配，不如把事实写出来。
+            fd.append('model', 'BIT');
             fd.append('threshold', '0.5');
             fd.append('series_id', String(seriesId));
             fd.append('phase_index', String(i));

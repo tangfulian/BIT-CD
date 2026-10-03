@@ -150,6 +150,10 @@ export const en = {
     "batch.detecting": "Batch processing...",
     "batch.complete": "Batch Complete!",
     "batch.progress": "Progress",
+    // 见 zh-CN.js 同处注释：这三个键缺失时汇总条会直接显示原始 key 字符串
+    "batch.sumTotal": "Total",
+    "batch.sumDone": "Done",
+    "batch.sumFailed": "Failed",
     "batch.queued": "Queued",
     "batch.running": "Running",
     "batch.done": "Done",
@@ -546,6 +550,11 @@ export const en = {
     "modelCompare.lowest": "Lowest",
     "modelCompare.detectionFailed": "Detection Failed",
     "modelCompare.threshold": "Threshold",
+    // 见 zh-CN.js 同处注释：模型展示名的唯一定义处
+    "model.BIT.label": "BIT Change Detection (recommended)",
+    "model.DIFF.label": "Classic Difference (baseline)",
+    "model.AFCF3D.label": "AFCF3D-Net (3D conv)",
+    "model.BIT_LuojiaSET.label": "BIT LuojiaSET",
 
     // Batch Restore
     "batch.restoreBanner": "Unfinished batch task detected ({done}/{total} completed). Resume?",
