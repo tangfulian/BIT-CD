@@ -133,8 +133,10 @@ export const Agent = {
 
         const toolsBtn = document.getElementById("agentModeTools");
         const browserBtn = document.getElementById("agentModeBrowser");
-        if (toolsBtn) toolsBtn.className = isTools ? 'btn-primary' : 'btn-gray';
-        if (browserBtn) browserBtn.className = isTools ? 'btn-gray' : 'btn-primary';
+        // 保留 agent-mode-btn：btn-primary 是通栏按钮，没有它这个类
+        // 放进一行里会被拉满（见 styles.css 里该类的说明）
+        if (toolsBtn) toolsBtn.className = (isTools ? 'btn-primary' : 'btn-gray') + ' agent-mode-btn';
+        if (browserBtn) browserBtn.className = (isTools ? 'btn-gray' : 'btn-primary') + ' agent-mode-btn';
 
         const hint = document.getElementById("agentModeHint");
         if (hint) hint.textContent = I18n.t(isTools ? 'agent.modeToolsHint' : 'agent.modeBrowserHint');

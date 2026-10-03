@@ -1781,6 +1781,21 @@ select.form-control {
     margin-top: 14px;
 }
 
+/* 执行方式切换。
+   .btn-primary 是为「整块表单的主操作」设计的通栏按钮（width:100%、
+   margin-top:6px、display:flex 居中），直接摆进一行里第一个就会被拉满，
+   看起来像两个不同系统的控件。这里只收窄布局，配色仍沿用这两个类，
+   深浅两套主题都不必各自再写一遍。 */
+.agent-mode-btn {
+    width: auto;
+    flex: 0 0 auto;
+    min-width: 0;
+    min-height: 40px;
+    margin-top: 0;
+    padding: 0 18px;
+    font-size: var(--font-sm);
+}
+
 .agent-keyboard-hint {
     margin-top: 10px;
     font-size: var(--font-xs);
