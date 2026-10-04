@@ -5,7 +5,7 @@
 """
 import pathlib, re, sys, io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-ROOT = pathlib.Path(r"d:\A汤福连的比赛与实验\BIT_CD")
+ROOT = pathlib.Path(r"D:\BIT_CD")
 
 idx = ROOT / 'frontend/index.html'
 t = idx.read_text(encoding='utf-8')

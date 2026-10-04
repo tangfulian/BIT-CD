@@ -2,7 +2,7 @@
 """验证本轮修复是否真正生效（端到端行为，而非仅语法正确）"""
 import os, sys, io, pathlib
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-ROOT = pathlib.Path(r"d:\A汤福连的比赛与实验\BIT_CD")
+ROOT = pathlib.Path(r"D:\BIT_CD")
 os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
 os.environ["DATABASE_URL"] = "sqlite:///./verify_tmp.db"

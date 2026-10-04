@@ -2,7 +2,7 @@
 """给 detect.py 加统一的图片解码入口，非法图片返回 400 而非裸 500"""
 import pathlib, sys, io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-ROOT = pathlib.Path(r"d:\A汤福连的比赛与实验\BIT_CD")
+ROOT = pathlib.Path(r"D:\BIT_CD")
 
 p = ROOT / 'backend/app/routers/detect.py'
 t = p.read_text(encoding='utf-8')

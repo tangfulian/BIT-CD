@@ -7,7 +7,7 @@ torch 前向（CPU 上数百毫秒到数秒）与 dashscope SDK（网络往返�
 """
 import pathlib, sys, io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-ROOT = pathlib.Path(r"d:\A汤福连的比赛与实验\BIT_CD")
+ROOT = pathlib.Path(r"D:\BIT_CD")
 
 
 def patch(rel, pairs, add_import_after):

@@ -84,6 +84,10 @@ window.onload = () => {
     safeInit('NDVIViewer', () => NDVIViewer.init());
     safeInit('Agent', () => Agent.init());
     safeInit('Disaster', () => Disaster.init());
+    // SystemStatus 此前 import 了却从没 init（原来 init 是空的，没人发现）。
+    // 现在它要挂一个 lang-change 监听：运行时长是 JS 按语言拼出来的字符串，
+    // 不是 data-i18n 元素，切语言时不会自己重排。
+    safeInit('SystemStatus', () => SystemStatus.init());
 
     const langBtn = document.getElementById("langSwitchBtn");
     if (langBtn) {

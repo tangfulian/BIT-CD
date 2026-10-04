@@ -2,7 +2,7 @@
 """第二批修复：前端存储型 XSS 转义、.dockerignore 补齐、检查其他未转义点"""
 import pathlib, sys, io, re
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-ROOT = pathlib.Path(r"d:\A汤福连的比赛与实验\BIT_CD")
+ROOT = pathlib.Path(r"D:\BIT_CD")
 
 # ---------- 1) .dockerignore 补 .env.production ----------
 di = ROOT / '.dockerignore'

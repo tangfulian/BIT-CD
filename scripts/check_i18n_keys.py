@@ -14,6 +14,11 @@ import re
 import sys
 from pathlib import Path
 
+# Windows 控制台默认是 GBK，报告里的 ✓ ✗ ⚠ 会直接抛 UnicodeEncodeError，
+# 把一次「没有任何问题」的检查变成崩溃。改走 UTF-8 并允许替换，别让输出编码
+# 决定检查的成败。
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parent.parent
 FRONTEND = ROOT / "frontend"
 LOCALES = FRONTEND / "js" / "locales"
@@ -57,8 +62,17 @@ def main() -> int:
         for k in found:
             used.setdefault(k, set()).add(str(f.relative_to(ROOT)))
 
-    # 动态拼接的键（'model.' + value）会以裸前缀出现，结尾是点，不算缺失
+    # 动态拼接的键（'model.' + value）会以裸前缀出现，结尾是点，不算缺失。
+    # 拼接处还会被正则连引号一起吞进来，例如
+    #   data-i18n="status.req.' + key + '"
+    # 会捕获成 `status.req.' + key + '` —— 这种也一律不算键。
+    # 代价是这一族键**静态查不到**，靠浏览器里的中英双语断言兜底
+    # （见 status.req.* ：9 个桶名的中英两种渲染都在运行时验过）。
+    KEY_SHAPE = re.compile(r"[A-Za-z][\w.-]*\Z")
+
     def real(k: str) -> bool:
+        if not KEY_SHAPE.match(k):
+            return False
         return not k.endswith(".") and not k.startswith("unit.")
 
     missing_zh = {k: v for k, v in used.items() if k not in zh and real(k)}

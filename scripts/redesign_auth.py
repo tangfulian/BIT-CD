@@ -10,7 +10,7 @@
 """
 import pathlib, re, sys, io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-ROOT = pathlib.Path(r"d:\A汤福连的比赛与实验\BIT_CD")
+ROOT = pathlib.Path(r"D:\BIT_CD")
 
 NEW_CSS = '''/* ============================ 登录 / 注册 ============================
    配色取自黑土地物性：母质层/耕作层/土粒边界/秸秆/作物，而非通用的绿色科技风。

@@ -3,7 +3,7 @@
 import pathlib, shutil, sys, io, os
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-ROOT = pathlib.Path(r"d:\A汤福连的比赛与实验\BIT_CD")
+ROOT = pathlib.Path(r"D:\BIT_CD")
 
 # 1) models/ 依赖顶层 misc 包（仓库中不存在，仅靠 Dockerfile 拷贝维持）→ 改为 core.misc
 FIXES = {
