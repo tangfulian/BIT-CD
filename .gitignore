@@ -78,3 +78,8 @@ frontend/js/config.local.js
 # 技能目录：实体文件在 .agents/（已入库），.claude/skills/ 下是它的 junction。
 # 不忽略的话，git add -A 会把同一份内容重复入库一遍。
 .claude/skills/frontend-design/
+
+# Claude Code 的本地权限配置：记的是本机绝对路径（含用户名），换台机器全无意义，
+# 而且每次累积权限都会混进提交。这里没有团队级配置，所以两个都不入库。
+.claude/settings.json
+.claude/settings.local.json
