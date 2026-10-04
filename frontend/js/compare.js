@@ -2,6 +2,7 @@ import { CONFIG } from './config.js';
 import { Utils } from './utils.js';
 import { API } from './api.js';
 import { I18n } from './i18n.js';
+import { Toast } from './toast.js';
 
 export const Compare = {
     _historyCache: [],
@@ -21,6 +22,22 @@ export const Compare = {
         const page = document.getElementById('page-compare');
         if (!page || !page.classList.contains('active')) return;
         const history = await API.fetchHistory();
+
+        // null = 请求失败（与「确实没有记录」的 [] 区分开）。
+        // 以前失败会渲染成「0 条记录 / 0% / 空下拉框」，用户只会以为系统里没数据。
+        if (history === null) {
+            const msg = I18n.t('common.loadFailed', '数据加载失败，请重试');
+            Toast.error(msg);
+            this._historyCache = [];
+            this._renderStatsBar([]);
+            const s1 = document.getElementById('compareId1');
+            const s2 = document.getElementById('compareId2');
+            const failOpt = '<option value="">' + msg + '</option>';
+            if (s1) s1.innerHTML = failOpt;
+            if (s2) s2.innerHTML = failOpt;
+            return;
+        }
+
         this._historyCache = history;
 
         this._renderStatsBar(history);

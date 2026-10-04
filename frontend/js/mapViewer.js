@@ -3,6 +3,14 @@ import { state } from './state.js';
 import { Utils } from './utils.js';
 import { API } from './api.js';
 import { I18n } from './i18n.js';
+import { Toast } from './toast.js';
+
+/**
+ * 底图因高德鉴权失败而画不出来时的提示语。
+ * AMap 自身不报错、map 的 complete 事件照样触发，画布只是整块空白；
+ * 这个标志位由 index.html 里的 console 探针捕获 INVALID_USER_DOMAIN 后置位。
+ */
+const AUTH_MSG = '底图加载失败：高德 Key 未授权当前域名，标记仍可查看';
 
 function setText(id, val) {
     var el = document.getElementById(id);
@@ -27,18 +35,33 @@ export const MapViewer = {
         const page = document.getElementById('page-mapviewer');
         if (!page || !page.classList.contains('active')) return;
 
+        // fetchHistory 现在失败返回 null、空数据返回 []。
+        // 以前它一律 return []，所以下面这个 catch 是死代码，而请求失败时
+        // 页面会显示「暂无带坐标的检测记录 / 带坐标记录：0」—— 实测当时
+        // 库里有 118 条带坐标记录，页面是在说谎。
         let history;
         try {
             history = await API.fetchHistory();
         } catch (e) {
             console.error('加载地图数据失败:', e);
-            history = [];
+            history = null;
+        }
+        if (history === null) {
+            const msg = I18n.t('common.loadFailed', '数据加载失败，请重试');
+            Toast.error(msg);
+            this.initMap([], msg);
+            return;
         }
         console.log('[MapViewer] 历史记录:', history.length, '条, 含坐标:', history.filter(function(i) { return !!i.lat_lng; }).length, '条');
         this.initMap(history);
     },
 
-    initMap(history) {
+    /**
+     * @param {Array} history - 检测记录
+     * @param {string} [errorMsg] - 请求失败时的提示；给了就说明是「加载失败」，
+     *   而不是「确实没有带坐标的记录」，两者不能共用同一句话
+     */
+    initMap(history, errorMsg) {
         const container = document.getElementById('mapviewerMap');
         if (!container) return;
 
@@ -56,21 +79,72 @@ export const MapViewer = {
             this.map = null;
         }
 
-        this.map = new AMap.Map("mapviewerMap", {
-            zoom: 6,
-            center: [126.63, 45.75],
-            resizeEnable: true
-        });
-
-        if (geoItems.length === 0) {
-            document.getElementById('heatmapToggleBtn').style.display = 'none';
-            // 在无坐标记录时给出可见提示
-            const msgEl = document.getElementById('mapEmptyHint');
-            if (msgEl) msgEl.style.display = 'block';
+        // AMap 脚本可能整个没加载出来（未配 Key、CDN 不可达）
+        if (typeof AMap === 'undefined') {
+            console.warn('[MapViewer] AMap 未加载');
+            this._showMapHint('地图组件未加载（未配置高德 Key 或网络不可达）');
             return;
         }
-        const msgEl = document.getElementById('mapEmptyHint');
-        if (msgEl) msgEl.style.display = 'none';
+
+        try {
+            this.map = new AMap.Map("mapviewerMap", {
+                zoom: 6,
+                center: [126.63, 45.75],
+                resizeEnable: true
+            });
+        } catch (e) {
+            console.error('[MapViewer] 地图初始化失败', e);
+            this._showMapHint('底图加载失败，请检查高德 Key 的域名白名单是否包含当前域名');
+            return;
+        }
+
+        // 底图瓦片/样式被高德拒绝时（域名未授权 → INVALID_USER_DOMAIN），
+        // new AMap.Map 本身**不会**报错，画布只是整块空白，页面静默无提示，
+        // 用户看到的就是「一张白纸上飘着一个标记点」。
+        // AMap 在底图就绪时派发 complete 事件；超时仍未等到就判定为没画出来。
+        let mapReady = false;
+        clearTimeout(this._mapReadyTimer);
+        this.map.on('complete', () => {
+            mapReady = true;
+            clearTimeout(this._mapReadyTimer);
+            // 这里**不要**去收提示：底图就绪不代表有记录，
+            // 收了会把「暂无带坐标的检测记录」的正常空态一起抹掉。
+            // 提示的显隐由下面的空态分支与失败回调各自负责。
+        });
+
+        // 鉴权失败的确定性信号来自 index.html 的 console 探针（AMap 自身
+        // 不提供任何可用的 API 信号，且瓦片全被拒时 complete 照样触发）。
+        // 报错时机比任何定时猜测都准，所以以事件为主、超时为兜底。
+        if (this._onAmapAuthFail) {
+            window.removeEventListener('amap-auth-failed', this._onAmapAuthFail);
+        }
+        this._onAmapAuthFail = () => {
+            console.warn('[MapViewer] 高德鉴权失败（域名未授权）');
+            this._showMapHint(AUTH_MSG);
+        };
+        window.addEventListener('amap-auth-failed', this._onAmapAuthFail);
+
+        this._mapReadyTimer = setTimeout(() => {
+            // complete 在瓦片被拒时也会触发，这条纯粹是兜底猜测
+            if (!mapReady) {
+                console.warn('[MapViewer] 底图 8 秒内未就绪，判定为加载失败');
+                this._showMapHint('底图加载失败，标记仍可查看');
+            }
+        }, 8000);
+
+        if (geoItems.length === 0) {
+            const btn = document.getElementById('heatmapToggleBtn');
+            if (btn) btn.style.display = 'none';
+            if (errorMsg) this._showMapHint(errorMsg);
+            else if (window.__amapAuthFailed) this._showMapHint(AUTH_MSG);
+            else this._clearMapHint(true);   // 显示原始的空态文案
+            return;
+        }
+        // 鉴权失败的提示优先级最高：它不是「没有记录」，是底图没画出来。
+        // 不加这个分支的话，下面这行 _clearMapHint() 会把事件回调刚弹出的
+        // 警示又收掉（二次进入本页时就是这个顺序）。
+        if (window.__amapAuthFailed) this._showMapHint(AUTH_MSG);
+        else this._clearMapHint();
 
         const points = [];
         this._heatmapData = [];
@@ -218,5 +292,40 @@ export const MapViewer = {
             <circle cx="12" cy="12" r="${size/2}" fill="${color}" opacity="0.8" stroke="white" stroke-width="2"/>
         </svg>`;
         return 'data:image/svg+xml;base64,' + btoa(svg);
+    },
+
+    /**
+     * 在地图容器上叠一条可见的警示。
+     * 底图加载失败时页面原本是「一块纯色画布 + 一个标记点」，完全静默 ——
+     * 用户不知道是底图坏了还是自己看错了。宁可给一句话。
+     * @param {string} text
+     */
+    _showMapHint(text) {
+        const el = document.getElementById('mapEmptyHint');
+        if (!el) return;
+        if (el.dataset.origHtml === undefined) el.dataset.origHtml = el.innerHTML;
+        el.textContent = '⚠️ ' + text;
+        el.style.color = 'var(--danger)';
+        el.style.fontSize = '15px';
+        el.style.maxWidth = '80%';
+        el.style.display = 'block';
+    },
+
+    /**
+     * 撤掉警示，还原成页面上原本的空态文案。
+     * @param {boolean} [keepVisible] - true 时保留显示（用于「确实没有记录」的正常空态）
+     */
+    _clearMapHint(keepVisible) {
+        const el = document.getElementById('mapEmptyHint');
+        if (!el) return;
+        // 先无条件还原文案：可能被 _showMapHint 换成过警示语，
+        // 不还原的话「确实没有记录」的正常空态会一直显示上一条错误。
+        if (el.dataset.origHtml !== undefined) {
+            el.innerHTML = el.dataset.origHtml;
+        }
+        el.style.color = '';
+        el.style.fontSize = '';
+        el.style.maxWidth = '';
+        el.style.display = keepVisible ? 'block' : 'none';
     }
 };

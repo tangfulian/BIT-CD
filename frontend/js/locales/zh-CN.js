@@ -113,6 +113,8 @@ export const zhCN = {
     // 单张检测
     "detect.title": "单张影像检测",
     "detect.subtitle": "上传前后时相遥感影像，进行变化检测分析",
+    "detect.emptyTitle": "还没有检测结果",
+    "detect.emptyDesc": "上传 T1 前时相与 T2 后时相影像，点击「开始检测」，结果与统计会显示在这里。",
     "detect.t1Label": "T1 前时相",
     "detect.t2Label": "T2 后时相",
     "detect.model": "检测模型",
@@ -222,6 +224,7 @@ export const zhCN = {
     "history.confirmClearAll": "确定清空所有检测历史吗？此操作不可恢复！",
     "history.clearFailed": "清空失败",
     "history.requestFailed": "请求失败",
+    "history.rateLimited": "请求过于频繁，请稍后重试",
     "history.allModels": "所有模型",
     "history.allTypes": "所有类型",
     "history.noMatch": "暂无匹配的检测历史",
@@ -229,6 +232,10 @@ export const zhCN = {
     // 数据看板
     "dashboard.title": "数据看板",
     "dashboard.subtitle": "检测结果统计概览",
+    "dashboard.running": "系统运行中",
+    "dashboard.mainTitle": "黑土地遥感监测数据大屏",
+    "dashboard.chartFailed": "数据加载失败，请刷新页面",
+    "dashboard.unitWan": "万",
     "dashboard.byType": "按变化类型分布",
     "dashboard.byModel": "按模型使用统计",
     "dashboard.recentRecords": "最近检测记录",
@@ -255,6 +262,7 @@ export const zhCN = {
 
     // 地图
     "map.title": "检测结果地图",
+    "map.avgRatio": "平均变化率：",
     "map.subtitle": "所有带地理位置的检测记录在地图上可视化展示",
     "map.heatmapMode": "热力图模式",
     "map.markerMode": "标记点模式",
@@ -270,6 +278,8 @@ export const zhCN = {
     // 对比
     "compare.title": "检测结果对比",
     "compare.subtitle": "选择两个历史记录进行并排比较",
+    "compare.emptyTitle": "还没有对比结果",
+    "compare.emptyDesc": "在上方分别选择记录 A 与记录 B，点击「开始对比」，两者的指标差异会显示在这里。",
     "compare.select1": "选择记录 1",
     "compare.select2": "选择记录 2",
     "compare.compareBtn": "开始对比",
@@ -313,11 +323,22 @@ export const zhCN = {
     "status.pythonLabel": "Python版本：",
     "status.databaseLabel": "数据库：",
     "status.requestStats": "请求统计",
-    "status.detectCount": "检测请求：",
-    "status.aiChatCount": "AI 对话：",
-    "status.aiAnalysisCount": "AI 解读：",
-    "status.regeoCount": "地理编码：",
     "status.countUnit": "次",
+    // 请求分布条形图的桶名，对应后端 /status 的 requests 字段。
+    // 键名在 status.js 里是拼出来的，scripts/check_i18n_keys.py 的静态扫描抓不到，
+    // 增删桶时两份 locale 要一起改。
+    "status.req.detect": "检测",
+    "status.req.register": "注册",
+    "status.req.login": "登录",
+    "status.req.chat": "AI 对话",
+    "status.req.analysis": "AI 解读",
+    "status.req.regeo": "地理编码",
+    "status.req.history": "历史",
+    "status.req.compare": "对比",
+    "status.req.recommend": "推荐阈值",
+    // 运行时长按当前语言在前端拼（后端只给秒数）。
+    // 做成整句模板而不是「天/小时」几个独立键，是为了让英文能自己调整语序与缩写。
+    "status.uptimeFormat": "{0}天 {1}小时 {2}分钟 {3}秒",
     "status.backendError": "后端服务未连接",
     "status.totalRequests": "总请求数：",
     "status.memory": "内存",
@@ -623,6 +644,7 @@ export const zhCN = {
     "profile.pwdChangeFailed": "密码修改失败",
 
     // 关于
+    "about.title": "BlackLand CD 黑土地遥感变化检测系统",
     "about.description": "黑土地遥感变化检测智能平台，融合深度学习与GIS技术，为东北黑土地保护提供高效、精准的变化检测与数据分析解决方案。",
     "about.techStack": "技术栈",
     "about.frontend": "前端",
@@ -759,6 +781,13 @@ export const zhCN = {
     "disaster.exportPdf": "导出 PDF 测算单",
     "disaster.secGrade": "受灾分级（系统测算）",
     "disaster.level": "等级",
+    // 与后端 disaster_service.SEVERITY_LEVELS 的四个键一一对应。
+    // 假设参数表里的分级下界是 {"moderate":0.6,...} 这种对象，
+    // 需要按等级名渲染成人话，而不是把 JSON 原样打出来。
+    "disaster.levelMild": "轻度",
+    "disaster.levelModerate": "中度",
+    "disaster.levelSevere": "重度",
+    "disaster.levelTotal": "绝收",
     "disaster.pixels": "变化像素",
     "disaster.areaMu": "面积（亩）",
     "disaster.lossRate": "减产比例（假设）",

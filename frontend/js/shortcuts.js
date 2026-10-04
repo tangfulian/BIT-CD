@@ -48,8 +48,15 @@ export const Shortcuts = {
 
     _closeModal() {
         // close chatbot first
+        //
+        // 判据必须是 .show：聊天窗的显隐走 .chatbot-window / .chatbot-window.show
+        // 两条类规则（styles.css），既不加 .hidden 也不改内联 display，
+        // 所以原先 "!contains('hidden') && style.display !== 'none'" 恒为真。
+        // 更糟的是 #chatbotClose 绑的是 toggleWindow()，窗口关着时点它会把聊天
+        // 窗**打开**，并且这里 return true 把 Esc 吞掉 —— 结果就是按 Esc 非但
+        // 关不掉模态框，反而弹出助手。
         const chatbot = document.getElementById('chatbotWindow');
-        if (chatbot && !chatbot.classList.contains('hidden') && chatbot.style.display !== 'none') {
+        if (chatbot && chatbot.classList.contains('show')) {
             document.getElementById('chatbotClose')?.click();
             return true;
         }

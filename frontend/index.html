@@ -11,18 +11,55 @@
     <meta property="og:image" content="images/logo.png">
     <meta property="og:type" content="website">
 
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <script>
+      /* 尽早把主题写上去。main.js 是 defer 的，要等 DOM 解析完才跑，
+         深色用户刷新页面时会先闪一帧白底。这里在读样式表之前就定好。 */
+      (function () {
+        try {
+          var t = localStorage.getItem("app_theme");
+          if (t === "dark" || t === "light") {
+            document.documentElement.setAttribute("data-theme", t);
+          }
+        } catch (e) {
+          /* 隐私模式 / 禁用存储：保持 HTML 上的默认值 light */
+        }
+      })();
+    </script>
+
+    <!-- JS 库与字体都已自托管到 vendor/，这里只剩高德地图一个外部依赖 -->
     <link rel="dns-prefetch" href="https://webapi.amap.com">
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="apple-touch-icon" href="images/logo.png">
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <!-- 高德地图：密钥由 js/config.local.js 提供（该文件不入库），缺失时自动降级 -->
     <script src="js/config.local.js"></script>
+    <script>
+      /* 高德鉴权失败（Key 的域名白名单不含当前域名）时只会在 console 里刷
+         "FlyDataAuthTask error: INVALID_USER_DOMAIN"，并在其内部抛异常；
+         new AMap.Map() 本身不报错，map 的 complete 事件照样触发，
+         画布就这样静默空白 —— 外部拿不到任何可用的 API 信号。
+         所以提前挂一个探针，把这条错误记成标志位供 mapViewer 判断，
+         好给用户一句人话，而不是一块空白画布。
+         探针只读不改：原 console.error 的行为完全保留，自身异常也全部吞掉。 */
+      (function () {
+        window.__amapAuthFailed = false;
+        var orig = console.error;
+        console.error = function () {
+          try {
+            if (!window.__amapAuthFailed) {
+              var s = Array.prototype.join.call(arguments, " ");
+              if (s.indexOf("INVALID_USER_DOMAIN") >= 0
+                  || s.indexOf("FlyDataAuthTask") >= 0) {
+                window.__amapAuthFailed = true;
+                // 同时派发事件：报错时机比任何定时猜测都准，
+                // mapViewer 据此立刻给出提示，不必等超时。
+                try { window.dispatchEvent(new Event("amap-auth-failed")); } catch (e) {}
+              }
+            }
+          } catch (e) { /* 探针绝不能影响主流程 */ }
+          return orig.apply(console, arguments);
+        };
+      })();
+    </script>
     <script>
       (function () {
         var key = (window.__APP_LOCAL_CONFIG__ && window.__APP_LOCAL_CONFIG__.amapKey) || "";
@@ -37,10 +74,12 @@
         document.head.appendChild(s);
       })();
     </script>
-    <script defer src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/geotiff@2.1.3/dist-browser/geotiff.js"></script>
+    <!-- 四个库全部自托管。此前 echarts/geotiff 走 cdn.jsdelivr.net，实测连接被重置
+         （net::ERR_CONNECTION_RESET），而全站图表都依赖 echarts，导致看板整页空白。 -->
+    <script defer src="vendor/echarts.min.js"></script>
+    <script defer src="vendor/jspdf.umd.min.js"></script>
+    <script defer src="vendor/html2canvas.min.js"></script>
+    <script defer src="vendor/geotiff.js"></script>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="images/logo.png" type="image/png">
 </head>
@@ -263,9 +302,9 @@
                 <div class="land-layout">
                     <div class="land-map-area">
                         <div class="card" style="padding: 16px; height: 100%; display: flex; flex-direction: column;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <div class="land-gps-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                                 <label class="form-label" style="margin: 0;" data-i18n="land.gpsLabel">GPS地理定位</label>
-                                <div style="display: flex; gap: 8px;">
+                                <div class="land-gps-buttons" style="display: flex; gap: 8px;">
                                     <button type="button" id="getGPSBtn" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 13px;">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="10" r="3"/><path d="M12 2C7.58 2 4 6.48 4 12c0 5.52 7 10 8 10s8-4.48 8-10c0-5.52-3.58-10-8-10z"/></svg>
                                         <span data-i18n="land.getGPS">获取当前位置</span>
@@ -461,6 +500,15 @@
                                 <button class="btn-gray" id="retryBtn" style="display: none; padding: 8px 16px; font-size: 14px;" data-i18n="detect.retry">重新检测</button>
                             </div>
                             <div id="status" class="status-badge"></div>
+                            <!-- 未检测时的空态。此前这里是一片纯白空白，卡片只有标题，
+                                 看不出该怎么开始。结果显示后由 CSS :has() 让位。 -->
+                            <div id="detectEmptyState" class="empty-state">
+                                <div class="empty-state-icon">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                                </div>
+                                <div class="empty-state-title" data-i18n="detect.emptyTitle">还没有检测结果</div>
+                                <p class="empty-state-desc" data-i18n="detect.emptyDesc">上传 T1 前时相与 T2 后时相影像，点击「开始检测」，结果与统计会显示在这里。</p>
+                            </div>
                             <div id="resultArea" class="hidden fade-in">
                                 <div class="stats-row">
                                     <div class="stat-card">
@@ -585,8 +633,10 @@
             <!-- ========== 批量检测 ========== -->
             <div id="page-batch" class="page-content">
                 <div class="page-header">
-                    <h1 data-i18n="batch.title">批量变化检测</h1>
-                    <p data-i18n="batch.subtitle">批量上传双时相影像，自动完成大规模变化检测</p>
+                    <div>
+                        <h1 data-i18n="batch.title">批量变化检测</h1>
+                        <p data-i18n="batch.subtitle">批量上传双时相影像，自动完成大规模变化检测</p>
+                    </div>
                 </div>
                 <div class="cards-grid">
                     <div class="card">
@@ -722,11 +772,11 @@
                     <div class="tech-header">
                         <div class="tech-header-left">
                             <div class="tech-status-dot"></div>
-                            <span>系统运行中</span>
+                            <span data-i18n="dashboard.running">系统运行中</span>
                         </div>
                         <div class="tech-header-center">
                             <div class="tech-title-line"></div>
-                            <h1 class="tech-main-title">黑土地遥感监测数据大屏</h1>
+                            <h1 class="tech-main-title" data-i18n="dashboard.mainTitle">黑土地遥感监测数据大屏</h1>
                             <div class="tech-title-line"></div>
                         </div>
                         <div class="tech-header-right">
@@ -819,8 +869,10 @@
             <!-- ========== 时序分析 ========== -->
             <div id="page-timeline" class="page-content">
                 <div class="page-header">
-                    <h1 data-i18n="timeline.title">多时相时序分析</h1>
-                    <p data-i18n="timeline.subtitle">把同一地块的多期影像组织成序列，按影像日期分析变化速率与趋势</p>
+                    <div>
+                        <h1 data-i18n="timeline.title">多时相时序分析</h1>
+                        <p data-i18n="timeline.subtitle">把同一地块的多期影像组织成序列，按影像日期分析变化速率与趋势</p>
+                    </div>
                 </div>
 
                 <div class="card">
@@ -897,13 +949,22 @@
             <!-- 系统状态页面 -->
             <div id="page-status" class="page-content">
                 <div class="page-header">
-                    <h1 data-i18n="status.title">系统状态</h1>
-                    <p data-i18n="status.subtitle">后端运行信息与健康状态</p>
+                    <div>
+                        <h1 data-i18n="status.title">系统状态</h1>
+                        <p data-i18n="status.subtitle">后端运行信息与健康状态</p>
+                    </div>
                 </div>
+                <!-- 取数失败时显示。这个键两份 locale 里都早就有了，却一直没有引用 ——
+                     后端一挂整页只剩一排 --，不告诉用户为什么。 -->
+                <p id="statusError" class="hidden" style="color:var(--danger);font-size:13px;margin:0 0 12px;"
+                   data-i18n="status.backendError">后端服务未连接</p>
                 <div class="status-grid">
                     <div class="card status-card">
                         <div class="card-header"><h3 class="card-title" data-i18n="status.modelInfo">模型信息</h3></div>
-                        <p><span data-i18n="status.modelName">模型名称：</span><span id="stModel" data-i18n="common.loading">加载中...</span></p>
+                        <!-- stModel 刻意不带 data-i18n：它装的是**取回来的值**，不是文案。
+                             挂上 data-i18n 就会被 setLocale 的全量重译刷回占位符 ——
+                             切一次语言，已经加载出来的模型名就没了。占位符由 status.js 写。 -->
+                        <p><span data-i18n="status.modelName">模型名称：</span><span id="stModel">-</span></p>
                         <p><span data-i18n="status.computeDevice">计算设备：</span><span id="stDevice">-</span></p>
                         <p><span data-i18n="status.pytorchLabel">PyTorch版本：</span><span id="stTorch">-</span></p>
                         <p><span data-i18n="status.pythonLabel">Python版本：</span><span id="stPython">-</span></p>
@@ -956,7 +1017,10 @@
                 </div>
                 <div class="map-layout">
                     <div class="card" style="padding:0;overflow:hidden;flex:1;">
-                        <div id="mapviewerMap" style="width:100%;height:600px;position:relative;">
+                        <!-- 提示元素必须放在地图容器**外面**：AMap 接管 #mapviewerMap 时
+                             会清空容器内的既有节点，放在里面会在第二次进入页面时被抹掉。 -->
+                        <div style="position:relative;">
+                            <div id="mapviewerMap" style="width:100%;height:600px;"></div>
                             <div id="mapEmptyHint" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:10;pointer-events:none;">
                                 <!-- 这两条**不接** map.noGeoData / map.noGeoHint：键确实存在，但键值与
                                      页面文案不是同一句话 —— noGeoHint 键说的是「请先在地块信息配置中
@@ -971,7 +1035,9 @@
                         <h4 data-i18n="map.statsTitle">检测统计</h4>
                         <div id="mapStatsContent">
                             <p class="map-stat-row"><span data-i18n="map.geoRecords">带坐标记录：</span><strong id="mapGeoCount">0</strong></p>
-                            <p class="map-stat-row"><span data-i18n="compare.avgRatio">平均变化率：</span><strong id="mapAvgRatio">--</strong></p>
+                            <!-- 这里原先借用了 compare.avgRatio，而该键的值不带冒号，
+                                 切一次语言就会渲染成「平均变化率14.6%」。用自己的键。 -->
+                            <p class="map-stat-row"><span data-i18n="map.avgRatio">平均变化率：</span><strong id="mapAvgRatio">--</strong></p>
                             <p class="map-stat-row"><span data-i18n="map.maxRatio">最高变化率：</span><strong id="mapMaxRatio">--</strong></p>
                             <p class="map-stat-row"><span data-i18n="map.uniqueLocations">覆盖地区：</span><strong id="mapUniqueLocs">0</strong></p>
                         </div>
@@ -1012,8 +1078,10 @@
             <!-- 结果对比页面 -->
             <div id="page-compare" class="page-content">
                 <div class="page-header">
-                    <h1 data-i18n="compare.title">检测结果对比</h1>
-                    <p data-i18n="compare.subtitle">选择两个历史记录进行并排比较</p>
+                    <div>
+                        <h1 data-i18n="compare.title">检测结果对比</h1>
+                        <p data-i18n="compare.subtitle">选择两个历史记录进行并排比较</p>
+                    </div>
                 </div>
                 <div id="compareStatsBar" class="stats-bar">
                     <div class="stats-bar-item"><span class="stats-bar-value" id="cmpTotalRecords">0</span><span class="stats-bar-label" data-i18n="compare.totalRecords">检测总数</span></div>
@@ -1033,14 +1101,24 @@
                     <button class="btn-primary" id="compareBtn" style="width: auto; padding: 10px 20px;" data-i18n="compare.compareBtn">开始对比</button>
                 </div>
                 <div id="comparePreview" class="compare-preview-cards hidden"></div>
+                <!-- 未对比时的空态：此前这块什么都没有，页面下半段是纯空白 -->
+                <div id="compareEmptyState" class="empty-state">
+                    <div class="empty-state-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/><path d="M10 12h4"/></svg>
+                    </div>
+                    <div class="empty-state-title" data-i18n="compare.emptyTitle">还没有对比结果</div>
+                    <p class="empty-state-desc" data-i18n="compare.emptyDesc">在上方分别选择记录 A 与记录 B，点击「开始对比」，两者的指标差异会显示在这里。</p>
+                </div>
                 <div id="compareResult" class="compare-result-grid hidden"></div>
             </div>
 
             <!-- ========== 模型评估页面 ========== -->
             <div id="page-evaluate" class="page-content">
                 <div class="page-header">
-                    <h1 data-i18n="eval.title">模型批量评估</h1>
-                    <p data-i18n="eval.subtitle">基于 SUSY-CD 数据集，对多个模型批量计算 Precision / Recall / F1 / IoU</p>
+                    <div>
+                        <h1 data-i18n="eval.title">模型批量评估</h1>
+                        <p data-i18n="eval.subtitle">基于 SUSY-CD 数据集，对多个模型批量计算 Precision / Recall / F1 / IoU</p>
+                    </div>
                 </div>
 
                 <div class="card" style="margin-bottom:20px;">
@@ -1062,11 +1140,18 @@
                     <!-- 复选框由 js/models.js 渲染（此处原为第 5 份手抄副本，默认全勾） -->
                     <div id="evalModelChecks" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;"></div>
                     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-                        <label style="font-size:13px;color:var(--text-secondary);" data-i18n="detect.threshold">阈值：</label>
-                        <input type="number" id="evalThreshold" value="0.5" min="0.1" max="0.99" step="0.01" class="form-control" style="width:80px;">
-                        <label style="font-size:13px;color:var(--text-secondary);margin-left:8px;" data-i18n="eval.evalCount">评估数量：</label>
-                        <input type="number" id="evalCount" value="50" min="1" max="9999" step="1" class="form-control" style="width:70px;">
-                        <span style="font-size:11px;color:var(--text-tertiary);" data-i18n="eval.evalCountHint">（设为 0 评估全部）</span>
+                        <!-- 每组 label+输入框各包一层：外层是 wrap 的，裸放时
+                             「评估数量：」会和它的输入框被拆到两行，
+                             提示文案还会跟到下一行最左，归属看不出来。 -->
+                        <div style="display:flex;gap:8px;align-items:center;flex:0 0 auto;">
+                            <label style="font-size:13px;color:var(--text-secondary);" data-i18n="detect.threshold">阈值：</label>
+                            <input type="number" id="evalThreshold" value="0.5" min="0.1" max="0.99" step="0.01" class="form-control" style="width:80px;">
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;flex:0 0 auto;">
+                            <label style="font-size:13px;color:var(--text-secondary);" data-i18n="eval.evalCount">评估数量：</label>
+                            <input type="number" id="evalCount" value="50" min="1" max="9999" step="1" class="form-control" style="width:70px;">
+                            <span style="font-size:11px;color:var(--text-tertiary);" data-i18n="eval.evalCountHint">（设为 0 评估全部）</span>
+                        </div>
                         <button class="btn-primary" id="evalStartBtn" disabled data-i18n="eval.start">开始批量评估</button>
                         <button class="btn-gray hidden" id="evalCancelBtn" data-i18n="common.cancel">取消</button>
                     </div>
@@ -1220,8 +1305,13 @@
             <!-- ========== 个人中心 ========== -->
             <div id="page-profile" class="page-content">
                 <div class="page-header">
-                    <h1 data-i18n="profile.title">个人中心</h1>
-                    <p data-i18n="profile.subtitle">账号信息与个人统计</p>
+                    <!-- h1 与 p 必须包在一个 div 里。.page-header 是 flex +
+                         space-between，裸放会把标题甩到最左、副标题甩到最右，
+                         窄屏下副标题还被裁掉。user 管理页是正确写法。 -->
+                    <div>
+                        <h1 data-i18n="profile.title">个人中心</h1>
+                        <p data-i18n="profile.subtitle">账号信息与个人统计</p>
+                    </div>
                 </div>
                 <div id="profileSkeleton" class="skeleton-loading">
                     <div class="skeleton skeleton-card" style="height:140px; margin-bottom:20px;"></div>
@@ -1266,12 +1356,15 @@
             <div id="page-about" class="page-content">
                 <div class="about-hero">
                     <div class="about-logo"><img src="images/logo.png" alt="BlackLand CD" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain;"></div>
+                    <!-- 整页此前没有 h1，且两张卡的 h3 排在「更新日志」的 h2 之前 ——
+                         层级倒挂。这里补上页面级标题，卡片那两级标题降为 h2。 -->
+                    <h1 class="about-title" data-i18n="about.title">BlackLand CD 黑土地遥感变化检测系统</h1>
                     <span class="about-version">v1.0.0</span>
                     <p class="about-desc" data-i18n="about.description">黑土地遥感变化检测智能平台，融合深度学习与GIS技术，为东北黑土地保护提供高效、精准的变化检测与数据分析解决方案。</p>
                 </div>
                 <div class="about-grid">
                     <div class="about-card">
-                        <h3 data-i18n="about.techStack">技术栈</h3>
+                        <h2 data-i18n="about.techStack">技术栈</h2>
                         <table>
                             <tr><td data-i18n="about.frontend">前端</td><td>Vanilla JS + ECharts + 高德地图</td></tr>
                             <tr><td data-i18n="about.backend">后端</td><td>Python FastAPI + SQLAlchemy</td></tr>
@@ -1281,7 +1374,7 @@
                         </table>
                     </div>
                     <div class="about-card">
-                        <h3 data-i18n="about.features">系统功能</h3>
+                        <h2 data-i18n="about.features">系统功能</h2>
                         <table>
                             <tr><td>·</td><td data-i18n="about.feat1">双时相遥感影像变化检测</td></tr>
                             <tr><td>·</td><td data-i18n="about.feat2">批量多模型对比分析</td></tr>
@@ -1303,8 +1396,10 @@
             <!-- ========== 灾害定损 ========== -->
             <div id="page-disaster" class="page-content">
                 <div class="page-header">
-                    <h1 data-i18n="disaster.title">农业灾害定损</h1>
-                    <p data-i18n="disaster.subtitle">基于变化检测结果估算受灾面积与经济损失，并对比查勘成本</p>
+                    <div>
+                        <h1 data-i18n="disaster.title">农业灾害定损</h1>
+                        <p data-i18n="disaster.subtitle">基于变化检测结果估算受灾面积与经济损失，并对比查勘成本</p>
+                    </div>
                 </div>
 
                 <div class="card disaster-config">

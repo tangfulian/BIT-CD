@@ -32,20 +32,74 @@ export var History = {
     load: async function () {
         // 游客没有 token，跳过 API 请求
         if (Auth.isGuest()) return;
+        var res;
         try {
             // 拉取全部数据，客户端分页+筛选
-            var res = await Utils.authFetch(CONFIG.API_BASE_URL + '/history?limit=500');
-            if (!res.ok) return;
+            res = await Utils.authFetch(CONFIG.API_BASE_URL + '/history?limit=500');
+        } catch (e) {
+            console.error('[history] 请求失败', e);
+            this._renderLoadFailed(I18n.t('history.requestFailed', '请求失败'));
+            return;
+        }
+        // 失败路径必须收掉骨架屏。此前是非 2xx 直接 return，永远不隐藏
+        // #historySkeleton，页面就停在「三块灰色骨架条」上，用户以为一直在
+        // 加载；429 限流时更是连一句提示都没有，也没有任何重试入口。
+        if (!res.ok) {
+            console.error('[history] /history 返回', res.status);
+            this._renderLoadFailed(
+                res.status === 429
+                    ? I18n.t('history.rateLimited', '请求过于频繁，请稍后重试')
+                    : I18n.t('history.requestFailed', '请求失败'));
+            return;
+        }
+        try {
             var json = await res.json();
             if (json.code === 200) {
                 this.historyCache = json.data || [];
                 this.updateModelOptions();
                 this.updateTypeOptions();
                 this.renderList();
+            } else {
+                this._renderLoadFailed(I18n.t('history.requestFailed', '请求失败'));
             }
         } catch (e) {
-            Toast.error(I18n.t('history.requestFailed'));
+            console.error('[history] 响应解析失败', e);
+            this._renderLoadFailed(I18n.t('history.requestFailed', '请求失败'));
         }
+    },
+
+    /**
+     * 加载失败的收尾：收掉骨架屏、清掉旧列表、给出可读状态与重试按钮。
+     * 所有失败分支都要走这里，不能裸 return。
+     * @param {string} msg
+     */
+    _renderLoadFailed: function (msg) {
+        var skeleton = document.getElementById("historySkeleton");
+        if (skeleton) skeleton.classList.add('hidden');
+        var empty = document.getElementById("historyEmpty");
+        if (empty) empty.classList.add('hidden');
+
+        var dom = document.getElementById("historyList");
+        if (dom) {
+            dom.querySelectorAll('.history-item, .history-load-failed')
+                .forEach(function (el) { el.remove(); });
+            var box = document.createElement('div');
+            box.className = 'empty-state history-load-failed';
+            var p = document.createElement('div');
+            p.className = 'empty-state-title';
+            p.textContent = msg;
+            var btn = document.createElement('button');
+            btn.className = 'btn-gray';
+            btn.style.cssText = 'width:auto;margin-top:12px;padding:8px 24px;';
+            btn.textContent = I18n.t('common.retry', '重试');
+            btn.onclick = function () { History.load(); };
+            box.appendChild(p);
+            box.appendChild(btn);
+            dom.appendChild(box);
+        }
+        var pag = document.getElementById("historyPagination");
+        if (pag) pag.innerHTML = '';
+        Toast.error(msg);
     },
 
     deleteOne: async function (id) {

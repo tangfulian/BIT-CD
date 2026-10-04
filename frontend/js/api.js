@@ -38,14 +38,26 @@ export const API = {
      * @returns {Promise<Array>} 检测记录数组
      */
     async fetchHistory() {
+        // 失败返回 null，空数据返回 []，两者必须可区分。
+        // 此前一律 return []，于是限流 429 / 500 / 断网在消费方眼里和
+        // 「系统里本来就没有记录」长得一模一样：对比页渲染成 0 条 0%、
+        // 看板渲染成全 0 空环图、地图页谎报「暂无带坐标记录」，
+        // 而大屏的 _showError 兜底因为这里从不抛错而永远不触发。
         const token = Utils.safeLocalStorage.getItem(CONFIG.TOKEN_KEY);
         if (!token) return [];
         try {
             const res = await Utils.authFetch(`${CONFIG.API_BASE_URL}/history?limit=500`);
-            if (_handleAuthError(res)) return [];
+            if (_handleAuthError(res)) return null;
+            if (!res.ok) {
+                console.warn('[api] /history 返回', res.status);
+                return null;
+            }
             const data = await res.json();
-            return data.code === 200 ? data.data : [];
-        } catch { return []; }
+            return data.code === 200 ? (data.data || []) : null;
+        } catch (e) {
+            console.warn('[api] /history 请求失败', e);
+            return null;
+        }
     },
 
     /**

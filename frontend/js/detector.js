@@ -651,7 +651,7 @@ export const Detector = {
         document.getElementById("aiAnalysisResult").classList.add("hidden");
         const mcs = document.getElementById("modelCompareSection");
         mcs.classList.remove("hidden");
-        mcs.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        Utils.scrollTo(mcs);
         document.getElementById("modelCompareGrid").innerHTML = '<div class="status-badge show loading" style="grid-column:1/-1;text-align:center;"><span>' + I18n.t('detect.inferring') + '</span></div>';
 
         const fd = new FormData();
@@ -675,7 +675,7 @@ export const Detector = {
                 // 自动滚动到对比结果
                 setTimeout(() => {
                     const mcs2 = document.getElementById('modelCompareSection');
-                    if (mcs2) mcs2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    if (mcs2) Utils.scrollTo(mcs2);
                 }, 200);
 
                 const firstModel = selectedModels[0];

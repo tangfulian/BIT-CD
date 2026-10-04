@@ -190,8 +190,8 @@ export const Evaluator = {
         const scanBtn = $('evalScanBtn');
         if (scanBtn) scanBtn.onclick = () => this._scanThreshold();
 
-        // Scroll to results
-        $('evalResults').scrollIntoView({ behavior: 'smooth' });
+        // Scroll to results（经 Utils.scrollTo 走 prefers-reduced-motion 判断）
+        Utils.scrollTo($('evalResults'));
     },
 
     _aggregate() {

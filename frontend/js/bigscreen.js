@@ -29,17 +29,35 @@ export const BigScreen = {
         this.cleanup();
         this._startClock();
         this._startAutoRefresh();
+
+        let history;
         try {
-            const history = await API.fetchHistory();
-            this.updateStats(history);
-            this.renderTypeChart(history);
-            this.renderModelChart(history);
-            this.renderTrendChart(history);
-            this.renderRecentList(history);
+            history = await API.fetchHistory();
         } catch (e) {
             console.error('大屏数据加载失败:', e);
             this._showError();
+            return;
         }
+        // fetchHistory 失败返回 null（以前返回 []，所以这个兜底永远不触发，
+        // 页面会把限流/断网渲染成「全 0 + 空环图」）
+        if (history === null) {
+            console.error('大屏数据加载失败：/history 未返回数据');
+            this._showError();
+            return;
+        }
+
+        // 四个区块各自独立渲染。此前共用一个 try/catch：只要前一个图表抛错，
+        // 后面全部跳过 —— 连「最新检测记录」也一起变空。而那个列表是纯 HTML，
+        // 根本不依赖 echarts，不该被图表的失败连坐。
+        [
+            ['统计卡', () => this.updateStats(history)],
+            ['变化类型分布', () => this.renderTypeChart(history)],
+            ['模型使用统计', () => this.renderModelChart(history)],
+            ['近 7 天趋势', () => this.renderTrendChart(history)],
+            ['最新检测记录', () => this.renderRecentList(history)],
+        ].forEach(([name, fn]) => {
+            try { fn(); } catch (e) { console.error('大屏「' + name + '」渲染失败:', e); }
+        });
     },
 
     _startAutoRefresh() {
@@ -51,6 +69,9 @@ export const BigScreen = {
             }
             try {
                 const history = await API.fetchHistory();
+                // 失败时保留屏幕上的上一次数据，绝不覆盖成 0 ——
+                // 「静默不打扰」可以，但把正确数字换成错的不是静默，是撒谎。
+                if (history === null) return;
                 this.updateStats(history);
                 this.renderRecentList(history);
             } catch(e) {
@@ -59,12 +80,18 @@ export const BigScreen = {
         }, 30000);
     },
 
+    /** 整批数据都没取到时的兜底：所有面板都填上可读的提示，不留白洞 */
     _showError() {
-        const ids = ['bsTypeChart', 'bsModelChart', 'bsTrendChart'];
-        ids.forEach(id => {
+        const msg = I18n.t('dashboard.chartFailed', '数据加载失败，请刷新页面');
+        ['bsTypeChart', 'bsModelChart', 'bsTrendChart'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-tertiary);">数据加载失败，请刷新页面</div>';
+            if (el) el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;'
+                + 'height:100%;color:var(--text-tertiary);">' + msg + '</div>';
         });
+        const list = document.getElementById('bsRecentList');
+        if (list) {
+            list.innerHTML = '<div style="padding:16px;color:var(--text-tertiary);">' + msg + '</div>';
+        }
     },
 
     _startClock() {
@@ -108,7 +135,9 @@ export const BigScreen = {
         this.animateValue(document.getElementById('bsActivePlots'), plots.size);
 
         const areaEl = document.getElementById('bsTotalChangeArea');
-        if (areaEl) areaEl.innerHTML = `${(totalChangePixels / 10000).toFixed(1)}<span class="tech-unit">万</span>`;
+        // 单位也走 i18n：中文「万」= 10^4，英文用 ×10⁴，数值口径不变
+        if (areaEl) areaEl.innerHTML = `${(totalChangePixels / 10000).toFixed(1)}`
+            + `<span class="tech-unit">${I18n.t('dashboard.unitWan', '万')}</span>`;
     },
 
     renderTypeChart(history) {

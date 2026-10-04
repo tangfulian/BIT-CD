@@ -99,12 +99,18 @@ export function createDoughnutOption({ labels, values }) {
             },
         },
         legend: {
+            // 变化类型名最长到「耕地非粮化（种树/挖塘）」，一排放不下会被硬切。
+            // 滚动图例接管溢出，超长名称截断加省略号（完整名称仍在 tooltip 里）。
+            type: 'scroll',
             orient: 'horizontal',
             bottom: 0,
             textStyle: { color: textColor, fontSize: 12 },
             itemWidth: 12,
             itemHeight: 12,
             itemGap: 16,
+            formatter(name) {
+                return name.length > 9 ? name.slice(0, 9) + '…' : name;
+            },
         },
         series: [{
             type: 'pie',

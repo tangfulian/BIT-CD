@@ -15,9 +15,37 @@ import { I18n } from './i18n.js';
 import { Modal } from './modal.js';
 import { Toast } from './toast.js';
 import { API } from './api.js';
-import { ChartUtils } from './chartUtils.js';
+// createDoughnutOption 是 chartUtils.js 的**独立命名导出**，不在 ChartUtils 对象上
+// （该对象只有 init/dispose/disposeAll/resizeAll/setAndTrack）。
+// 原先这里只导入了 ChartUtils，调用时抛 "ChartUtils.createDoughnutOption is not a function"，
+// 受灾分级环形图因此整块不渲染。bigscreen.js / timeline.js 的导入方式是对的。
+import { ChartUtils, createDoughnutOption } from './chartUtils.js';
 
 const $ = (id) => document.getElementById(id);
+
+/** 后端 disaster_service.SEVERITY_LEVELS 的四个键 → i18n 键 */
+const SEVERITY_LABEL_KEYS = {
+    mild: 'disaster.levelMild',
+    moderate: 'disaster.levelModerate',
+    severe: 'disaster.levelSevere',
+    total: 'disaster.levelTotal',
+};
+
+/**
+ * 把「分级下界」这类对象值渲染成人话。
+ * {"moderate":0.6,"severe":0.75,"total":0.92} → "中度 0.6 · 重度 0.75 · 绝收 0.92"
+ * 未知键原样保留，后端将来加了等级也不会丢信息。
+ * @param {object} obj
+ * @returns {string}
+ */
+function _formatAssumptionObject(obj) {
+    return Object.entries(obj)
+        .map(([k, v]) => {
+            const key = SEVERITY_LABEL_KEYS[k];
+            return (key ? I18n.t(key, k) : k) + ' ' + v;
+        })
+        .join(' · ');
+}
 
 export const Disaster = {
     _params: null,      // /disaster/params 的默认值
@@ -68,7 +96,20 @@ export const Disaster = {
         if (!sel) return;
         try {
             const res = await Utils.authFetch(CONFIG.API_BASE_URL + '/history?limit=500');
-            if (!res.ok) return;
+            if (!res.ok) {
+                // 此前这条分支直接 return：非 2xx（实测遇到过 429）时下拉框留空、
+                // 一句提示都没有，用户只会以为「就是没有可用记录」。要报出来。
+                const msg = I18n.t('disaster.recordsFailed', '记录列表加载失败');
+                Toast.error(msg);
+                sel.innerHTML = '';
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.disabled = true;
+                opt.selected = true;
+                opt.textContent = msg + '，请刷新重试';
+                sel.appendChild(opt);
+                return;
+            }
             const json = await res.json();
             // 只有带概率图的记录能定损：没有 score 的记录（多模型对比产生的、
             // 以及早期记录）后端会拒绝，不该让用户选到。
@@ -187,7 +228,11 @@ export const Disaster = {
             this._draft = '';
             this._renderResult();
         } catch (e) {
-            Toast.error(e.message || I18n.t('disaster.assessFailed', '定损测算失败'));
+            // 不要把 e.message 直接抛给终端用户：原先弹的是
+            // "ChartUtils.createDoughnutOption is not a function" 这种英文技术报错。
+            // 面向用户给可读文案，技术细节留在控制台。
+            console.error('[disaster] 定损测算失败:', e);
+            Toast.error(I18n.t('disaster.assessFailed', '定损测算失败，请重试'));
         } finally {
             if (btn) btn.disabled = false;
         }
@@ -248,7 +293,13 @@ export const Disaster = {
         html += `<th>${t('disaster.param', '参数')}</th><th>${t('disaster.value', '取值')}</th>`;
         html += `<th>${t('disaster.source', '来源说明')}</th></tr></thead><tbody>`;
         r.assumptions.forEach((a) => {
-            const val = typeof a.value === 'object' ? JSON.stringify(a.value) : `${a.value} ${a.unit || ''}`;
+            // 对象值原先直接 JSON.stringify：表格里显示成
+            // {"moderate":0.6,"severe":0.75,"total":0.92}，既难读又撑宽单元格
+            // （实测该表 min-content 因此达 440px，窄屏上把列挤成竖排单字）。
+            // 改成「中度 0.6 · 重度 0.75 · 绝收 0.92」。
+            const val = typeof a.value === 'object'
+                ? _formatAssumptionObject(a.value)
+                : `${a.value} ${a.unit || ''}`;
             html += `<tr><td>${Utils.escapeHtml(a.label)}</td><td>${Utils.escapeHtml(val)}</td>`;
             html += `<td class="disaster-source">${Utils.escapeHtml(a.note)}</td></tr>`;
         });
@@ -282,7 +333,7 @@ export const Disaster = {
             ChartUtils.init('disasterChart'),
             'doughnut',
             null,
-            ChartUtils.createDoughnutOption({
+            createDoughnutOption({
                 labels: levels.map((l) => l.label),
                 values: levels.map((l) => l.area_mu),
             })
@@ -332,7 +383,8 @@ export const Disaster = {
         rows.push([I18n.t('disaster.param', '假设参数'), I18n.t('disaster.value', '取值'),
                    I18n.t('disaster.source', '来源说明')]);
         r.assumptions.forEach((a) => {
-            const val = typeof a.value === 'object' ? JSON.stringify(a.value) : a.value;
+            // 与屏幕上显示的写法保持一致，导出的报表里不该出现生 JSON
+            const val = typeof a.value === 'object' ? _formatAssumptionObject(a.value) : a.value;
             rows.push([a.label, val, a.note]);
         });
         if (this._draft) {
@@ -382,7 +434,10 @@ export const Disaster = {
         html += `<tr><th>${t('disaster.param', '参数')}</th><th>${t('disaster.value', '取值')}</th>`
             + `<th>${t('disaster.source', '来源说明')}</th></tr>`;
         r.assumptions.forEach((a) => {
-            const val = typeof a.value === 'object' ? JSON.stringify(a.value) : `${a.value} ${a.unit || ''}`;
+            // PDF 测算单里同样不该出现生 JSON
+            const val = typeof a.value === 'object'
+                ? _formatAssumptionObject(a.value)
+                : `${a.value} ${a.unit || ''}`;
             html += `<tr><td>${esc(a.label)}</td><td>${esc(val)}</td><td>${esc(a.note)}</td></tr>`;
         });
         html += `</table>`;

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bitcd-v10';
+const CACHE_NAME = 'bitcd-v11';
 
 const PRECACHE_URLS = [
   './',
@@ -36,9 +36,31 @@ const PRECACHE_URLS = [
   './js/i18n.js',
   './js/locales/zh-CN.js',
   './js/locales/en.js',
-  'https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
+  // 以下 13 个文件此前漏在清单外，其中 main.js 是应用入口、toast.js 被
+  // utils.js 直接 import —— 缺了它们离线打开基本是坏的。
+  './js/main.js',
+  './js/toast.js',
+  './js/models.js',
+  './js/agent.js',
+  './js/evaluator.js',
+  './js/profile.js',
+  './js/gallery.js',
+  './js/imageTools.js',
+  './js/indexedDB.js',
+  './js/ndviViewer.js',
+  './js/shareView.js',
+  './js/shortcuts.js',
+  './js/config.local.js',
+  // 这四个库与三份字体已改为自托管。原先这里预缓存的是 jsdelivr / cdnjs 的地址，
+  // 自托管之后那几条既不生效（图表库那条还会因为 jsdelivr 被重置而静默失败），
+  // 真正在用的 /vendor/ 文件反而没有离线副本。
+  './vendor/echarts.min.js',
+  './vendor/geotiff.js',
+  './vendor/jspdf.umd.min.js',
+  './vendor/html2canvas.min.js',
+  './vendor/fonts/inter-latin-400.woff2',
+  './vendor/fonts/inter-latin-500.woff2',
+  './vendor/fonts/inter-latin-600.woff2'
 ];
 
 self.addEventListener('install', event => {

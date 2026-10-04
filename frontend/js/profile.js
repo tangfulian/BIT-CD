@@ -14,7 +14,12 @@ export const Profile = {
         this._loadData().then(function (data) {
             if (skeleton) skeleton.classList.add('hidden');
             if (content) content.classList.remove('hidden');
-            if (!data) return;
+            if (!data) {
+                // 此前是直接 return：骨架消失，页面留着占位符，用户以为数据就是这样。
+                // 失败必须说出来。
+                Toast.warning(I18n.t('profile.loadFailed', '个人资料加载失败，请刷新重试'));
+                return;
+            }
             _fillProfile(data);
         });
     },
@@ -22,9 +27,13 @@ export const Profile = {
     _loadData: async function () {
         try {
             var res = await Utils.authFetch(CONFIG.API_BASE_URL + '/profile');
-            if (!res.ok) return null;
+            if (!res.ok) {
+                console.warn('[profile] /profile 返回', res.status);
+                return null;
+            }
             return await res.json();
         } catch (e) {
+            console.warn('[profile] /profile 请求失败', e);
             return null;
         }
     },
@@ -52,9 +61,16 @@ function _fillProfile(data) {
     if (roleEl) roleEl.textContent = (d.role === 'admin' ? I18n.t('usermgr.adminBadge') : I18n.t('auth.normalUser')) || '--';
     if (avatarEl) avatarEl.textContent = (d.username || 'U').charAt(0).toUpperCase();
     if (createdEl) createdEl.textContent = d.created_at || '--';
-    if (detEl) detEl.textContent = d.detection_count || 0;
-    if (plotsEl) plotsEl.textContent = d.plot_count || 0;
-    if (avgEl) avgEl.textContent = (d.avg_ratio != null ? (d.avg_ratio * 100).toFixed(2) + '%' : '--');
+    // 用 != null 判断而不是 || 0：字段缺失时渲染 0 会谎报成「这个账号一次检测都没有」，
+    // 而真实原因可能是接口失败。缺值一律显示占位符。
+    if (detEl) detEl.textContent = d.detection_count != null ? d.detection_count : '--';
+    if (plotsEl) plotsEl.textContent = d.plot_count != null ? d.plot_count : '--';
+    // 不要再乘 100：后端存进 detections.ratio 的**已经是百分数**
+    // （detect_service.py:212 `change_pixel / total_pixel * 100`），
+    // auth.py:94 返回的是这些百分数的均值。这里再乘一次会放大 100 倍
+    // （实测显示成 1372.00%，而同一条记录在历史页是 21.9%）。
+    // 全站只有这一处多乘，history.js / compare.js 都是直接 `ratio + '%'`。
+    if (avgEl) avgEl.textContent = (d.avg_ratio != null ? d.avg_ratio.toFixed(2) + '%' : '--');
     if (lastEl) lastEl.textContent = d.last_active || '--';
 }
 

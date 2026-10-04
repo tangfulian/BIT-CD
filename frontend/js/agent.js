@@ -154,7 +154,13 @@ export const Agent = {
         if (main) main.classList.toggle("hidden", isTools);
         if (strip && isTools) strip.classList.add("hidden");
         if (trace && isTools) {
-            trace.textContent = '';
+            // 原来是 textContent=''：切到工具模式后这块面板就是一片空白，
+            // 看不出它是什么、要等什么。用与 _resetUI 相同的占位文案；
+            // 已有轨迹时不清空，避免切模式把结果弄丢。
+            if (!trace.textContent.trim()) {
+                trace.innerHTML = '<div class="agent-screenshot-placeholder"><p>'
+                    + Utils.escapeHtml(I18n.t('agent.toolPlaceholder')) + '</p></div>';
+            }
             trace.classList.remove("hidden");
         }
         const count = document.getElementById("agentScreenshotCount");

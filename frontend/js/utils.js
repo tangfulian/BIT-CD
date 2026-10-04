@@ -216,5 +216,26 @@ export const Utils = {
     showToast(message, type) {
         type = type || 'info';
         Toast[type] ? Toast[type](message) : Toast.info(message);
+    },
+
+    /**
+     * 滚动到元素。CSS 里的 prefers-reduced-motion 管不到 `behavior: 'smooth'`
+     * 这类由 JS 传入的滚动参数，必须在这里自己判断，否则开了「减弱动效」
+     * 之后页面依然会平滑滚动。
+     * @param {Element|null} el - 目标元素
+     * @param {object} [options] - 传给 scrollIntoView 的其余选项
+     */
+    scrollTo(el, options = {}) {
+        if (!el) return;
+        var reduce = false;
+        try {
+            reduce = window.matchMedia
+                && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        } catch (e) {
+            // matchMedia 不可用（极旧浏览器）时按不减弱处理，保持原有行为
+        }
+        el.scrollIntoView(Object.assign({ block: 'start' }, options, {
+            behavior: reduce ? 'auto' : (options.behavior || 'smooth'),
+        }));
     }
 };
