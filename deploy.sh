@@ -34,8 +34,14 @@ cd "$APP_DIR"
 
 echo "=== [3/4] 检查 .env ==="
 if [ ! -f .env ]; then
-    echo "错误: 请先创建 .env 文件！"
-    echo "参考 .env.production 填写你的 API Key，然后: cp .env.production .env"
+    echo "错误: 当前目录下没有 .env！"
+    echo ""
+    echo "  .env 与 .env.production 都在 .gitignore 里，不会随仓库分发，"
+    echo "  需要在部署机上用仓库里的模板自己创建："
+    echo ""
+    echo "      cp .env.example .env"
+    echo ""
+    echo "  然后按注释填入 JWT_SECRET、ADMIN_DEFAULT_PASSWORD、DASHSCOPE_API_KEY 等。"
     exit 1
 fi
 
