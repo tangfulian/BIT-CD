@@ -4,23 +4,24 @@ import re
 
 import httpx
 
-from backend.app.core.config import DASHSCOPE_API_KEY
+from backend.app.core import llm_budget
+from backend.app.core.config import LLM_BASE_URL, LLM_API_KEY, LLM_MODEL
 
 logger = logging.getLogger(__name__)
 
-# 百炼的 OpenAI 兼容端点。
+# 走服务商的 OpenAI 兼容端点，不绑定任何专有 SDK。
 #
 # 此前走原生 dashscope SDK 的 Generation.call，它把请求固定发往
 # /api/v1/services/aigc/text-generation/generation 这个 legacy 路径。
 # 实测该路径只服务 qwen-turbo / qwen-plus 这类老模型：换成 Qwen3.7 系列后
 # 一律返回 400 "url error"。而 qwen-turbo 本身就在 2026-10-10 的下线名单上，
-# 也就是说这条路径没有未来。改走兼容端点，与 agent_service 统一。
-_DASHSCOPE_CHAT_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+# 也就是说这条路径没有未来。改走兼容端点，与 agent_service 统一 ——
+# 这个决定现在有了第二个好处：换服务商只是改 .env。
+#
+# 服务商、密钥、模型全部来自 config（默认 DeepSeek）。
+_LLM_CHAT_URL = LLM_BASE_URL.rstrip("/") + "/chat/completions"
 
-# qwen-turbo 的替代。同为最低价档；已实测文本对话、JSON 分类、
-# 定损草稿（含强制尾注与禁止假装看过影像两条约束）均可用。
-# 换模型只改这一处。
-_AI_MODEL = "qwen3.7-flash"
+_AI_MODEL = LLM_MODEL
 _AI_TIMEOUT = 90.0
 _AI_MAX_TOKENS = 2048
 
@@ -44,13 +45,15 @@ def _chat_completion(messages: list, temperature: float, max_tokens: int = _AI_M
     原本由 dashscope SDK 兜的三种失败——未配置 key、非 200、空响应——
     在这里显式处理，错误信息保持可读。
     """
-    if not DASHSCOPE_API_KEY:
-        raise Exception("未配置 DASHSCOPE_API_KEY，AI 功能不可用")
+    if not LLM_API_KEY:
+        raise Exception("未配置 LLM_API_KEY，AI 功能不可用")
+    # 日预算闸。放在发请求之前 —— 超预算的那一次不该被发出去。
+    llm_budget.spend()
 
     try:
         resp = httpx.post(
-            _DASHSCOPE_CHAT_URL,
-            headers={"Authorization": f"Bearer {DASHSCOPE_API_KEY}"},
+            _LLM_CHAT_URL,
+            headers={"Authorization": f"Bearer {LLM_API_KEY}"},
             json={
                 "model": _AI_MODEL,
                 "messages": messages,

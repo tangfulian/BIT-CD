@@ -40,7 +40,8 @@
 
 **模型** PyTorch · 见下方「检测模型」
 
-**AI** 阿里云百炼 DashScope 通义千问（`qwen3.7` 系列）— 变化类型分类、分析报告、定损说明草稿
+**AI** DeepSeek（`deepseek-v4-flash`）— 变化类型分类、分析报告、定损说明草稿。
+服务商可通过环境变量切换，三个消费方都走 OpenAI 兼容端点，换家不用改代码。
 
 **Agent** browser-use + Playwright — 浏览器操控通道；另有一条直接调用后端工具的工具通道
 
@@ -98,7 +99,9 @@ DEPLOY_HOST=your.server.ip bash deploy.sh
 | `JWT_SECRET` | 令牌签名密钥。未设置时启动生成随机值，**重启后所有用户需重新登录** |
 | `ADMIN_DEFAULT_PASSWORD` | 管理员初始密码，仅首次建库时使用 |
 | `USER_RESET_PASSWORD` | 管理员重置用户密码时的默认值 |
-| `DASHSCOPE_API_KEY` | 通义千问。缺失时 AI 相关功能不可用，其余功能正常 |
+| `LLM_API_KEY` | LLM 服务商密钥。缺失时 AI 相关功能不可用，其余功能正常 |
+| `LLM_BASE_URL` / `LLM_MODEL` / `LLM_AGENT_MODEL` | 服务商与模型。默认 DeepSeek |
+| `LLM_DAILY_CALL_LIMIT` | 每日调用次数上限（默认 500，0 = 不限制），用来拦住失控的循环调用 |
 | `AMAP_WEB_KEY` | 高德地图。缺失时地图页降级 |
 | `ALLOWED_ORIGINS` | CORS 白名单，逗号分隔 |
 | `DATABASE_URL` | 默认 `sqlite:///./blackland.db` |
@@ -172,7 +175,10 @@ Service Worker 的预缓存清单与之同步，断网也能打开。
 - **灾害定损的假设参数（亩产、单价、减产比例）默认值是示例值**，界面上已标注。
   实际测算前应按当地统计年鉴或保险条款替换。
 - **游客额度记在浏览器 localStorage 里**，后端只做 30 次/分钟的限流，不做总量约束。
-- AI 相关功能依赖 DashScope 可用性与账号配额，接口不可用时仅这些功能降级。
+- AI 相关功能依赖所配 LLM 服务商的可用性与账号配额，接口不可用时仅这些功能降级。
+- **Agent 用途的模型必须同时支持视觉与 Function Calling**。当前默认
+  `deepseek-v4-flash`（实测两项都支持）。换模型时注意 `deepseek-v4-pro`
+  **不接受图片输入**，会让 Agent 失效。
 
 ---
 

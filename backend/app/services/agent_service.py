@@ -9,10 +9,18 @@ from typing import Any
 import aiohttp
 
 from browser_use import Agent, BrowserProfile, Tools
-from browser_use.llm import ChatOpenAI
+# 必须是 ChatDeepSeek 而不是 ChatOpenAI —— 这不是风格选择，是必需：
+# browser_use 的 ChatOpenAI 会发 response_format={"type":"json_schema"}，
+# 而 DeepSeek 对该类型直接返回 400（实测 "This response_format type is
+# unavailable now"）。同库的 ChatDeepSeek 发的是 json_object，被支持。
+from browser_use.llm import ChatDeepSeek
 
+from backend.app.core import llm_budget
 from backend.app.core.config import (
-    DASHSCOPE_API_KEY,
+    LLM_BASE_URL,
+    LLM_API_KEY,
+    LLM_AGENT_MODEL,
+    LLM_AGENT_FALLBACK_MODEL,
     AGENT_FRONTEND_URL,
     AGENT_USERNAME,
     AGENT_BROWSER_HEADLESS,
@@ -146,41 +154,45 @@ def _get_chrome_path() -> str:
     return shutil.which("chromium") or shutil.which("google-chrome") or "chromium"
 
 
-def _build_llm() -> ChatOpenAI:
-    # qwen-vl-plus 的替代。选它的三个理由，缺一不可：
-    #   1. qwen-vl-plus 在百炼 2026-10-10 的下线名单上，下线后直接 403；
-    #   2. 它**不支持 Function Calling**（实测：给 tools 时只回散文、不返回
-    #      tool_calls），而 Agent 的决策循环依赖结构化工具调用；
-    #   3. qwen3.7-plus 实测视觉可用、FC 可用，且属于官方推荐的 Qwen3.7 系列。
-    return ChatOpenAI(
-        model="qwen3.7-plus",
-        base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
-        api_key=DASHSCOPE_API_KEY,
+def _build_llm() -> ChatDeepSeek:
+    """主模型。
+
+    选型要求三项同时满足，缺一不可：
+      1. **视觉** —— Agent 的每一步决策都基于页面截图；
+      2. **Function Calling** —— 决策循环依赖结构化的 tool_calls，
+         只回散文的模型跑不动（qwen-vl-plus 就是这样被淘汰的）；
+      3. **结构化输出** —— 见文件顶部注释：必须走 json_object。
+
+    实测 deepseek-v4-flash 三项都满足。
+    **不要换成 deepseek-v4-pro** —— 它不接受图片输入（实测传给它的图
+    根本没进 prompt_tokens，模型自己回「我无法查看这张图片」）。
+    """
+    return ChatDeepSeek(
+        model=LLM_AGENT_MODEL,
+        base_url=LLM_BASE_URL,
+        api_key=LLM_API_KEY,
         temperature=0.2,
-        reasoning_effort=None,
-        dont_force_structured_output=False,
-        max_retries=3,
     )
 
 
-def _build_fallback_llm() -> ChatOpenAI:
-    """备用 LLM。
+def _build_fallback_llm() -> ChatDeepSeek | None:
+    """备用模型。未配置 LLM_AGENT_FALLBACK_MODEL 时返回 None —— 不启用备用。
 
-    原来用 qwen-plus（纯文本）。换成 qwen3.7-flash 而非保留原样，是因为
-    备用模型会接手主模型失败的**同一条**对话，那个对话里可能有截图 ——
-    实测 qwen3.7-flash 同样具备视觉能力，而 qwen-plus 已属老一代
-    （其日期快照已在百炼另一批下线名单中），不如一并挪到新系列。
+    此前这里是主备两个不同模型。换到单一服务商后，如果主备指向同一个模型，
+    备用就没有任何意义了，索性默认关掉，把是否启用交给配置。
 
-    注意：本构造函数没有传 dont_force_structured_output，走库默认值 False，
-    即**会**带 response_format。这是必需的 —— 实测 qwen3.7-flash 在不带
-    response_format 时会返回 ```json 围栏包裹的内容，结构化解析会失败。
+    要启用的话，**跨服务商才有价值**：同一家会在限流、故障、欠费时一起挂。
+    但注意跨服务商需要不同的 LLM 类（DeepSeek 用 ChatDeepSeek，Qwen 用
+    ChatOpenAI，两者的 response_format 不一样），得在这里按 provider 分支，
+    不是填个模型名就够。
     """
-    return ChatOpenAI(
-        model="qwen3.7-flash",
-        base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
-        api_key=DASHSCOPE_API_KEY,
+    if not LLM_AGENT_FALLBACK_MODEL:
+        return None
+    return ChatDeepSeek(
+        model=LLM_AGENT_FALLBACK_MODEL,
+        base_url=LLM_BASE_URL,
+        api_key=LLM_API_KEY,
         temperature=0.1,
-        max_retries=2,
     )
 
 
@@ -445,6 +457,10 @@ async def _execute_locked(
             enable_signal_handler=False,
         )
 
+        # 日预算闸。这里记 1 笔而不是 max_steps 笔 —— 一次 run 内部会用掉
+        # 若干步，但实际步数只有跑完才知道；预扣最大值会把预算虚耗数倍，
+        # 反而挡住正常使用。浏览器通道本身另有 3 次/分钟的端点限流兜着。
+        llm_budget.spend()
         logger.info("Agent开始执行: max_steps=%d", max_steps)
 
         history = await asyncio.wait_for(

@@ -41,9 +41,43 @@ if not _user_reset:
 USER_RESET_PASSWORD = _user_reset
 
 # --- 外部服务 API Key ---
-DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY")
 AMAP_WEB_KEY = os.getenv("AMAP_WEB_KEY")
 AMAP_API_BASE = "https://restapi.amap.com/v3"
+
+# --- LLM 服务商（可切换，不需要改代码） ---
+# 三个消费方（ai_service / agent_service / tool_agent_service）都从这里取值。
+# 换服务商 = 改 .env 里的这几个变量，不用动任何 .py。
+#
+# 当前默认 DeepSeek。切换时务必注意**模型名与端点是绑定的**：
+# 同一个服务商的不同端点，可用的模型 ID 可能不同，而且列模型的接口不一定
+# 列全 —— 实测 DeepSeek 的 /models 只返回 deepseek-flash 与 deepseek-v4-pro，
+# 但 deepseek-v4-flash 实际也能调。以真实调用为准，别信列表。
+LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.deepseek.com")
+# 没有回退。曾经回退到 DASHSCOPE_API_KEY，但那带来一个隐患：LLM_API_KEY
+# 被误删时会**静默**指回百炼，而此时若百炼已停缴，报错是 401 而不是
+# 「配置缺了」，排查会绕远路。宁可缺了就明确报缺。
+LLM_API_KEY = os.getenv("LLM_API_KEY")
+# 文本用途：变化类型分类、分析报告、定损说明草稿
+LLM_MODEL = os.getenv("LLM_MODEL", "deepseek-v4-flash")
+# Agent 用途：需要**同时**支持视觉与 Function Calling。
+# 实测 deepseek-v4-flash 两项都支持（deepseek-v4-pro 不支持视觉，别用）。
+LLM_AGENT_MODEL = os.getenv("LLM_AGENT_MODEL", LLM_MODEL)
+# Agent 备用模型：留空 = 不启用（browser_use 的 fallback_llm 允许为 None）。
+# 有意义的是**跨服务商**的备用 —— 同一账号同一家会在限流/欠费时一起挂。
+LLM_AGENT_FALLBACK_MODEL = os.getenv("LLM_AGENT_FALLBACK_MODEL", "")
+
+# --- LLM 每日调用预算 ---
+# 服务里已有一重防护，但都是**按请求**的：单请求超时、Agent 循环轮次上限、
+# 端点限流（每分钟几次）。限流按分钟算，一个每 20 秒发一次的循环在它放开后
+# 一天仍能跑掉几千次调用。
+#
+# 而这个项目的 LLM key 与开发者的 Claude Code **共用同一份额度** ——
+# 一个失控的循环烧掉的是开发额度，不是「反正免费的测试额度」。
+# 所以在限流之外再加一道按天累计的闸。
+#
+# 0 或负数 = 不限制。默认 500：正常演示一天用不到（一次检测 1 次分类调用，
+# 一次 Agent 任务几次），但足以在几分钟内拦住跑飞的循环。
+LLM_DAILY_CALL_LIMIT = int(os.getenv("LLM_DAILY_CALL_LIMIT", "500") or 0)
 
 # --- AI Agent（Browser Use 操控前端） ---
 # 默认 8000 而不是 5500：前端由本应用自己挂在 / 上（main.py 的 StaticFiles），

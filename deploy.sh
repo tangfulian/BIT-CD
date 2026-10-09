@@ -41,7 +41,7 @@ if [ ! -f .env ]; then
     echo ""
     echo "      cp .env.example .env"
     echo ""
-    echo "  然后按注释填入 JWT_SECRET、ADMIN_DEFAULT_PASSWORD、DASHSCOPE_API_KEY 等。"
+    echo "  然后按注释填入 JWT_SECRET、ADMIN_DEFAULT_PASSWORD、LLM_API_KEY 等。"
     exit 1
 fi
 

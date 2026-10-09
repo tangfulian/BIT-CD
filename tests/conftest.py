@@ -74,7 +74,9 @@ def admin_headers(client):
 
 @pytest.fixture(autouse=True)
 def mock_ai_chat(monkeypatch):
-    """Mock DashScope AI chat to return a fixed reply.
+    """Mock the LLM chat call to return a fixed reply.
+
+    与具体服务商无关 —— 测试不该因为换了 LLM 供应商而失效。
 
     收 *args/**kwargs 是刻意的：调用方若给 chat 传了新关键字参数（如 temperature），
     签名写死的假函数会 TypeError，而测试失败信息会指向假函数、掩盖真实原因。

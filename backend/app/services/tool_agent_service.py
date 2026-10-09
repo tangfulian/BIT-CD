@@ -29,7 +29,8 @@ from pydantic import ValidationError
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from backend.app.core.config import DASHSCOPE_API_KEY
+from backend.app.core import llm_budget
+from backend.app.core.config import LLM_BASE_URL, LLM_API_KEY, LLM_AGENT_MODEL
 from backend.app.models.detection import DetectionResultDB
 from backend.app.models.series import ImageSeriesDB
 from backend.app.models.user import UserDB
@@ -41,11 +42,14 @@ from backend.app.services.record_access import find_owned_detection, query_owned
 
 logger = logging.getLogger(__name__)
 
-_DASHSCOPE_CHAT_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+_LLM_CHAT_URL = LLM_BASE_URL.rstrip("/") + "/chat/completions"
 
-# 工具通道用 qwen3.7-plus：实测它同时具备视觉、Function Calling 与
-# json_schema 严格模式，而 qwen-vl-plus 不支持 Function Calling。
-_AGENT_MODEL = "qwen3.7-plus"
+# 工具通道的模型必须**同时**具备视觉与 Function Calling。
+# 服务商与模型名都来自 config（默认 deepseek-v4-flash，两项实测均支持）。
+#
+# 这条通道只发 tools、不发 response_format，所以它**不依赖** json_schema
+# 严格模式 —— 这也是三家服务商里最容易迁移的一条。
+_AGENT_MODEL = LLM_AGENT_MODEL
 _LLM_TIMEOUT = 120.0
 # 工具循环的轮次上限。每一轮都是一次完整的模型往返，放开会让一次请求
 # 拖到几分钟；正常任务 2~3 轮就能收敛。
@@ -489,11 +493,13 @@ _DISPATCH = {
 
 
 def _post_chat(messages: list, tools: list) -> dict:
-    if not DASHSCOPE_API_KEY:
-        raise RuntimeError("未配置 DASHSCOPE_API_KEY，Agent 功能不可用")
+    if not LLM_API_KEY:
+        raise RuntimeError("未配置 LLM_API_KEY，Agent 功能不可用")
+    # 日预算闸。工具循环每轮都走这里，所以一次多轮任务会被如实计入多笔。
+    llm_budget.spend()
     resp = httpx.post(
-        _DASHSCOPE_CHAT_URL,
-        headers={"Authorization": f"Bearer {DASHSCOPE_API_KEY}"},
+        _LLM_CHAT_URL,
+        headers={"Authorization": f"Bearer {LLM_API_KEY}"},
         json={
             "model": _AGENT_MODEL,
             "messages": messages,
