@@ -69,12 +69,33 @@ python api.py
 ### 测试
 
 ```bash
-pytest                    # 15 个测试文件
-python scripts/smoke_test.py   # 端到端冒烟（需要服务已启动）
+pytest                              # 单元/接口测试，不需要起服务
 ```
 
-> `pytest.ini` 把收集范围限定在 `tests/`：`scripts/smoke_test.py` 会打真实服务器、
-> 登录失败即 `sys.exit(1)`，而它的文件名正好匹配 pytest 默认的 `test_*.py`，
+下面几个是**跑真实系统**的检查脚本，除注明外都需要先 `python api.py`：
+
+| 脚本 | 覆盖什么 | 代价 |
+|---|---|---|
+| `scripts/smoke_test.py` | 约 30 项接口：检测、评估、历史、标注、鉴权、限流 | 本地签发令牌；自清理 |
+| `scripts/api_misc_test.py` | 地块档案 / 时序序列 / 灾害定损 —— 冒烟没覆盖的三块 | 会造记录，跑完自删 |
+| `scripts/agent_tools_test.py` | Agent 七个工具的**实际执行**，含附件白名单与归属过滤两条安全边界 | 不起服务（进程内直调）；零 LLM 调用 |
+| `scripts/agent_e2e_test.py` | Agent 端到端闭环（意图→执行→回灌→汇报） | **花 LLM 调用**，每条 1~3 次 |
+| `scripts/browser_test.py` | 批量检测 / 地图底图 / 导出 CSV+PDF —— 只能靠真浏览器验的部分 | 需要 Playwright；会造记录，跑完自删 |
+| `scripts/eval_agent_intent.py` | Agent 意图解析准确率（只问「选哪个工具」，不执行） | 每条用例一次 LLM 调用 |
+
+维护用：
+
+```bash
+python scripts/clean_results.py            # 看看 results/ 里有多少没人引用的文件
+python scripts/clean_results.py --delete   # 清掉
+```
+
+> `results/` 只增不减 —— 删检测记录并不会删文件。判据不能只看数据库的 URL
+> 字段：`_t2.png` 不记录在任何字段里，是靠 `score_url` 推出来的（重建融合图要用），
+> 照「URL 里没有就删」会把它干掉。脚本已把这类推导文件算进保留集。
+
+> `pytest.ini` 把收集范围限定在 `tests/` 是**必需的**：`scripts/` 下这些脚本的
+> 文件名都匹配 pytest 默认的 `*_test.py`，而它们会打真实服务器、造真实记录，
 > 不排除的话裸跑 `pytest` 会在收集阶段直接崩。
 
 ### Docker 部署
