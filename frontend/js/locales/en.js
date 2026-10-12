@@ -48,6 +48,8 @@ export const en = {
     "auth.insufficientPermission": "Insufficient permission. Contact an administrator.",
     "auth.serverError": "Server error. Please try again later.",
     "auth.sessionExpired": "Authentication failed. Please sign in again.",
+    "auth.captchaFailed": "Failed to load the captcha. Click the image to retry.",
+    "auth.verifyOffline": "Cannot reach the server. Later actions may fail.",
     "auth.register": "Register",
     "auth.goRegister": "No account? Register",
     "auth.goLogin": "Have an account? Login",
@@ -157,6 +159,7 @@ export const en = {
     "batch.exportPDF": "Export PDF",
     "batch.detecting": "Batch processing...",
     "batch.complete": "Batch Complete!",
+    "batch.persistFailed": "Progress could not be saved. Refreshing will lose the current queue.",
     "batch.progress": "Progress",
     // 见 zh-CN.js 同处注释：这三个键缺失时汇总条会直接显示原始 key 字符串
     "batch.sumTotal": "Total",

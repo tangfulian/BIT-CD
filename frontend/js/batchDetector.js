@@ -2,6 +2,7 @@ import { CONFIG } from './config.js';
 import { state } from './state.js';
 import { Utils } from './utils.js';
 import { Modal } from './modal.js';
+import { Toast } from './toast.js';
 import { Auth } from './auth.js';
 import { History } from './history.js';
 import { API } from './api.js';
@@ -17,6 +18,7 @@ let _taskMeta = {};   // id -> { row, t1Url, t2Url, name, files, index, ... }
 let _batchDone = 0;
 let _batchTotal = 0;
 let _onBatchComplete = null;
+let _persistWarned = false;   // 队列持久化失败只提示一次，别每张图弹一遍
 
 export const BatchDetector = {
     init() {
@@ -682,7 +684,17 @@ async function _persistTaskToDB(id, index, t1File, t2File, modelName, threshold,
             latLng, location, changeType,
             status: 'pending',
         });
-    } catch {
-        // IndexedDB 写入失败不影响检测流程
+    } catch (e) {
+        // 这里不能照原样静默。_persistTaskToDB 存在的唯一理由就是让队列跨刷新恢复
+        // —— 写失败等于这个能力没了，而用户要等到刷新之后才发现，那时队列已经无声
+        // 消失、无从解释。检测本身继续跑（那是另一回事），但必须提前说清楚：别刷新。
+        console.warn('[batch] 队列持久化失败，刷新页面将丢失进度:', e);
+        _warnPersistFailed();
     }
+}
+
+function _warnPersistFailed() {
+    if (_persistWarned) return;
+    _persistWarned = true;
+    Toast.warning(I18n.t('batch.persistFailed', '进度无法保存，刷新页面会丢失当前队列'));
 }

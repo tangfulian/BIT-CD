@@ -2,6 +2,7 @@ import { CONFIG } from './config.js';
 import { state } from './state.js';
 import { Utils } from './utils.js';
 import { Modal } from './modal.js';
+import { Toast } from './toast.js';
 import { LandInfo, PlotManager } from './landInfo.js';
 import { I18n } from './i18n.js';
 import { History } from './history.js';
@@ -174,9 +175,18 @@ export const Auth = {
                 const img = data.data.captcha_image;
                 if (imgReg) imgReg.src = img;
                 if (imgLogin) imgLogin.src = img;
+                this._captchaWarned = false;   // 恢复正常，下次失败可以再提示
             }
-        } catch {
-            // 静默失败，后端会校验
+        } catch (e) {
+            // 原先这里静默吞掉，结果是登录路径上的一条死路：用户看到的是一个空白
+            // 验证码框，既不知道出了什么事，也不知道点一下图能刷新。后端确实会校验
+            // 验证码，但读不到码就填不对 —— 不提示等于让人对着空白框猜。
+            // 只提示一次，避免每次打开登录框都弹。
+            console.warn('[auth] 验证码加载失败:', e);
+            if (!this._captchaWarned) {
+                this._captchaWarned = true;
+                Toast.warning(I18n.t('auth.captchaFailed', '验证码加载失败，点击图片可重试'));
+            }
         } finally {
             this._captchaLoading = false;
         }
@@ -331,7 +341,14 @@ export const Auth = {
                 this.showAuthOverlay('login');
             }
         } catch (e) {
-            // 网络问题不作处理，交由各页面的请求自行提示
+            // 「网络异常不踢用户下线」这个行为保留（见方法文档注释），但不能静默：
+            // 确认不了会话时，后面各页面的请求失败就失去了解释。提示一次即可 ——
+            // 每次进入应用都会走到这里，重复弹就是骚扰。
+            console.warn('[auth] 会话校验失败（网络原因），保留本地登录态:', e);
+            if (!this._offlineWarned) {
+                this._offlineWarned = true;
+                Toast.warning(I18n.t('auth.verifyOffline', '无法连接服务器，后续操作可能失败'));
+            }
         }
     },
 

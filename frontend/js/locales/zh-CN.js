@@ -53,6 +53,8 @@ export const zhCN = {
     "auth.insufficientPermission": "权限不足，请联系管理员",
     "auth.serverError": "服务器异常，请稍后重试",
     "auth.sessionExpired": "认证失败，请重新登录",
+    "auth.captchaFailed": "验证码加载失败，点击图片可重试",
+    "auth.verifyOffline": "无法连接服务器，后续操作可能失败",
     "auth.register": "注册账号",
     "auth.goRegister": "没有账号？去注册",
     "auth.goLogin": "已有账号？去登录",
@@ -166,6 +168,7 @@ export const zhCN = {
     "batch.exportPDF": "导出PDF报告",
     "batch.detecting": "批量检测中...",
     "batch.complete": "批量检测完成！",
+    "batch.persistFailed": "进度无法保存，刷新页面会丢失当前队列",
     "batch.progress": "进度",
     // 批量汇总条的三个标签。此前 HTML 里写了 data-i18n="batch.sumTotal" 等，
     // 但两份 locale 都没有这些键，而 _translateElement 在找不到键时会把**原始
