@@ -139,6 +139,15 @@ DEPLOY_HOST=root@your.server.ip ./upload_checkpoints.sh
 
 ---
 
+## 深入阅读
+
+| 文档 | 讲什么 |
+|---|---|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 系统架构：后端分层、数据模型、鉴权与权限面、检测流水线、外部依赖 |
+| [docs/AGENT.md](docs/AGENT.md) | Agent 的两条通道（工具 / 浏览器）、7 个工具清单、提示词设计、模型选型约束 |
+
+---
+
 ## 项目结构
 
 ```
