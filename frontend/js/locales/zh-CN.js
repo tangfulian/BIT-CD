@@ -38,6 +38,7 @@ export const zhCN = {
     "common.model": "模型",
     "common.location": "位置",
     "common.time": "时间",
+    "common.loadFailed": "数据加载失败，请重试",
     "unit.mu": "亩",
 
     // 认证
@@ -427,17 +428,17 @@ export const zhCN = {
     "detect.adjustThresholdHint": "拖动滑块实时调整变化检测阈值",
     "detect.swapPair": "交换 T1/T2",
     "detect.swapDone": "T1 ↔ T2 已交换",
-    "detect.susycdQuick": "SUSY-CD 快速配对",
+    "detect.susycdQuick": "SYSU-CD 快速配对",
     "detect.susycdNeedChrome": "此功能需要 Chrome/Edge 浏览器 + HTTPS 安全连接。当前使用 HTTP，请改用 HTTPS 地址访问。也可手动选择：T1 选 A 文件夹中的图，T2 选 B 文件夹中的同名图。",
-    "detect.susycdNoDir": "未找到 A/ 或 B/ 子目录。请选择 SUSY-CD 数据集的根目录（应包含 A 和 B 两个文件夹）。",
-    "detect.susycdNoMatch": "A/ 和 B/ 文件夹中没有同名图片文件。SUSY-CD 标准结构要求两文件夹中的图片文件名完全一致。",
+    "detect.susycdNoDir": "未找到 A/ 或 B/ 子目录。请选择 SYSU-CD 数据集的根目录（应包含 A 和 B 两个文件夹）。",
+    "detect.susycdNoMatch": "A/ 和 B/ 文件夹中没有同名图片文件。SYSU-CD 标准结构要求两文件夹中的图片文件名完全一致。",
 
     // 模型评估
     "nav.evaluate": "模型评估",
     "nav.disaster": "灾害定损",
     "eval.title": "模型批量评估",
-    "eval.subtitle": "基于 SUSY-CD 数据集，对多个模型批量计算 Precision / Recall / F1 / IoU",
-    "eval.pickFolder": "选择 SUSY-CD 数据集目录",
+    "eval.subtitle": "基于 SYSU-CD 数据集，对多个模型批量计算敏感性（Recall）/ 特异性 / F1 / IoU",
+    "eval.pickFolder": "选择 SYSU-CD 数据集目录",
     "eval.pickHint": "选择包含 A/ B/ label/ 的根目录",
     "eval.foundPairs": "发现配对：",
     "eval.pairsUnit": "对",
@@ -634,6 +635,7 @@ export const zhCN = {
     "profile.plotsCount": "地块数量",
     "profile.avgRatio": "平均变化率",
     "profile.lastActive": "最近活动",
+    "profile.loadFailed": "个人资料加载失败，请刷新重试",
     "profile.changePassword": "修改密码",
     "profile.oldPassword": "当前密码",
     "profile.newPassword": "新密码",

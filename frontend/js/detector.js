@@ -42,14 +42,14 @@ export const Detector = {
         const swapBtn = document.getElementById("swapPairBtn");
         if (swapBtn) swapBtn.onclick = () => this._swapImages();
 
-        // SUSY-CD quick pair (requires HTTPS / secure context)
+        // SYSU-CD quick pair (requires HTTPS / secure context)
         const quickPairBtn = document.getElementById("susycdQuickBtn");
         if (quickPairBtn) {
             if (!window.isSecureContext) {
                 quickPairBtn.style.display = 'none';
                 const hint = document.createElement('span');
                 hint.className = 'field-hint';
-                hint.textContent = 'SUSY-CD 快速配对需要 HTTPS 安全连接，当前为 HTTP';
+                hint.textContent = 'SYSU-CD 快速配对需要 HTTPS 安全连接，当前为 HTTP';
                 hint.style.color = 'var(--text-tertiary)';
                 hint.style.fontSize = '12px';
                 quickPairBtn.parentNode?.appendChild(hint);
@@ -205,7 +205,7 @@ export const Detector = {
             }
         } catch (e) {
             if (e.name !== 'AbortError') {
-                console.error('SUSY-CD quick pair error:', e);
+                console.error('SYSU-CD quick pair error:', e);
                 Modal.alert('读取数据集失败：' + e.message);
             }
         }
@@ -214,7 +214,7 @@ export const Detector = {
     _showPairPicker(pairs) {
         return new Promise((resolve) => {
             const html = '<div class="modal-box" style="max-width:500px;max-height:80vh;display:flex;flex-direction:column;">' +
-                '<div class="modal-title">SUSY-CD 快速配对 <button id="modalCloseBtn" style="float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-tertiary);">&times;</button></div>' +
+                '<div class="modal-title">SYSU-CD 快速配对 <button id="modalCloseBtn" style="float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-tertiary);">&times;</button></div>' +
                 '<div style="overflow-y:auto;flex:1;padding:0 4px;">' +
                 '<p style="margin-bottom:12px;color:var(--text-secondary);font-size:13px;">找到 <strong>' + pairs.length + '</strong> 对匹配图片，点击选择：</p>' +
                 pairs.map(p => '<button class="btn-gray susycd-pair-btn" data-name="' + p + '" style="display:block;width:100%;text-align:left;margin-bottom:4px;padding:10px 14px;font-family:monospace;font-size:13px;">📷 ' + p + '</button>').join('') +

@@ -442,11 +442,22 @@ def compute_metrics(pred_mask, gt_mask):
     f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
     iou = tp / (tp + fp + fn) * 100 if (tp + fp + fn) > 0 else 0.0
 
+    # 敏感性 / 特异性 —— 与 precision/recall 是同一批数据的两种叫法：
+    #     敏感性(sensitivity) = 真阳性率 = recall      —— 该检出的漏了多少
+    #     特异性(specificity) = 真阴性率 = TN/(TN+FP)  —— 不该报的误报了多少
+    # 单列出来是因为农业灾害/保险定损场景用的是这两个词（也是命题的验收口径），
+    # 让外部直接取用，不必自己换算。
+    sensitivity = recall
+    specificity = tn / (tn + fp) * 100 if (tn + fp) > 0 else 0.0
+
     return {
         "precision": round(precision, 2),
         "recall": round(recall, 2),
         "f1": round(f1, 2),
         "iou": round(iou, 2),
+        # 与 recall 同值：保留两个名字，避免调用方各自换算时口径不一致
+        "sensitivity": round(sensitivity, 2),
+        "specificity": round(specificity, 2),
         "tp": tp, "fp": fp, "fn": fn, "tn": tn,
     }
 
@@ -531,7 +542,11 @@ def evaluate_scan(img1_pil, img2_pil, label_pil, model_list, thresholds):
         for t in thresholds:
             pred_mask = (score_map > t).astype(np.uint8) * 255
             m = compute_metrics(pred_mask, gt_arr)
-            curve.append({"threshold": round(t, 2), "f1": m["f1"], "precision": m["precision"], "recall": m["recall"], "iou": m["iou"]})
+            # 阈值扫描正是看敏感性/特异性权衡的地方（阈值升 → 特异性升、敏感性降），
+            # 所以这两个也必须进曲线，否则前端画不出这条权衡。
+            curve.append({"threshold": round(t, 2), "f1": m["f1"], "precision": m["precision"],
+                          "recall": m["recall"], "iou": m["iou"],
+                          "sensitivity": m["sensitivity"], "specificity": m["specificity"]})
         results[model_name] = curve
 
     return results

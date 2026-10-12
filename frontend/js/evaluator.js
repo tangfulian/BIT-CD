@@ -72,7 +72,7 @@ export const Evaluator = {
             try { lH = lH || await rootHandle.getDirectoryHandle('Label'); } catch(e) {}
             try { lH = lH || await rootHandle.getDirectoryHandle('LABEL'); } catch(e) {}
 
-            if (!aH || !bH) return Modal.alert(I18n.t('detect.susycdNoDir', '未找到 A/ 或 B/ 文件夹。请选择 SUSY-CD 数据集根目录。'));
+            if (!aH || !bH) return Modal.alert(I18n.t('detect.susycdNoDir', '未找到 A/ 或 B/ 文件夹。请选择 SYSU-CD 数据集根目录。'));
 
             const aFiles = []; const bFiles = []; const lFiles = new Set();
             for await (const [n] of aH.entries()) { if (/\.(png|jpg|jpeg|tif|tiff|bmp)$/i.test(n)) aFiles.push(n); }
@@ -197,7 +197,9 @@ export const Evaluator = {
     _aggregate() {
         const agg = {};
         ALL_MODELS.forEach(m => {
-            agg[m] = { precision: [], recall: [], f1: [], iou: [], time_ms: [], count: 0 };
+            // 不单独累计 sensitivity：它与 recall 是同一个值（真阳性率的两种叫法），
+            // 分开累计只会在表里出现两列一模一样的数字。
+            agg[m] = { precision: [], recall: [], specificity: [], f1: [], iou: [], time_ms: [], count: 0 };
         });
 
         this._results.forEach(r => {
@@ -205,6 +207,7 @@ export const Evaluator = {
                 if (!agg[model] || !metrics || typeof metrics.f1 !== 'number') return;
                 agg[model].precision.push(metrics.precision);
                 agg[model].recall.push(metrics.recall);
+                if (typeof metrics.specificity === 'number') agg[model].specificity.push(metrics.specificity);
                 agg[model].f1.push(metrics.f1);
                 agg[model].iou.push(metrics.iou);
                 if (typeof metrics.time_ms === 'number') agg[model].time_ms.push(metrics.time_ms);
@@ -219,6 +222,7 @@ export const Evaluator = {
             result[m] = {
                 precision: avg(d.precision),
                 recall: avg(d.recall),
+                specificity: avg(d.specificity),
                 f1: avg(d.f1),
                 iou: avg(d.iou),
                 time_ms: avg(d.time_ms),
@@ -242,6 +246,7 @@ export const Evaluator = {
                 <td><strong>${m}</strong>${isBest ? ' 🏆' : ''}</td>
                 <td>${d.precision}%</td>
                 <td>${d.recall}%</td>
+                <td>${d.specificity}%</td>
                 <td style="font-weight:700;color:${isBest ? 'var(--primary)' : 'var(--text-primary)'};">${d.f1}%</td>
                 <td>${d.iou}%</td>
                 <td>${d.time_ms}ms</td>
@@ -475,12 +480,15 @@ export const Evaluator = {
         const models = this._getSelectedModels().length > 0 ? this._getSelectedModels() : Object.keys(this._aggregate());
         if (models.length === 0 || this._results.length === 0) return;
 
-        const header = ['filename', ...models.flatMap(m => [`${m}_Precision`, `${m}_Recall`, `${m}_F1`, `${m}_IoU`, `${m}_Time_ms`])];
+        // Recall 即敏感性（真阳性率），只导出一列；Specificity 是另一回事，单独一列。
+        const header = ['filename', ...models.flatMap(m =>
+            [`${m}_Sensitivity(=Recall)`, `${m}_Specificity`, `${m}_Precision`, `${m}_F1`, `${m}_IoU`, `${m}_Time_ms`])];
         const rows = this._results.map(r => {
             const row = [r.name];
             models.forEach(m => {
                 const d = r[m];
-                row.push(d?.precision ?? '', d?.recall ?? '', d?.f1 ?? '', d?.iou ?? '', d?.time_ms ?? '');
+                row.push(d?.recall ?? '', d?.specificity ?? '', d?.precision ?? '',
+                         d?.f1 ?? '', d?.iou ?? '', d?.time_ms ?? '');
             });
             return row;
         });

@@ -458,7 +458,7 @@
 
                             <div style="display:flex;gap:8px;justify-content:center;margin-bottom:4px;">
                                 <button type="button" id="swapPairBtn" class="btn-gray" style="padding:6px 14px;font-size:12px;" title="交换 T1/T2">🔄 交换前后时相</button>
-                                <button type="button" id="susycdQuickBtn" class="btn-gray" style="padding:6px 14px;font-size:12px;" title="从 SUSY-CD 数据集快速配对">📂 SUSY-CD 快速配对</button>
+                                <button type="button" id="susycdQuickBtn" class="btn-gray" style="padding:6px 14px;font-size:12px;" title="从 SYSU-CD 数据集快速配对">📂 SYSU-CD 快速配对</button>
                             </div>
 
                             <div class="form-group">
@@ -1117,7 +1117,7 @@
                 <div class="page-header">
                     <div>
                         <h1 data-i18n="eval.title">模型批量评估</h1>
-                        <p data-i18n="eval.subtitle">基于 SUSY-CD 数据集，对多个模型批量计算 Precision / Recall / F1 / IoU</p>
+                        <p data-i18n="eval.subtitle">基于 SYSU-CD 数据集，对多个模型批量计算 Precision / Recall / F1 / IoU</p>
                     </div>
                 </div>
 
@@ -1125,7 +1125,7 @@
                     <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
                         <button class="btn-primary" id="evalPickFolderBtn">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                            <span data-i18n="eval.pickFolder">选择 SUSY-CD 数据集目录</span>
+                            <span data-i18n="eval.pickFolder">选择 SYSU-CD 数据集目录</span>
                         </button>
                         <span style="font-size:13px;color:var(--text-tertiary);" data-i18n="eval.pickHint">选择包含 A/ B/ label/ 的根目录</span>
                     </div>
@@ -1177,7 +1177,12 @@
                         <table class="data-table">
                             <thead><tr>
                                 <th data-i18n="common.model">模型</th>
-                                <th>Precision</th><th>Recall</th><th>F1</th><th>IoU</th>
+                                <th>Precision</th>
+                                <!-- Recall 与敏感性是同一个值（真阳性率），只列一次并在此说明，
+                                     避免表里出现两列一模一样的数字被当成 bug -->
+                                <th title="Recall，即敏感性（真阳性率）">Recall<br><span style="font-weight:400;font-size:11px;opacity:.75;">敏感性</span></th>
+                                <th title="真阴性率 = TN/(TN+FP)，即误报控制能力">Specificity<br><span style="font-weight:400;font-size:11px;opacity:.75;">特异性</span></th>
+                                <th>F1</th><th>IoU</th>
                                 <th data-i18n="eval.avgTime">平均耗时</th>
                                 <th data-i18n="eval.samples">样本数</th>
                             </tr></thead>
