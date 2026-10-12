@@ -66,7 +66,12 @@ SYSTEM_PROMPT = """你是东北黑土地变化检测系统的智能助手，通�
 3. 需要模型名但不确定有哪些可用时，先调 list_models。
 4. 工具返回错误时，把错误原因原样告诉用户，不要反复重试同一个调用。
 5. 拿到结果后用中文简洁汇报关键数字（变化比例、面积、数量等），不要罗列原始 JSON。
-6. 你只能看见当前用户自己的数据。如果查询结果为空，如实说没有，不要推测。"""
+6. 你只能看见当前用户自己的数据。如果查询结果为空，如实说没有，不要推测。
+7. 调用所需的参数已经齐了就直接调，不要为了「确认一下」再多查一次。
+   挑工具的标准是「哪一个能**直接回答用户所问**」，而不是「哪一个能先看到
+   原始数据」。先查一遍再作答既慢又费钱，结果也不会因此更准。
+8. 用户问的是你的能力范围、系统支持什么、或某个概念的含义时，直接回答，
+   不要调用工具 —— 这类问题没有对应的查询接口，调工具答不上来。"""
 
 
 def _tool_schemas(file_paths: list[str]) -> list[dict]:
@@ -135,7 +140,13 @@ def _tool_schemas(file_paths: list[str]) -> list[dict]:
             "type": "function",
             "function": {
                 "name": "get_detection",
-                "description": "按 detection_id 取一条检测记录的完整统计信息。",
+                "description": (
+                    "按 detection_id 取一条检测记录的统计信息：模型、阈值、变化比例、"
+                    "变化像素数、位置、时相。"
+                    "**不包含地块面积与作物类型** —— 那些不在检测记录里，"
+                    "定损要用的话得向用户询问。"
+                    "如果要的是受灾面积或损失金额，别先调这个，直接调 assess_disaster。"
+                ),
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -386,7 +397,7 @@ def _assess_disaster(args: dict, ctx: dict) -> dict:
         {"label": a.get("label"), "value": a.get("value"), "unit": a.get("unit")}
         for a in result.get("assumptions", [])
     ]
-    # 未给亩产与单价时，总损失会被算成 0，而原响应里对此没有任何提示 ——
+    # 参数缺失时，总损失会被算成 0，而原响应里对此没有任何提示 ——
     # 模型看到一个光秃秃的 0，极可能直接汇报「无损失」。
     # 这条警告刻意排在结果最前面：它比任何数字都更该被先看到，
     # 也让它在轨迹被截断时依然可见。
@@ -394,13 +405,22 @@ def _assess_disaster(args: dict, ctx: dict) -> dict:
     # 所以判据是「有哪一项为 0」，不是「全都为 0」—— 后者会漏掉只填了一个的情况：
     # 亩产 0、单价 2.4 时 any() 为真，告警被抑制，而 total_loss 仍是 0，
     # 模型照样会向用户汇报「无损失」。实测确认过这个漏网。
+    #
+    # **面积是第三个因子，此前没被查**：它不在 assumptions 里（那张表装的是
+    # "假设参数"，面积是用户输入），所以被漏掉了。后果实测确认：用户给了亩产
+    # 与单价、只是没给面积时，zero_params 为空 → 无告警 → 模型拿到
+    # total_loss_yuan: 0 汇报「没有损失」。上面那句「任一项」写对了原则，
+    # 实现却只覆盖了两项。
     economic = [a for a in assumptions if a.get("label") in ("亩产", "单价")]
     zero_params = [a["label"] for a in economic if not a.get("value")]
+    if not result.get("plot_area_mu"):
+        zero_params.append("地块总面积")
     out = {}
     if zero_params:
+        params = "、".join(zero_params)
         out["warning"] = (
-            f"{'、'.join(zero_params)}为 0，因此 total_loss_yuan 为 0 —— 这**不代表没有损失**，"
-            "而是缺少经济参数。请如实告知用户：需要同时提供亩产与单价才能算出金额。"
+            f"{params}为 0，因此 total_loss_yuan 为 0 —— 这**不代表没有损失**，"
+            f"而是缺少测算参数。请如实告知用户：需要提供{params}才能算出金额。"
         )
     out.update({
         "detection_id": result["detection"]["id"],

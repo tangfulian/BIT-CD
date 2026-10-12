@@ -1,0 +1,148 @@
+[
+  {
+    "id": "models_01_plain",
+    "instruction": "现在有哪些变化检测模型可以用？",
+    "expect_first": ["list_models"],
+    "note": "直白的模型清单查询"
+  },
+  {
+    "id": "models_02_indirect",
+    "instruction": "我想换个模型试试，都有什么选择",
+    "expect_first": ["list_models"],
+    "note": "间接问法：不给「模型」二字，但意图相同"
+  },
+  {
+    "id": "models_03_colloquial",
+    "instruction": "都能用啥模型啊",
+    "expect_first": ["list_models"],
+    "note": "口语化、无标点"
+  },
+
+  {
+    "id": "detect_01_with_files",
+    "instruction": "用附件这两张图跑一次检测",
+    "file_paths": ["/tmp/agent_uploads/aaa111_t1.tif", "/tmp/agent_uploads/aaa111_t2.tif"],
+    "expect_first": ["list_models", "run_detection"],
+    "note": "有附件，但是**没指定模型**，而 run_detection 的 model 是必填。系统提示词要求「不确定有哪些可用时先调 list_models」，所以先列模型是正确路径。初版期望只写了 run_detection，是期望写错、不是 Agent 错。"
+  },
+  {
+    "id": "detect_02_with_model",
+    "instruction": "用 BIT 模型检测一下附件里的影像，阈值 0.6",
+    "file_paths": ["/tmp/agent_uploads/bbb222_t1.tif", "/tmp/agent_uploads/bbb222_t2.tif"],
+    "expect_first": ["run_detection"],
+    "note": "指定了模型与阈值，参数要能对上"
+  },
+  {
+    "id": "detect_03_no_files",
+    "instruction": "帮我跑一次变化检测",
+    "expect_first": [],
+    "note": "没有附件。不该硬调 run_detection（它需要影像路径），应说明缺什么"
+  },
+
+  {
+    "id": "history_01_list",
+    "instruction": "我最近做了哪些检测？",
+    "expect_first": ["list_detections"],
+    "note": "列自己的历史"
+  },
+  {
+    "id": "history_02_model_filter",
+    "instruction": "帮我查查用 AFCF3D 跑过的记录",
+    "expect_first": ["list_detections"],
+    "note": "带模型过滤的列表查询"
+  },
+  {
+    "id": "history_03_count",
+    "instruction": "我一共检测过多少次",
+    "expect_first": ["list_detections"],
+    "note": "问次数，也需要先列记录"
+  },
+
+  {
+    "id": "detail_01_by_id",
+    "instruction": "把 137 号记录的详细信息给我",
+    "expect_first": ["get_detection"],
+    "note": "明确给了 ID，不该再去列列表"
+  },
+  {
+    "id": "detail_02_ratio",
+    "instruction": "第 42 条记录的变化比例是多少",
+    "expect_first": ["get_detection"],
+    "note": "问单条记录的具体字段"
+  },
+
+  {
+    "id": "disaster_01_need_id",
+    "instruction": "帮我做一下灾害定损",
+    "expect_first": ["list_detections", "assess_disaster"],
+    "note": "没给记录 ID。先列记录找 ID、或直接反问，都算合理；不该瞎猜 ID"
+  },
+  {
+    "id": "disaster_02_by_id",
+    "instruction": "对 88 号记录做受灾定损，地块 120 亩，种的是玉米",
+    "expect_first": ["assess_disaster"],
+    "note": "ID 与关键参数都给全了"
+  },
+  {
+    "id": "disaster_03_loss_only",
+    "instruction": "23 号记录如果绝收，大概损失多少钱？",
+    "expect_first": [],
+    "note": "**正确行为是追问，不是调工具**：用户要的是金额，但没给地块面积，而 assess_disaster 在不给 area_mu 时「各级面积按 0 计，只能看占比」，算不出钱；get_detection 也不返回面积（面积在地块档案里）。所以任何工具都答不了这个问题，只能向用户要参数。初版期望写的是 assess_disaster，是期望错了。"
+  },
+
+  {
+    "id": "series_01_list",
+    "instruction": "我建过哪些时序序列？",
+    "expect_first": ["list_series"],
+    "note": "列序列"
+  },
+  {
+    "id": "series_02_trend_by_name",
+    "instruction": "「2024 年玉米地」这个序列这几年的变化趋势怎么样",
+    "expect_first": ["list_series", "get_series_trend"],
+    "note": "只给了名字没给 ID —— 应先 list_series 找 ID，跳过直接猜 ID 是错的"
+  },
+  {
+    "id": "series_03_trend_by_id",
+    "instruction": "算一下 3 号序列的变化速率",
+    "expect_first": ["get_series_trend"],
+    "note": "ID 已给，可直接取趋势"
+  },
+
+  {
+    "id": "notool_01_greeting",
+    "instruction": "你好",
+    "expect_first": [],
+    "note": "闲聊，不该调任何工具"
+  },
+  {
+    "id": "notool_02_capability",
+    "instruction": "你能做什么？",
+    "expect_first": [],
+    "note": "问能力范围，应直接回答"
+  },
+  {
+    "id": "notool_03_concept",
+    "instruction": "NDVI 是什么意思",
+    "expect_first": [],
+    "note": "概念问题，没有对应工具"
+  },
+  {
+    "id": "notool_04_out_of_scope",
+    "instruction": "帮我写一首关于黑土地的诗",
+    "expect_first": [],
+    "note": "与系统能力无关的请求"
+  },
+  {
+    "id": "notool_05_no_such_tool",
+    "instruction": "把所有检测记录都删掉",
+    "expect_first": [],
+    "note": "没有删除工具。应如实说做不到，不该硬套某个工具"
+  },
+  {
+    "id": "notool_06_about_system",
+    "instruction": "这个系统支持哪些影像格式？",
+    "expect_first": [],
+    "note": "问系统本身，不是查数据"
+  }
+]
