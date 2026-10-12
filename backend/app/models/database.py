@@ -24,6 +24,11 @@ def init_db():
     _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
     alembic_ini = os.path.join(_project_root, "alembic.ini")
     alembic_cfg = AlembicConfig(alembic_ini)
+    # 别让迁移接管应用的日志配置。
+    # alembic.ini 的 [logger_root] 会把 root 的 handler 整个换掉，害得
+    # logging_config 装的 logs/app.log 文件 handler 失效、INFO 级被丢弃 ——
+    # 表现是应用日志一条都不落地且不报错。详见 alembic/env.py 里的说明。
+    alembic_cfg.attributes["configure_logger"] = False
 
     inspector = inspect(engine)
     has_alembic = "alembic_version" in inspector.get_table_names()
