@@ -1,0 +1,80 @@
+name: tests
+
+# 推代码 / 提 PR 时自动跑 pytest。
+#
+# 为什么要有它：scripts/smoke_test.py 曾经**静默失效几个月没人发现** ——
+# 它的登录方式过时了，每次都在开头 sys.exit(1)，而没人会去手动跑它。
+# 「有测试」和「测试在跑」是两件事，这个 workflow 补的是后者。
+#
+# 这里只跑 pytest：它完全离线（不连外部服务、不花 LLM 调用 ——
+# tests/conftest.py 里那个 autouse 的 mock_ai_chat 会挡掉所有模型调用）。
+# scripts/ 下那几个 *_test.py 要起真实服务，agent_e2e_test.py 还要花真钱，
+# 都不适合进 CI。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # opencv-python 依赖 libGL，ubuntu 基础镜像里没有。不装的话
+      # `import cv2` 会抛 ImportError: libGL.so.1 —— 看起来像代码坏了，
+      # 其实是缺系统库。
+      - name: 系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgl1 libglib2.0-0
+
+      # 先单独装 CPU 版 torch：直接从 PyPI 装会连带拉一堆 nvidia-* 包，
+      # 多下载约 2.5GB；CPU 版只要 200MB 左右。装完之后再跑 requirements，
+      # 里面的 `torch>=2.0.0` 已经满足，不会重复下载。
+      - name: CPU 版 torch
+        run: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+      - name: 其余依赖
+        run: pip install -r requirements.txt
+
+      # checkpoints/ 在 .gitignore 里，CI 里没有权重文件。而
+      # tests/test_model_availability.py 会断言「随附权重的模型报可用」，
+      # 缺文件就会红 —— 一个 naive 的 CI 第一天就是红的。
+      #
+      # 这里造**空占位文件**是安全的：
+      #   - is_model_available 只做 os.path.exists，不读文件内容
+      #   - 检测类测试的模型推理是 mock 掉的，不会真去加载权重
+      #
+      # 只造测试认定为「已随附」的那三个。多造会把
+      # test_unshipped_models_report_unavailable 的断言搞反。
+      # ⚠️ 这份清单与 tests/test_model_availability.py 的 SHIPPED 对应，
+      #    改一处要改两处。
+      - name: 造占位权重（checkpoints/ 不入库）
+        run: |
+          python - <<'PY'
+          import pathlib
+          from backend.app.services.detect_service import resolve_checkpoint_path
+
+          SHIPPED = ["BIT", "AFCF3D", "BIT_LuojiaSET"]
+          for name in SHIPPED:
+              p = pathlib.Path(resolve_checkpoint_path(name))
+              p.parent.mkdir(parents=True, exist_ok=True)
+              p.touch()
+              print("占位:", p)
+          PY
+
+      - name: 跑测试
+        run: python -m pytest -q

@@ -79,6 +79,10 @@ python api.py
 pytest                              # 单元/接口测试，不需要起服务
 ```
 
+**推代码和提 PR 时会自动跑这套测试**（[.github/workflows/tests.yml](.github/workflows/tests.yml)）。
+CI 里没有 `checkpoints/`（不入库），workflow 会造三个空占位文件 —— 可用性测试只做
+`os.path.exists`，检测类测试的推理是 mock 的，不会真去加载权重。
+
 下面几个是**跑真实系统**的检查脚本，除注明外都需要先 `python api.py`：
 
 | 脚本 | 覆盖什么 | 代价 |
