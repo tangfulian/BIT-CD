@@ -2613,6 +2613,54 @@ select.form-control {
 #mapviewerMap { background: var(--bg-main); }
 #mapviewerMap .amap-marker { cursor: pointer; }
 
+/* 空态/警示提示是浮在地图上的。原先默认底图是浅色矢量图，灰字直接压上去
+   还能看；换成卫星影像后同一句话糊在航拍细节里基本读不出来。给一个随主题
+   走的卡片底（文字色仍由 _showMapHint/_clearMapHint 各自控制）。 */
+#mapEmptyHint {
+    padding: 14px 22px;
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    box-shadow: var(--shadow-md);
+    opacity: 0.94;
+}
+
+/* ---- 底图切换（标准 / 卫星）---- */
+.map-base-toggle {
+    display: inline-flex;
+    padding: 2px;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+}
+.map-base-btn {
+    padding: 3px 14px;
+    border: none;
+    background: transparent;
+    border-radius: 13px;
+    font-size: var(--font-xs);
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transition-fast);
+}
+.map-base-btn:hover { color: var(--text-primary); }
+.map-base-btn[aria-pressed="true"] {
+    background: var(--primary);
+    color: #fff;
+}
+
+/* 暗色主题下的卫星底图：压暗底图画布，让影像不至于在暗色面板中间发亮。
+   只命中 canvas.amap-layer —— AMap 2.0 把整张底图画在这一个 canvas 上，
+   而标记点是它的兄弟节点（.amap-markers > .amap-marker），因此不受影响。 */
+#mapviewerMap.map-dark-base canvas.amap-layer,
+#mapContainer.map-dark-base canvas.amap-layer {
+    /* 0.7 会把地名注记也压得发灰（注记和影像在同一个画布上），
+       0.75 是压得住亮度、又还认得出地名的位置。 */
+    filter: brightness(0.75) saturate(0.85) contrast(1.05);
+}
+
 @media (max-width: 900px) {
     .map-layout { flex-direction: column; }
     .map-side-panel { width: 100%; }

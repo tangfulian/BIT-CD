@@ -4,15 +4,89 @@ import { Utils } from './utils.js';
 import { LandInfo } from './landInfo.js';
 import { Modal } from './modal.js';
 import { I18n } from './i18n.js';
+import { eventBus } from './eventBus.js';
 
 export const GPSLocator = {
     mouseTool: null,
     drawnPolygon: null,
+    // 底图类型与检测地图共用同一份偏好（CONFIG.MAP_BASE_KEY）
+    _baseMode: 'satellite',
+    _lastLngLat: null,
 
     init() {
         document.getElementById("getGPSBtn").onclick = () => this.getCurrentLocation();
         document.getElementById("drawAreaBtn").onclick = () => this.startDrawing();
         document.getElementById("clearDrawBtn").onclick = () => this.clearDrawing();
+
+        this._baseMode = Utils.safeLocalStorage.getItem(CONFIG.MAP_BASE_KEY) === 'standard'
+            ? 'standard' : 'satellite';
+        ['landBaseStdBtn', 'landBaseSatBtn'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.onclick = () => this.setBaseLayer(btn.dataset.mode);
+        });
+        this._syncBaseButtons();
+
+        eventBus.on('theme-change', () => this._onThemeChange());
+    },
+
+    setBaseLayer(mode) {
+        if (mode !== 'satellite' && mode !== 'standard') return;
+        if (mode === this._baseMode) return;
+        this._baseMode = mode;
+        Utils.safeLocalStorage.setItem(CONFIG.MAP_BASE_KEY, mode);
+        this._syncBaseButtons();
+        // 用户可能还没定位、地图都没建出来，那就只记偏好
+        if (state.map && this._lastLngLat) this._rebuildMap();
+    },
+
+    _syncBaseButtons() {
+        [['landBaseStdBtn', 'standard'], ['landBaseSatBtn', 'satellite']].forEach(([id, mode]) => {
+            const btn = document.getElementById(id);
+            if (btn) btn.setAttribute('aria-pressed', String(this._baseMode === mode));
+        });
+    },
+
+    _isDark() {
+        return document.documentElement.getAttribute('data-theme') === 'dark';
+    },
+
+    _onThemeChange() {
+        if (!state.map) return;
+        // 卫星底图只需换滤镜（不闪烁）；矢量底图的样式只能在构造时定，得重建。
+        if (this._baseMode === 'satellite') this._applyBaseTone();
+        else this._rebuildMap();
+    },
+
+    _applyBaseTone() {
+        const el = document.getElementById('mapContainer');
+        if (el) el.classList.toggle('map-dark-base', this._isDark() && this._baseMode === 'satellite');
+    },
+
+    /**
+     * 按当前底图/主题重建地图，并把标记点、已绘制的多边形搬过去。
+     * 这三样都不会跟着新地图自动出现 —— 尤其 _mapClickEnabled 必须重置，
+     * 否则点击新地图不会再移动标记（监听是挂在**旧**地图对象上的）。
+     */
+    _rebuildMap() {
+        if (!state.map || !this._lastLngLat) return;
+        let view = null;
+        try {
+            view = { center: state.map.getCenter(), zoom: state.map.getZoom() };
+        } catch (e) { view = null; }
+        const { lng, lat } = this._lastLngLat;
+
+        state.map.destroy();
+        state.map = null;
+        this._createMap(lng, lat, view);
+        this._placeMarker(lng, lat);
+        // 多边形是 MouseTool 建的、挂在旧地图上，搬过来
+        if (this.drawnPolygon) {
+            try {
+                this.drawnPolygon.setMap(state.map);
+            } catch (e) {
+                console.warn('[GPSLocator] 已绘制的地块边框未能迁移到新底图', e);
+            }
+        }
     },
 
     async getCurrentLocation() {
@@ -129,15 +203,44 @@ export const GPSLocator = {
     _mapClickEnabled: false,
 
     _updateMap(lng, lat) {
+        this._lastLngLat = { lng, lat };
         if (!state.map) {
-            state.map = new AMap.Map("mapContainer", {
-                zoom: 16,
-                center: [lng, lat],
-                resizeEnable: true
-            });
+            this._createMap(lng, lat, null);
         } else {
             state.map.setCenter([lng, lat]);
         }
+        this._placeMarker(lng, lat);
+        state.map.setFitView([state.marker]);
+    },
+
+    /**
+     * @param {{center: object, zoom: number}|null} view - 传了就沿用这个视野（重建时用）
+     */
+    _createMap(lng, lat, view) {
+        state.map = new AMap.Map("mapContainer", {
+            zoom: view ? view.zoom : 16,
+            center: view ? [view.center.lng, view.center.lat] : [lng, lat],
+            resizeEnable: true,
+            mapStyle: this._isDark() ? CONFIG.MAP_STYLE_DARK : CONFIG.MAP_STYLE_LIGHT
+        });
+        // 卫星图层取不到就退回矢量图 —— 地块定位是表单的必填项，不能让整张图空掉
+        if (this._baseMode === 'satellite') {
+            try {
+                this._satellite = new AMap.TileLayer.Satellite();
+                this._roadNet = new AMap.TileLayer.RoadNet();
+                state.map.add([this._satellite, this._roadNet]);
+            } catch (e) {
+                console.warn('[GPSLocator] 卫星图层加载失败，回退到矢量底图', e);
+                this._satellite = null;
+                this._roadNet = null;
+            }
+        }
+        this._applyBaseTone();
+        // 监听是挂在具体地图对象上的，换图后必须允许重挂
+        this._mapClickEnabled = false;
+    },
+
+    _placeMarker(lng, lat) {
         if (state.marker) state.marker.setMap(null);
         state.marker = new AMap.Marker({
             position: [lng, lat],
@@ -150,7 +253,6 @@ export const GPSLocator = {
             })
         });
         state.marker.setMap(state.map);
-        state.map.setFitView([state.marker]);
 
         // 拖拽标记更新地址
         state.marker.on('dragend', async (e) => {
@@ -158,7 +260,7 @@ export const GPSLocator = {
             await this._onMapClick(pos.lng, pos.lat);
         });
 
-        // 点击地图移动标记并更新地址
+        // 点击地图移动标记并更新地址（每条地图实例挂一次）
         if (!this._mapClickEnabled) {
             this._mapClickEnabled = true;
             state.map.on('click', async (e) => {

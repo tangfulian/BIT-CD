@@ -316,7 +316,13 @@
                                     <button type="button" id="clearDrawBtn" class="btn-gray" style="width: auto; padding: 8px 16px; font-size: 13px; display: none;" data-i18n="common.reset">清除</button>
                                 </div>
                             </div>
-                            <div id="gpsStatus" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;"><span data-i18n="land.gpsHint">点击按钮获取当前位置，或手动绘制地块范围</span></div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px;">
+                                <div id="gpsStatus" style="font-size: 13px; color: var(--text-secondary);"><span data-i18n="land.gpsHint">获取当前位置，或手动绘制地块范围</span></div>
+                                <div class="map-base-toggle" role="group" aria-label="底图类型" data-i18n-aria="map.baseGroup" style="flex-shrink:0;">
+                                    <button type="button" class="map-base-btn" id="landBaseStdBtn" data-mode="standard" aria-pressed="false" data-i18n="map.baseStandard">标准</button>
+                                    <button type="button" class="map-base-btn" id="landBaseSatBtn" data-mode="satellite" aria-pressed="true" data-i18n="map.baseSatellite">卫星</button>
+                                </div>
+                            </div>
                             <div id="mapContainer" style="flex: 1; width: 100%; min-height: 400px; border-radius: var(--radius-md); border: 1px solid var(--border);"></div>
                         </div>
                     </div>
@@ -1003,9 +1009,13 @@
                 <div class="page-header">
                     <div>
                         <h1 data-i18n="map.title">检测结果地图</h1>
-                        <p data-i18n="map.subtitle">所有带地理位置的检测记录在地图上可视化展示</p>
+                        <p data-i18n="map.subtitle">带坐标的检测记录地图总览</p>
                     </div>
                     <div style="display:flex;gap:12px;align-items:center;">
+                        <div class="map-base-toggle" role="group" aria-label="底图类型" data-i18n-aria="map.baseGroup">
+                            <button type="button" class="map-base-btn" id="mapBaseStdBtn" data-mode="standard" aria-pressed="false" data-i18n="map.baseStandard">标准</button>
+                            <button type="button" class="map-base-btn" id="mapBaseSatBtn" data-mode="satellite" aria-pressed="true" data-i18n="map.baseSatellite">卫星</button>
+                        </div>
                         <button class="btn-small-action" id="heatmapToggleBtn" style="display:none;" data-i18n="map.heatmapMode">热力图模式</button>
                         <span style="font-size:13px;color:var(--text-secondary);">
                             <span style="color:#10b981;">●</span> <5% &nbsp;

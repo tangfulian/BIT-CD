@@ -18,5 +18,12 @@ export const CONFIG = {
     BATCH_CONCURRENCY: 3,
     ACCEPTED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/tiff', 'image/tif', 'image/bmp'],
     GUEST_QUOTA_KEY: "guest_detect_quota",
-    GUEST_MAX_QUOTA: 3
+    GUEST_MAX_QUOTA: 3,
+
+    // 地图底图。检测地图与地块信息两张图共用同一份用户偏好，
+    // 也和同一套高德样式 —— 样式必须写在 new AMap.Map 里，
+    // setStyle() 对已渲染的地图不重绘（见 mapViewer 的 _buildMap）。
+    MAP_BASE_KEY: "map_base_layer",        // 'satellite' | 'standard'
+    MAP_STYLE_LIGHT: "amap://styles/normal",
+    MAP_STYLE_DARK: "amap://styles/darkblue"
 };

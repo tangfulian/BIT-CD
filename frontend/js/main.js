@@ -111,6 +111,8 @@ window.onload = () => {
             html.classList.add("theme-transitioning");
             html.setAttribute("data-theme", next);
             Utils.safeLocalStorage.setItem("app_theme", next);
+            // 地图底图不认 CSS 变量，得自己响应（检测地图用它重挑底图样式/滤镜）
+            eventBus.emit("theme-change", next);
             themeBtn.setAttribute("aria-pressed", next === "dark");
             themeBtn.textContent = next === "dark" ? I18n.t('theme.dark') : I18n.t('theme.light');
             setTimeout(() => html.classList.remove("theme-transitioning"), 420);

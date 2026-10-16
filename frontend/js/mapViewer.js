@@ -4,6 +4,7 @@ import { Utils } from './utils.js';
 import { API } from './api.js';
 import { I18n } from './i18n.js';
 import { Toast } from './toast.js';
+import { eventBus } from './eventBus.js';
 
 /**
  * 底图因高德鉴权失败而画不出来时的提示语。
@@ -11,6 +12,12 @@ import { Toast } from './toast.js';
  * 这个标志位由 index.html 里的 console 探针捕获 INVALID_USER_DOMAIN 后置位。
  */
 const AUTH_MSG = '底图加载失败：高德 Key 未授权当前域名，标记仍可查看';
+
+// 矢量底图的样式与偏好键统一放在 config.js（地块信息页那张地图也用同一份）。
+// 注意 setStyle() 对已渲染的地图不生效，样式只能在 new AMap.Map 时给（见 _buildMap）。
+const LIGHT_STYLE = CONFIG.MAP_STYLE_LIGHT;
+const DARK_STYLE = CONFIG.MAP_STYLE_DARK;
+const BASE_MODE_KEY = CONFIG.MAP_BASE_KEY;
 
 function setText(id, val) {
     var el = document.getElementById(id);
@@ -23,12 +30,93 @@ export const MapViewer = {
     heatmap: null,
     _heatmapData: [],
     _heatmapVisible: false,
+    // 底图类型：'satellite'（默认，写实的卫星影像）| 'standard'（矢量路网）
+    _baseMode: 'satellite',
+    _history: [],
+    _errorMsg: null,
 
     init() {
         const toggleBtn = document.getElementById('heatmapToggleBtn');
         if (toggleBtn) {
             toggleBtn.onclick = () => this.toggleHeatmap();
         }
+
+        this._baseMode = Utils.safeLocalStorage.getItem(BASE_MODE_KEY) === 'standard'
+            ? 'standard' : 'satellite';
+        ['mapBaseStdBtn', 'mapBaseSatBtn'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.onclick = () => this.setBaseLayer(btn.dataset.mode);
+        });
+        this._syncBaseButtons();
+
+        // 地图底图不吃 CSS 变量，主题换了得自己重挑底图（见 _onThemeChange）
+        eventBus.on('theme-change', () => this._onThemeChange());
+    },
+
+    setBaseLayer(mode) {
+        if (mode !== 'satellite' && mode !== 'standard') return;
+        if (mode === this._baseMode) return;
+        this._baseMode = mode;
+        Utils.safeLocalStorage.setItem(BASE_MODE_KEY, mode);
+        this._syncBaseButtons();
+        this._rebuildMap();
+    },
+
+    _syncBaseButtons() {
+        [['mapBaseStdBtn', 'standard'], ['mapBaseSatBtn', 'satellite']].forEach(([id, mode]) => {
+            const btn = document.getElementById(id);
+            if (btn) btn.setAttribute('aria-pressed', String(this._baseMode === mode));
+        });
+    },
+
+    _isDark() {
+        return document.documentElement.getAttribute('data-theme') === 'dark';
+    },
+
+    /**
+     * 卫星模式下把 Satellite / RoadNet 图层叠到默认底图之上（它们不透明，会盖住）。
+     * 失败就回退到矢量图 —— 卫星瓦片取不到（配额、网络）不该让整张地图空掉。
+     */
+    _attachSatellite() {
+        if (this._baseMode !== 'satellite') return;
+        try {
+            this._satellite = new AMap.TileLayer.Satellite();
+            this._roadNet = new AMap.TileLayer.RoadNet();
+            this.map.add([this._satellite, this._roadNet]);
+        } catch (e) {
+            console.warn('[MapViewer] 卫星图层加载失败，回退到矢量底图', e);
+            this._satellite = null;
+            this._roadNet = null;
+        }
+    },
+
+    /**
+     * 暗色主题下压暗卫星底图。改的是容器上的一个类，由 CSS 去只作用于
+     * canvas.amap-layer —— 因此标记点不受影响，也不需要重建地图。
+     */
+    _applyBaseTone() {
+        const el = document.getElementById('mapviewerMap');
+        if (el) el.classList.toggle('map-dark-base', this._isDark() && this._baseMode === 'satellite');
+    },
+
+    _onThemeChange() {
+        if (!this.map) return;
+        // 卫星模式只需换个滤镜（无闪烁）；矢量模式的样式只能在构造时定，
+        // 所以必须重建。
+        if (this._baseMode === 'satellite') this._applyBaseTone();
+        else this._rebuildMap();
+    },
+
+    /** 按当前底图/主题重建地图，尽量保住用户当前的视野。 */
+    _rebuildMap() {
+        if (!this.map) return;
+        let view = null;
+        try {
+            view = { center: this.map.getCenter(), zoom: this.map.getZoom() };
+        } catch (e) {
+            view = null;
+        }
+        this._buildMap(this._history, this._errorMsg, view);
     },
 
     async render() {
@@ -62,6 +150,19 @@ export const MapViewer = {
      *   而不是「确实没有带坐标的记录」，两者不能共用同一句话
      */
     initMap(history, errorMsg) {
+        // 缓存起来：切换底图/主题要按同一批数据重建地图，不能重新去请求
+        this._history = history;
+        this._errorMsg = errorMsg;
+        this._buildMap(history, errorMsg, null);
+    },
+
+    /**
+     * 建图并画点。切底图、切主题都会回来重建 —— 因为高德的自定义样式只能在
+     * 构造时给（setStyle() 对已渲染的地图不重绘），重建是唯一可靠的办法。
+     * @param {{center: object, zoom: number}|null} view - 传了就沿用这个视野
+     *   （重建时保住用户当前的缩放和位置），不传则用默认视野 + setFitView
+     */
+    _buildMap(history, errorMsg, view) {
         const container = document.getElementById('mapviewerMap');
         if (!container) return;
 
@@ -78,6 +179,15 @@ export const MapViewer = {
             this.map.destroy();
             this.map = null;
         }
+        // 这些都挂在旧地图实例上，destroy 后必须一并丢弃：
+        // 留着的话热力图会绑在一张已销毁的地图上，而且永远不会重建。
+        this.markers = [];
+        this.heatmap = null;
+        this._heatmapData = [];
+        this._heatmapVisible = false;
+        // 按钮文案也得跟着回到初始态，否则重建后显示的是上一次的「标记点模式」
+        const heatBtn = document.getElementById('heatmapToggleBtn');
+        if (heatBtn) heatBtn.textContent = I18n.t('map.heatmapMode');
 
         // AMap 脚本可能整个没加载出来（未配 Key、CDN 不可达）
         if (typeof AMap === 'undefined') {
@@ -88,15 +198,23 @@ export const MapViewer = {
 
         try {
             this.map = new AMap.Map("mapviewerMap", {
-                zoom: 6,
-                center: [126.63, 45.75],
-                resizeEnable: true
+                zoom: view ? view.zoom : 6,
+                center: view ? [view.center.lng, view.center.lat] : [126.63, 45.75],
+                resizeEnable: true,
+                mapStyle: this._isDark() ? DARK_STYLE : LIGHT_STYLE
             });
         } catch (e) {
             console.error('[MapViewer] 地图初始化失败', e);
             this._showMapHint('底图加载失败，请检查高德 Key 的域名白名单是否包含当前域名');
             return;
         }
+
+        try {
+            this._attachSatellite();
+        } catch (e) {
+            console.warn('[MapViewer] 卫星图层异常', e);
+        }
+        this._applyBaseTone();
 
         // 底图瓦片/样式被高德拒绝时（域名未授权 → INVALID_USER_DOMAIN），
         // new AMap.Map 本身**不会**报错，画布只是整块空白，页面静默无提示，
@@ -147,7 +265,6 @@ export const MapViewer = {
         else this._clearMapHint();
 
         const points = [];
-        this._heatmapData = [];
         const infoWindow = new AMap.InfoWindow({ offset: new AMap.Pixel(0, -30) });
 
         geoItems.forEach((item, idx) => {
@@ -204,11 +321,16 @@ export const MapViewer = {
             });
         });
 
-        if (this.markers.length > 0) this.map.setFitView(this.markers);
+        // 重建时点了 setFitView 会把用户刚调好的视野又拉回去
+        if (!view && this.markers.length > 0) this.map.setFitView(this.markers);
 
         // 异步加载热力图插件
         if (!this.heatmap) {
+            // 回调是异步的，期间用户可能又切了底图/主题把地图换掉了。
+            // 不加这道判断，热力图会挂到一张已销毁的地图上。
+            const builtFor = this.map;
             AMap.plugin('AMap.HeatMap', () => {
+                if (this.map !== builtFor) return;
                 this.heatmap = new AMap.HeatMap(this.map, {
                     radius: 30,
                     opacity: [0, 0.7],
