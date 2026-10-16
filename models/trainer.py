@@ -91,7 +91,10 @@ class CDTrainer():
         elif args.loss == 'bce':
             self._pxl_loss = losses.binary_ce
         else:
-            raise NotImplemented(args.loss)
+            # 原先是 raise NotImplemented(...)：NotImplemented 是单例值不是异常类，
+            # 真走到这里抛的是 TypeError「exceptions must derive from BaseException」，
+            # 把「损失函数名写错了」伪装成了别的问题。
+            raise NotImplementedError(args.loss)
 
         self.VAL_ACC = np.array([], np.float32)
         if os.path.exists(os.path.join(self.checkpoint_dir, 'val_acc.npy')):

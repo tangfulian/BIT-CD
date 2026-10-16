@@ -56,7 +56,7 @@ def get_loaders(args):
     else:
         raise NotImplementedError(
             'Wrong dataset name %s (choose one from [CDDataset,])'
-            % dataset)
+            % args.dataset)
 
     datasets = {'train': training_set, 'val': val_set}
     dataloaders = {x: DataLoader(datasets[x], batch_size=args.batch_size,
