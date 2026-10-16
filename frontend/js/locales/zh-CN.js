@@ -43,7 +43,7 @@ export const zhCN = {
 
     // 认证
     "auth.title": "黑土地遥感变化检测系统",
-    "auth.subtitle": "上传两期卫星影像，自动识别耕地变化位置与面积",
+    "auth.subtitle": "上传两期影像，识别耕地变化位置与面积",
     "auth.username": "用户名",
     "auth.password": "密码",
     "auth.login": "登录系统",
@@ -93,7 +93,7 @@ export const zhCN = {
 
     // 地块信息
     "land.title": "地块信息配置",
-    "land.subtitle": "设置地块基础信息，用于检测记录",
+    "land.subtitle": "地块档案，供检测关联",
     "land.t1Time": "T1影像拍摄时间",
     "land.t2Time": "T2影像拍摄时间",
     "land.province": "所在省份",
@@ -111,13 +111,13 @@ export const zhCN = {
     "land.clearDraw": "清除绘制",
     "land.infoSaved": "✅ 地块配置保存成功！",
     "land.defaultChangeType": "黑土层变薄退化",
-    "land.gpsHint": "点击按钮获取当前位置，或手动绘制地块范围",
+    "land.gpsHint": "获取当前位置，或手动绘制地块范围",
 
     // 单张检测
     "detect.title": "单张影像检测",
-    "detect.subtitle": "上传前后时相遥感影像，进行变化检测分析",
+    "detect.subtitle": "上传前后时相影像，做变化检测与分析",
     "detect.emptyTitle": "还没有检测结果",
-    "detect.emptyDesc": "上传 T1 前时相与 T2 后时相影像，点击「开始检测」，结果与统计会显示在这里。",
+    "detect.emptyDesc": "上传 T1/T2 影像后开始检测，结果与统计显示在这里",
     "detect.t1Label": "T1 前时相",
     "detect.t2Label": "T2 后时相",
     "detect.model": "检测模型",
@@ -158,7 +158,7 @@ export const zhCN = {
 
     // 批量检测
     "batch.title": "批量影像检测",
-    "batch.subtitle": "批量上传多组影像对，自动依次检测",
+    "batch.subtitle": "多组影像对排队检测",
     "batch.config": "批量配置",
     "batch.result": "批量结果",
     "batch.t1Label": "T1 时相影像（批量）",
@@ -201,7 +201,7 @@ export const zhCN = {
 
     // 历史
     "history.title": "检测历史",
-    "history.subtitle": "查看您的所有检测记录",
+    "history.subtitle": "全部检测记录，可筛选与删除",
     "history.recordList": "历史记录",
     "history.noHistory": "暂无检测历史",
     "history.clearAll": "清空所有历史",
@@ -225,7 +225,7 @@ export const zhCN = {
     "history.confirmDeleteOne": "确定删除此检测记录吗？此操作不可恢复！",
     "history.deleted": "已删除",
     "history.deleteFailed": "删除失败",
-    "history.confirmClearAll": "确定清空所有检测历史吗？此操作不可恢复！",
+    "history.confirmClearAll": "将清空全部检测历史，且不可恢复。确定继续？",
     "history.clearFailed": "清空失败",
     "history.requestFailed": "请求失败",
     "history.rateLimited": "请求过于频繁，请稍后重试",
@@ -246,7 +246,7 @@ export const zhCN = {
 
     // 时序分析
     "timeline.title": "多时相时序分析",
-    "timeline.subtitle": "把同一地块的多期影像组织成序列，按影像日期分析变化速率与趋势",
+    "timeline.subtitle": "多期影像序列的变化速率与趋势",
     "timeline.selectSeries": "选择序列",
     "timeline.changeTrend": "变化比例趋势",
     "timeline.selectPlot": "选择地块",
@@ -267,8 +267,11 @@ export const zhCN = {
     // 地图
     "map.title": "检测结果地图",
     "map.avgRatio": "平均变化率：",
-    "map.subtitle": "所有带地理位置的检测记录在地图上可视化展示",
+    "map.subtitle": "带坐标的检测记录地图总览",
     "map.heatmapMode": "热力图模式",
+    "map.baseGroup": "底图类型",
+    "map.baseStandard": "标准",
+    "map.baseSatellite": "卫星",
     "map.markerMode": "标记点模式",
     "map.noGeoData": "暂无带地理位置的检测记录",
     "map.noGeoHint": "请先在地块信息配置中设置经纬度",
@@ -281,9 +284,9 @@ export const zhCN = {
 
     // 对比
     "compare.title": "检测结果对比",
-    "compare.subtitle": "选择两个历史记录进行并排比较",
+    "compare.subtitle": "两条记录并排比较",
     "compare.emptyTitle": "还没有对比结果",
-    "compare.emptyDesc": "在上方分别选择记录 A 与记录 B，点击「开始对比」，两者的指标差异会显示在这里。",
+    "compare.emptyDesc": "选择记录 A 与 B 后开始对比，指标差异显示在这里",
     "compare.select1": "选择记录 1",
     "compare.select2": "选择记录 2",
     "compare.compareBtn": "开始对比",
@@ -317,7 +320,7 @@ export const zhCN = {
 
     // 系统状态
     "status.title": "系统状态",
-    "status.subtitle": "后端运行信息与健康状态",
+    "status.subtitle": "模型信息与运行状态",
     "status.modelInfo": "模型信息",
     "status.modelName": "模型名称：",
     "status.computeDevice": "计算设备：",
@@ -352,7 +355,7 @@ export const zhCN = {
 
     // 用户管理
     "usermgr.title": "用户管理",
-    "usermgr.subtitle": "管理所有注册用户",
+    "usermgr.subtitle": "用户与权限管理",
     "usermgr.refresh": "刷新列表",
     "usermgr.id": "ID",
     "usermgr.role": "角色",
@@ -368,7 +371,7 @@ export const zhCN = {
     // AI 助手
     "chat.title": "黑土地AI助手",
     "chat.placeholder": "请输入您的问题...",
-    "chat.welcome": "您好！我是东北黑土地变化检测智能系统的专属AI助手。我可以为您解答黑土地保护、遥感变化检测技术、系统操作等相关问题。请问有什么可以帮助您的？",
+    "chat.welcome": "我是黑土地变化检测系统的 AI 助手，可解答黑土地保护、遥感检测与系统操作相关问题。",
     "chat.thinking": "思考中...",
     "chat.error": "抱歉，出错啦",
     "chat.send": "发送",
@@ -383,23 +386,23 @@ export const zhCN = {
     // AI Agent 全页视图
     "nav.agent": "AI Agent",
     "agent.title": "AI Agent 智能操控",
-    "agent.subtitle": "用自然语言下达指令，由 AI 选择工具调用或浏览器操控来完成任务",
+    "agent.subtitle": "自然语言驱动，自动选择工具调用或浏览器操控",
     "agent.instruction": "操作指令",
-    "agent.instructionPlaceholder": "用自然语言描述您想要执行的操作，例如：用附件两张影像跑一次 BIT 检测，阈值 0.5...",
+    "agent.instructionPlaceholder": "描述要执行的操作，例如：用附件影像跑一次 BIT 检测",
     "agent.maxSteps": "最大步数",
     "agent.attach": "附件（可选）",
-    "agent.attachHint": "上传的影像会作为附件交给 Agent；请在指令里说明哪张是前期、哪张是后期。",
+    "agent.attachHint": "请在指令中说明附件哪张是前期、哪张是后期",
     "agent.attachPick": "点击选择影像，或把文件拖到这里",
-    "agent.attachMulti": "可以分多次从不同文件夹添加，已选的会累加",
+    "agent.attachMulti": "可多次添加，跨文件夹累加",
     "agent.attachClear": "清空",
     "agent.attachCount": "已选 {n} 个文件",
     "agent.mode": "执行方式",
     "agent.modeTools": "工具调用（快）",
     "agent.modeBrowser": "浏览器操控",
-    "agent.modeToolsHint": "模型把指令直接解析成参数、调用系统内部接口，常规任务十几秒完成。跑检测、查历史用这个。",
-    "agent.modeBrowserHint": "模型驱动一个真实浏览器逐步点击页面。慢（分钟级）且可能因页面改版失效，但它能操作任意网页，属通用通道。",
+    "agent.modeToolsHint": "指令直接解析为接口参数并调用，常规任务约十几秒",
+    "agent.modeBrowserHint": "驱动真实浏览器逐步操作页面，分钟级，可操作任意网页",
     "agent.toolTrace": "工具调用轨迹",
-    "agent.toolPlaceholder": "执行任务后，工具调用轨迹将显示在这里",
+    "agent.toolPlaceholder": "执行后显示工具调用轨迹",
     "agent.noToolCalls": "本次没有调用任何工具",
     "agent.start": "开始执行",
     "agent.cancel": "取消执行",
@@ -420,8 +423,8 @@ export const zhCN = {
     "agent.noScreenshots": "暂无截图",
     "agent.noResult": "暂无执行结果",
     "agent.errors": "执行错误",
-    "agent.screenshotPlaceholder": "执行任务后，操作截图将显示在这里",
-    "agent.executingPlaceholder": "任务执行中，截图将逐步显示...",
+    "agent.screenshotPlaceholder": "执行后显示操作截图",
+    "agent.executingPlaceholder": "执行中，截图将逐步显示",
     "agent.hintFromChat": "浏览器操控功能已迁移到专用的 AI Agent 页面。请在左侧导航栏点击「AI Agent」或使用下方链接打开。",
     "agent.hintOpenLink": "打开 AI Agent 页面",
 
@@ -444,7 +447,7 @@ export const zhCN = {
     "nav.evaluate": "模型评估",
     "nav.disaster": "灾害定损",
     "eval.title": "模型批量评估",
-    "eval.subtitle": "基于 SYSU-CD 数据集，对多个模型批量计算敏感性（Recall）/ 特异性 / F1 / IoU",
+    "eval.subtitle": "多模型批量评估：敏感性 / 特异性 / F1 / IoU",
     "eval.pickFolder": "选择 SYSU-CD 数据集目录",
     "eval.pickHint": "选择包含 A/ B/ label/ 的根目录",
     "eval.foundPairs": "发现配对：",
@@ -464,7 +467,7 @@ export const zhCN = {
     "eval.avgTime": "平均耗时",
     "eval.scanTitle": "阈值扫描 — F1 曲线 ({name})",
     "eval.scanBtn": "开始扫描",
-    "eval.scanHint": "对最佳 F1 样本用 0.05~0.95 阈值扫描，绘制 F1 变化曲线",
+    "eval.scanHint": "对最佳 F1 样本做 0.05–0.95 阈值扫描，绘制 F1 曲线",
     "eval.scanning": "正在扫描阈值...",
     "eval.scanDone": "扫描完成: {name}",
     "eval.scanFailed": "扫描失败",
@@ -608,7 +611,7 @@ export const zhCN = {
     "modelCompare.aiModel": "AI模型",
     "modelCompare.basicMethod": "基础方法",
     "modelCompare.results": "对比结果",
-    "modelCompare.sameResultNote": "注：不同模型使用不同的检测算法，结果可能存在差异。DIFF 为像素级差分基准，其余模型使用深度学习特征。",
+    "modelCompare.sameResultNote": "注：各模型算法不同，结果会有差异；DIFF 为像素级差分，其余为深度学习模型",
     "modelCompare.statsTitle": "统计对比",
     "modelCompare.chartTitle": "变化比例对比",
     "modelCompare.modelCol": "模型",
@@ -654,7 +657,7 @@ export const zhCN = {
 
     // 关于
     "about.title": "BlackLand CD 黑土地遥感变化检测系统",
-    "about.description": "黑土地遥感变化检测智能平台，融合深度学习与GIS技术，为东北黑土地保护提供高效、精准的变化检测与数据分析解决方案。",
+    "about.description": "基于深度学习与 GIS 的黑土地遥感变化检测平台",
     "about.techStack": "技术栈",
     "about.frontend": "前端",
     "about.backend": "后端",
@@ -678,7 +681,7 @@ export const zhCN = {
 
     // 404
     "notfound.title": "页面未找到",
-    "notfound.desc": "您访问的页面不存在或已被移除。请检查地址是否正确，或返回首页。",
+    "notfound.desc": "页面不存在或已被移除，请检查地址或返回首页",
     "notfound.goHome": "返回首页",
 
     // 历史
@@ -760,7 +763,7 @@ export const zhCN = {
 
     // 灾害定损
     "disaster.title": "农业灾害定损",
-    "disaster.subtitle": "基于变化检测结果估算受灾面积与经济损失，并对比查勘成本",
+    "disaster.subtitle": "按受灾分级估算面积与经济损失，对比查勘成本",
     "disaster.secConfig": "测算参数",
     "disaster.proxyWarn": "受灾等级由模型变化置信度分级得到，是「变化强度」的代理，不是实测减产率。下方标注为假设的参数请按当地统计年鉴或保险条款替换。",
     "disaster.record": "检测记录",
@@ -813,9 +816,9 @@ export const zhCN = {
     "disaster.secDraft": "定损说明",
     "disaster.draftBadge": "AI 草稿 · 需人工复核",
     "disaster.noImage": "本说明由大模型根据上述数值生成，模型未接收任何影像数据。",
-    "disaster.draftHint": "尚未生成。点击下方按钮由 AI 依据上表数值撰写，生成后需人工复核。",
+    "disaster.draftHint": "尚未生成。点击下方按钮，由 AI 依据上表数值撰写",
     "disaster.pickRecord": "请先选择一条检测记录",
-    "disaster.needArea": "请填写地块总面积（亩）—— 受灾面积由它按像素占比摊派",
+    "disaster.needArea": "请填写地块总面积（亩），受灾面积按像素占比摊派",
     "disaster.assessFirst": "请先完成定损测算",
     "disaster.noRecords": "暂无可用于定损的记录",
     "disaster.recordsFailed": "记录列表加载失败",
@@ -832,7 +835,7 @@ export const zhCN = {
     // 多时相序列
     "series.createBtn": "新建序列",
     "series.deleteBtn": "删除序列",
-    "series.emptyHint": "还没有任何序列。一个序列代表同一地块的若干期影像；创建后系统会对相邻两期逐一检测，并给出变化速率与趋势。",
+    "series.emptyHint": "暂无序列。序列是同一地块的多期影像，创建后自动逐期检测并给出变化速率与趋势",
     "series.phases": "期",
     "series.none": "暂无序列",
     "series.location": "地点",
@@ -869,8 +872,8 @@ export const zhCN = {
     "series.areaHint": "留空则速率只给 %/年 口径",
     "series.tabPick": "从历史记录勾选",
     "series.tabUpload": "上传新影像",
-    "series.pickHint": "选择同一地块不同时期的检测记录，并补填每期的影像月份（形如 2024-05）。",
-    "series.uploadHint": "按时间顺序上传各期影像，系统会对相邻两期逐一检测（N 期影像产生 N-1 次检测）。",
+    "series.pickHint": "选择同一地块不同时期的记录，并补填每期影像月份（如 2024-05）",
+    "series.uploadHint": "按时间顺序上传各期影像，系统对相邻两期逐一检测（N 期得 N−1 次检测）",
     "series.addPhase": "添加一期",
     "series.noPickable": "暂无可用的检测记录",
     "series.submit": "创建",

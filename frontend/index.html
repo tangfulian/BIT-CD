@@ -93,7 +93,7 @@
                 <!-- Logo png -->
                 <img src="images/logo.png" alt="BlackLand CD" style="width:80px; height:80px; margin:0 auto 16px; display:block;">
                 <h1 data-i18n="auth.title">黑土地遥感变化检测系统</h1>
-                <p data-i18n="auth.subtitle">上传两期卫星影像，自动识别耕地变化位置与面积</p>
+                <p data-i18n="auth.subtitle">上传两期影像，识别耕地变化位置与面积</p>
             </div>
             <form id="loginForm" class="auth-form" novalidate onsubmit="event.preventDefault()">
                 <div class="form-group">
@@ -291,7 +291,7 @@
                 <div class="page-header">
                     <div>
                         <h1 data-i18n="land.title">精准地块信息配置</h1>
-                        <p data-i18n="land.subtitle">左侧地图定位，右侧填写地块详情，配置自动保存</p>
+                        <p data-i18n="land.subtitle">地块档案，供检测关联</p>
                     </div>
                     <button class="btn-primary" id="saveLandInfo" style="width: auto; padding: 10px 24px;">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -389,7 +389,7 @@
                 <div class="page-header">
                     <div>
                         <h1 data-i18n="detect.title">单张变化检测</h1>
-                        <p data-i18n="detect.subtitle">上传双时相遥感影像，使用多种模型进行智能变化检测</p>
+                        <p data-i18n="detect.subtitle">上传前后时相影像，做变化检测与分析</p>
                     </div>
                 </div>
 
@@ -507,7 +507,7 @@
                                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                                 </div>
                                 <div class="empty-state-title" data-i18n="detect.emptyTitle">还没有检测结果</div>
-                                <p class="empty-state-desc" data-i18n="detect.emptyDesc">上传 T1 前时相与 T2 后时相影像，点击「开始检测」，结果与统计会显示在这里。</p>
+                                <p class="empty-state-desc" data-i18n="detect.emptyDesc">上传 T1/T2 影像后开始检测，结果与统计显示在这里</p>
                             </div>
                             <div id="resultArea" class="hidden fade-in">
                                 <div class="stats-row">
@@ -635,7 +635,7 @@
                 <div class="page-header">
                     <div>
                         <h1 data-i18n="batch.title">批量变化检测</h1>
-                        <p data-i18n="batch.subtitle">批量上传双时相影像，自动完成大规模变化检测</p>
+                        <p data-i18n="batch.subtitle">多组影像对排队检测</p>
                     </div>
                 </div>
                 <div class="cards-grid">
@@ -710,7 +710,7 @@
                 <div class="page-header">
                     <div>
                         <h1 data-i18n="history.title">检测历史</h1>
-                        <p data-i18n="history.subtitle">查看您的所有检测记录</p>
+                        <p data-i18n="history.subtitle">全部检测记录，可筛选与删除</p>
                     </div>
                     <button class="btn-small-danger" id="clearAllHistory" data-i18n="history.clearAll">清空所有历史</button>
                 </div>
@@ -871,7 +871,7 @@
                 <div class="page-header">
                     <div>
                         <h1 data-i18n="timeline.title">多时相时序分析</h1>
-                        <p data-i18n="timeline.subtitle">把同一地块的多期影像组织成序列，按影像日期分析变化速率与趋势</p>
+                        <p data-i18n="timeline.subtitle">多期影像序列的变化速率与趋势</p>
                     </div>
                 </div>
 
@@ -885,7 +885,7 @@
                         <button class="btn-gray" id="timelineDeleteBtn" style="width:auto; padding:10px 18px;" data-i18n="series.deleteBtn">删除序列</button>
                     </div>
                     <div id="timelineEmpty" class="timeline-empty hidden">
-                        <p data-i18n="series.emptyHint">还没有任何序列。一个序列代表同一地块的若干期影像；创建后系统会对相邻两期逐一检测，并给出变化速率与趋势。</p>
+                        <p data-i18n="series.emptyHint">暂无序列。序列是同一地块的多期影像，创建后自动逐期检测并给出变化速率与趋势</p>
                     </div>
                 </div>
 
@@ -951,7 +951,7 @@
                 <div class="page-header">
                     <div>
                         <h1 data-i18n="status.title">系统状态</h1>
-                        <p data-i18n="status.subtitle">后端运行信息与健康状态</p>
+                        <p data-i18n="status.subtitle">模型信息与运行状态</p>
                     </div>
                 </div>
                 <!-- 取数失败时显示。这个键两份 locale 里都早就有了，却一直没有引用 ——
@@ -1054,7 +1054,7 @@
                 <div class="page-header">
                     <div>
                         <h1 data-i18n="usermgr.title">用户管理</h1>
-                        <p data-i18n="usermgr.subtitle">管理所有注册用户</p>
+                        <p data-i18n="usermgr.subtitle">用户与权限管理</p>
                     </div>
                     <button class="btn-primary" id="umRefreshBtn" style="width:auto;padding:10px 24px;" data-i18n="usermgr.refresh">刷新列表</button>
                 </div>
@@ -1080,7 +1080,7 @@
                 <div class="page-header">
                     <div>
                         <h1 data-i18n="compare.title">检测结果对比</h1>
-                        <p data-i18n="compare.subtitle">选择两个历史记录进行并排比较</p>
+                        <p data-i18n="compare.subtitle">两条记录并排比较</p>
                     </div>
                 </div>
                 <div id="compareStatsBar" class="stats-bar">
@@ -1107,7 +1107,7 @@
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/><path d="M10 12h4"/></svg>
                     </div>
                     <div class="empty-state-title" data-i18n="compare.emptyTitle">还没有对比结果</div>
-                    <p class="empty-state-desc" data-i18n="compare.emptyDesc">在上方分别选择记录 A 与记录 B，点击「开始对比」，两者的指标差异会显示在这里。</p>
+                    <p class="empty-state-desc" data-i18n="compare.emptyDesc">选择记录 A 与 B 后开始对比，指标差异显示在这里</p>
                 </div>
                 <div id="compareResult" class="compare-result-grid hidden"></div>
             </div>
@@ -1117,7 +1117,7 @@
                 <div class="page-header">
                     <div>
                         <h1 data-i18n="eval.title">模型批量评估</h1>
-                        <p data-i18n="eval.subtitle">基于 SYSU-CD 数据集，对多个模型批量计算 Precision / Recall / F1 / IoU</p>
+                        <p data-i18n="eval.subtitle">多模型批量评估：敏感性 / 特异性 / F1 / IoU</p>
                     </div>
                 </div>
 
@@ -1204,7 +1204,7 @@
                         <button id="evalScanBtn" class="btn btn-secondary btn-sm" data-i18n="eval.scanBtn">开始扫描</button>
                         <span id="evalScanStatus" class="hidden" style="font-size:13px;color:var(--text-secondary);"></span>
                     </div>
-                    <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px;" data-i18n="eval.scanHint">对最佳 F1 样本用 0.05~0.95 阈值扫描，绘制 F1 变化曲线</p>
+                    <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px;" data-i18n="eval.scanHint">对最佳 F1 样本做 0.05–0.95 阈值扫描，绘制 F1 曲线</p>
                     <div id="evalScanChart" class="hidden" style="height:350px;"></div>
                 </div>
 
@@ -1220,7 +1220,7 @@
                 <div class="page-header">
                     <div>
                         <h1 data-i18n="agent.title">AI Agent 浏览器操控</h1>
-                        <p data-i18n="agent.subtitle">通过自然语言指令，让 AI 自动操控浏览器完成复杂任务</p>
+                        <p data-i18n="agent.subtitle">自然语言驱动，自动选择工具调用或浏览器操控</p>
                     </div>
                 </div>
 
@@ -1251,7 +1251,7 @@
                                     <input type="file" id="agentPicker" multiple hidden
                                            accept=".jpg,.jpeg,.png,.tif,.tiff,.bmp,.webp">
                                     <span class="agent-dropzone-title" data-i18n="agent.attachPick">点击选择影像，或把文件拖到这里</span>
-                                    <span class="agent-dropzone-sub" data-i18n="agent.attachMulti">可以分多次从不同文件夹添加，已选的会累加</span>
+                                    <span class="agent-dropzone-sub" data-i18n="agent.attachMulti">可多次添加，跨文件夹累加</span>
                                 </div>
                                 <!-- 真正的选择结果存这里（隐藏），提交时读它 -->
                                 <input type="file" id="agentFiles" multiple hidden
@@ -1262,7 +1262,7 @@
                                             data-i18n="agent.attachClear">清空</button>
                                 </div>
                                 <div id="agentFileList" class="agent-file-list"></div>
-                                <span class="field-hint" data-i18n="agent.attachHint">上传的影像会作为附件交给 Agent；请在指令里说明哪张是前期、哪张是后期。</span>
+                                <span class="field-hint" data-i18n="agent.attachHint">请在指令中说明附件哪张是前期、哪张是后期</span>
                             </div>
                             <div class="agent-controls-row">
                                 <div class="form-group" id="agentMaxStepsGroup" style="display:flex;align-items:center;gap:8px;">
@@ -1308,8 +1308,7 @@
                                 <span id="agentScreenshotCount" class="agent-screenshot-count"></span>
                             </div>
                             <div id="agentScreenshotMain" class="agent-screenshot-main">
-                                <div class="agent-screenshot-placeholder" data-i18n="agent.screenshotPlaceholder">
-                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:12px;opacity:0.4;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                                <div class="agent-screenshot-placeholder" data-i18n="agent.screenshotPlaceholder">执行后显示操作截图<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:12px;opacity:0.4;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                                     <p>执行任务后，操作截图将显示在这里</p>
                                 </div>
                             </div>
@@ -1378,7 +1377,7 @@
                          层级倒挂。这里补上页面级标题，卡片那两级标题降为 h2。 -->
                     <h1 class="about-title" data-i18n="about.title">BlackLand CD 黑土地遥感变化检测系统</h1>
                     <span class="about-version">v1.0.0</span>
-                    <p class="about-desc" data-i18n="about.description">黑土地遥感变化检测智能平台，融合深度学习与GIS技术，为东北黑土地保护提供高效、精准的变化检测与数据分析解决方案。</p>
+                    <p class="about-desc" data-i18n="about.description">基于深度学习与 GIS 的黑土地遥感变化检测平台</p>
                 </div>
                 <div class="about-grid">
                     <div class="about-card">
@@ -1416,7 +1415,7 @@
                 <div class="page-header">
                     <div>
                         <h1 data-i18n="disaster.title">农业灾害定损</h1>
-                        <p data-i18n="disaster.subtitle">基于变化检测结果估算受灾面积与经济损失，并对比查勘成本</p>
+                        <p data-i18n="disaster.subtitle">按受灾分级估算面积与经济损失，对比查勘成本</p>
                     </div>
                 </div>
 
@@ -1521,7 +1520,7 @@
                 <div class="notfound-container">
                     <div class="notfound-code">404</div>
                     <h2 class="notfound-title" data-i18n="notfound.title">页面未找到</h2>
-                    <p class="notfound-desc" data-i18n="notfound.desc">您访问的页面不存在或已被移除。请检查地址是否正确，或返回首页。</p>
+                    <p class="notfound-desc" data-i18n="notfound.desc">页面不存在或已被移除，请检查地址或返回首页</p>
                     <div class="notfound-actions">
                         <button class="btn-primary" onclick="document.querySelector('.nav-item[data-page=\'single\']').click()" data-i18n="notfound.goHome">返回首页</button>
                     </div>
@@ -1588,7 +1587,7 @@
                     <button class="chatbot-close-btn" id="chatbotClose">&times;</button>
                 </div>
                 <div class="chatbot-messages" id="chatbotMessages">
-                    <div class="chat-message ai" data-i18n="chat.welcome">您好！我是东北黑土地变化检测智能系统的专属AI助手。我可以为您解答黑土地保护、遥感变化检测技术、系统操作等相关问题。请问有什么可以帮助您的？</div>
+                    <div class="chat-message ai" data-i18n="chat.welcome">我是黑土地变化检测系统的 AI 助手，可解答黑土地保护、遥感检测与系统操作相关问题。</div>
                 </div>
                 <div class="chatbot-input-area">
                     <input type="text" id="chatbotInput" class="chatbot-input" data-i18n="chat.placeholder" placeholder="请输入您的问题...">

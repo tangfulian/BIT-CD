@@ -6,21 +6,29 @@ import { eventBus } from './eventBus.js';
 const LOCALES = { 'zh-CN': zhCN, 'en': en };
 let _current = Utils.safeLocalStorage.getItem('app_lang') || 'zh-CN';
 
+// data-i18n → 文本；data-i18n-aria → aria-label（纯图标/分段控件这类元素
+// 没有可读文本，只翻 textContent 会让无障碍标签永远停在中文）。
+const I18N_SELECTOR = '[data-i18n], [data-i18n-aria]';
+
 const _observer = new MutationObserver((mutations) => {
     mutations.forEach(m => {
         m.addedNodes.forEach(node => {
             if (node.nodeType === 1) {
                 _translateElement(node);
-                node.querySelectorAll?.('[data-i18n]').forEach(_translateElement);
+                node.querySelectorAll?.(I18N_SELECTOR).forEach(_translateElement);
             }
         });
     });
 });
 
 function _translateElement(el) {
+    const dict = LOCALES[_current] || zhCN;
+
+    const ariaKey = el.getAttribute('data-i18n-aria');
+    if (ariaKey) el.setAttribute('aria-label', ariaKey in dict ? dict[ariaKey] : ariaKey);
+
     const key = el.getAttribute('data-i18n');
     if (!key) return;
-    const dict = LOCALES[_current] || zhCN;
     const text = key in dict ? dict[key] : key;
     const tag = el.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA') {
@@ -57,7 +65,7 @@ export const I18n = {
         if (!LOCALES[lang]) return;
         _current = lang;
         Utils.safeLocalStorage.setItem('app_lang', lang);
-        document.querySelectorAll('[data-i18n]').forEach(_translateElement);
+        document.querySelectorAll(I18N_SELECTOR).forEach(_translateElement);
         eventBus.emit('lang-change', lang);
     },
 
