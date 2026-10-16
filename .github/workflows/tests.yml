@@ -47,8 +47,12 @@ jobs:
       - name: CPU 版 torch
         run: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
+      # pytest 故意不写进 requirements.txt：它是测试期依赖，应用运行时用不到，
+      # 不该跟着上生产。但 CI 里必须显式装 —— 漏了这一步的后果是
+      # "No module named pytest"，而它看起来像测试挂了，其实是测试根本没跑。
+      # 这个 workflow 头一次真跑就踩了这个坑（本地能跑只因为开发机装了 pytest）。
       - name: 其余依赖
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt pytest
 
       # checkpoints/ 在 .gitignore 里，CI 里没有权重文件。而
       # tests/test_model_availability.py 会断言「随附权重的模型报可用」，
