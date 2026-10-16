@@ -2656,9 +2656,10 @@ select.form-control {
    而标记点是它的兄弟节点（.amap-markers > .amap-marker），因此不受影响。 */
 #mapviewerMap.map-dark-base canvas.amap-layer,
 #mapContainer.map-dark-base canvas.amap-layer {
-    /* 0.7 会把地名注记也压得发灰（注记和影像在同一个画布上），
-       0.75 是压得住亮度、又还认得出地名的位置。 */
-    filter: brightness(0.75) saturate(0.85) contrast(1.05);
+    /* 只压到 0.85。地名注记和影像画在同一个画布上，压得越狠注记越糊 ——
+       试过 0.75，暗是暗了，但地名基本读不出来，而地块页要对着影像认地界，
+       认不出地界就白搭。 */
+    filter: brightness(0.85) saturate(0.9) contrast(1.02);
 }
 
 @media (max-width: 900px) {
