@@ -76,5 +76,21 @@ jobs:
               print("占位:", p)
           PY
 
+      # 失败时把 pytest 的尾巴写成 annotation。
+      # 为什么绕这一下：job 日志（/actions/jobs/<id>/logs）需要仓库 admin 权限，
+      # 而无 token 的情况下根本读不到；annotation（/check-runs/<id>/annotations）
+      # 是公开可读的。红一次却看不到原因，CI 就只是个红叉。
       - name: 跑测试
-        run: python -m pytest -q
+        shell: bash
+        run: |
+          set +e
+          python -m pytest -q > pytest.out 2>&1
+          code=$?
+          if [ "$code" -ne 0 ]; then
+            echo "::error::pytest exited $code — 末 40 行见下"
+            tail -40 pytest.out | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+          fi
+          cat pytest.out
+          exit "$code"
