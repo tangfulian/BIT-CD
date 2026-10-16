@@ -4,11 +4,18 @@ from torch.utils.data import DataLoader
 from torchvision import utils
 
 from core import data_config
-from datasets.CD_dataset import CDDataset
+
+# 这里**不能**在模块顶层 import datasets.CD_dataset。
+# datasets/ 在 .gitignore 里（装的是 SYSU-CD / LuojiaSET-CLCD 数据集），
+# 干净 clone 出来的仓库没有这个目录，顶层 import 会让整个 core.utils
+# 不可导入 —— 连带把 /status 打挂：
+#   routers/status.py → detect_service.get_device() → from core import utils
+# 而 get_device() 跟数据集一点关系都没有。所以改成谁用谁 import。
 
 
 def get_loader(data_name, img_size=256, batch_size=8, split='test',
                is_train=False, dataset='CDDataset'):
+    from datasets.CD_dataset import CDDataset
     dataConfig = data_config.DataConfig().get_data_config(data_name)
     root_dir = dataConfig.root_dir
     label_transform = dataConfig.label_transform
@@ -30,7 +37,7 @@ def get_loader(data_name, img_size=256, batch_size=8, split='test',
 
 
 def get_loaders(args):
-
+    from datasets.CD_dataset import CDDataset
     data_name = args.data_name
     dataConfig = data_config.DataConfig().get_data_config(data_name)
     root_dir = dataConfig.root_dir
