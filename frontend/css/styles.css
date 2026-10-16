@@ -5011,9 +5011,62 @@ select.form-control {
 /* ============================================================
    Agent 附件
    ============================================================ */
-.agent-attach-row { display: flex; align-items: center; gap: var(--space-sm); }
-.agent-file-input { padding: 6px 8px; font-size: var(--font-sm); }
+/* 拖拽 / 点击选择区。替掉原生 file input —— 原生控件每次选择都整批替换，
+   没法跨文件夹累加，详见 agent.js 的 _mergeFiles。 */
+.agent-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: var(--space-md) var(--space-sm);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-main);
+    cursor: pointer;
+    text-align: center;
+    transition: border-color .15s, background .15s;
+}
+.agent-dropzone:hover { border-color: var(--primary); }
+.agent-dropzone.is-over {
+    border-color: var(--primary);
+    border-style: solid;
+    background: var(--primary-surface);
+}
+.agent-dropzone-title { font-size: var(--font-sm); color: var(--text-primary); }
+.agent-dropzone-sub { font-size: var(--font-xs); color: var(--text-tertiary); }
+
+.agent-file-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: var(--space-sm);
+    font-size: var(--font-xs);
+    color: var(--text-tertiary);
+}
+.agent-file-clear {
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: var(--font-xs);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+.agent-file-clear:hover { background: rgba(196, 69, 54, 0.12); color: var(--danger); }
+
 .agent-file-list { margin-top: var(--space-sm); display: flex; flex-direction: column; gap: 4px; }
+.agent-file-idx {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    border-radius: var(--radius-full);
+    background: var(--bg-card);
+    color: var(--text-tertiary);
+    font-size: var(--font-xs);
+}
 .agent-file-item {
     display: flex;
     align-items: center;

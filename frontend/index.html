@@ -1244,9 +1244,22 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="agent.attach">附件（可选）</label>
-                                <div class="agent-attach-row">
-                                    <input type="file" id="agentFiles" class="form-control agent-file-input" multiple
+                                <!-- 点击或拖拽都能加，且**每次是累加不是替换**：
+                                     T1 与 T2 常常不在同一个文件夹，而原生 file input
+                                     再选一次会把上一次的整批覆盖掉。详见 agent.js 的 _mergeFiles。 -->
+                                <div class="agent-dropzone" id="agentDropzone">
+                                    <input type="file" id="agentPicker" multiple hidden
                                            accept=".jpg,.jpeg,.png,.tif,.tiff,.bmp,.webp">
+                                    <span class="agent-dropzone-title" data-i18n="agent.attachPick">点击选择影像，或把文件拖到这里</span>
+                                    <span class="agent-dropzone-sub" data-i18n="agent.attachMulti">可以分多次从不同文件夹添加，已选的会累加</span>
+                                </div>
+                                <!-- 真正的选择结果存这里（隐藏），提交时读它 -->
+                                <input type="file" id="agentFiles" multiple hidden
+                                       accept=".jpg,.jpeg,.png,.tif,.tiff,.bmp,.webp">
+                                <div class="agent-file-head" id="agentFileHead" style="display:none;">
+                                    <span class="agent-file-count" id="agentFileCount"></span>
+                                    <button type="button" class="agent-file-clear" id="agentFileClear"
+                                            data-i18n="agent.attachClear">清空</button>
                                 </div>
                                 <div id="agentFileList" class="agent-file-list"></div>
                                 <span class="field-hint" data-i18n="agent.attachHint">上传的影像会作为附件交给 Agent；请在指令里说明哪张是前期、哪张是后期。</span>

@@ -35,8 +35,42 @@ export const Agent = {
             };
         }
 
-        const fileInput = document.getElementById("agentFiles");
-        if (fileInput) fileInput.onchange = () => this._renderFileList();
+        // ---- 附件：点击或拖拽都能加，每次**累加**而不是替换 ----
+        //
+        // picker 只负责「取文件」，取到就并进 agentFiles，然后清空自己 ——
+        // 不清空的话，同一个文件连选两次不会触发 change（值没变）。
+        const picker = document.getElementById("agentPicker");
+        const dropzone = document.getElementById("agentDropzone");
+        if (picker) {
+            picker.onchange = () => {
+                this._mergeFiles(Array.from(picker.files || []));
+                picker.value = "";
+            };
+        }
+        if (dropzone && picker) {
+            dropzone.onclick = () => picker.click();
+            ['dragenter', 'dragover'].forEach((ev) => {
+                dropzone.addEventListener(ev, (e) => {
+                    e.preventDefault();
+                    dropzone.classList.add('is-over');
+                });
+            });
+            ['dragleave', 'drop'].forEach((ev) => {
+                dropzone.addEventListener(ev, (e) => {
+                    e.preventDefault();
+                    dropzone.classList.remove('is-over');
+                });
+            });
+            dropzone.addEventListener('drop', (e) => {
+                // 从资源管理器拖进来的不认 accept 属性，这里自己筛一遍
+                const picked = Array.from((e.dataTransfer && e.dataTransfer.files) || [])
+                    .filter((f) => /\.(jpe?g|png|tiff?|bmp|webp)$/i.test(f.name)
+                        || (f.type || '').startsWith('image/'));
+                if (picked.length) this._mergeFiles(picked);
+            });
+        }
+        const clearBtn = document.getElementById("agentFileClear");
+        if (clearBtn) clearBtn.onclick = () => this._clearFiles();
 
         const strip = document.getElementById("agentScreenshotStrip");
         if (strip) {
@@ -191,19 +225,60 @@ export const Agent = {
         }).join('');
     },
 
+    /** 把新选的文件并进 #agentFiles —— **累加，不替换**。
+     *
+     * 原生 file input 每次选择都整批替换 input.files，而实际用起来 T1 与 T2
+     * 常常不在同一个文件夹：用户在两个文件夹各选一次，第二次会把第一次的整批
+     * 挤掉，看起来就像「只能选一个文件夹」。这里把新旧合并。
+     *
+     * 去重按「文件名 + 大小 + 修改时间」：同一个文件重复选只留一份，
+     * 但不同文件夹里的同名文件不会被误当成同一个。
+     */
+    _mergeFiles(incoming) {
+        const input = document.getElementById("agentFiles");
+        if (!input || !incoming || !incoming.length) return;
+        const dt = new DataTransfer();
+        const seen = new Set();
+        for (const f of [...Array.from(input.files || []), ...incoming]) {
+            const key = `${f.name}|${f.size}|${f.lastModified}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            dt.items.add(f);
+        }
+        input.files = dt.files;
+        this._renderFileList();
+    },
+
+    _clearFiles() {
+        const input = document.getElementById("agentFiles");
+        if (!input) return;
+        input.files = new DataTransfer().files;
+        this._renderFileList();
+    },
+
     /** 渲染已选附件列表（只显示文件名与大小，不做预览也不上传） */
     _renderFileList() {
         const box = document.getElementById("agentFileList");
         const input = document.getElementById("agentFiles");
+        const head = document.getElementById("agentFileHead");
+        const countEl = document.getElementById("agentFileCount");
         if (!box || !input) return;
         const files = Array.from(input.files || []);
+        if (head) head.style.display = files.length ? '' : 'none';
+        if (countEl) {
+            countEl.textContent = I18n.t('agent.attachCount', '已选 {n} 个文件')
+                .replace('{n}', files.length);
+        }
         if (!files.length) {
             box.innerHTML = '';
             return;
         }
+        // 带序号：提示语要求「在指令里说明哪张是前期、哪张是后期」，
+        // 有编号用户才好指代（「第 1 张是前期」）。
         box.innerHTML = files.map((f, i) => {
             const kb = (f.size / 1024).toFixed(1);
             return `<div class="agent-file-item">
+                <span class="agent-file-idx">${i + 1}</span>
                 <span class="agent-file-name">${Utils.escapeHtml(f.name)}</span>
                 <span class="agent-file-size">${kb} KB</span>
                 <button type="button" class="agent-file-remove" data-idx="${i}">×</button>
