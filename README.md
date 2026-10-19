@@ -176,6 +176,10 @@ DEPLOY_HOST=root@your.server.ip ./upload_checkpoints.sh
 | 文档 | 讲什么 |
 |---|---|
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 系统架构：后端分层、数据模型、鉴权与权限面、检测流水线、外部依赖 |
+| [docs/业务流程.md](docs/业务流程.md) | 用户从「有一块地」到「得出结论」实际走的那条路，以及四条最容易踩的数据契约 |
+| [docs/需求规格.md](docs/需求规格.md) | **逆向整理**的需求基线：功能需求编号、验收标准、需求—实现追溯矩阵 |
+| [docs/测试报告.md](docs/测试报告.md) | 六种测试手段的结果、本轮发现并处理的缺陷、明确未覆盖的范围 |
+| [docs/上线方案.md](docs/上线方案.md) | 部署步骤、配置项、验证清单、回滚与运维、已知限制 |
 | [docs/AGENT.md](docs/AGENT.md) | Agent 的两条通道（工具 / 浏览器）、7 个工具清单、提示词设计、模型选型约束 |
 | [docs/figures/](docs/figures/) | 系统架构图与业务架构图的**源码**与 Visio 源文件 —— 图是脚本画的，改 Python 重跑 |
 
