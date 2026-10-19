@@ -24,6 +24,10 @@ services:
       - ./results:/app/results
       - ./uploads:/app/uploads
       - ./samples/predict:/app/samples/predict
+      # 应用日志（logs/app.log，5MB 轮转 3 份）。不挂的话日志写在容器里，
+      # 一次 docker compose up --build 重建容器就全没了 —— 而排查线上问题
+      # 恰恰最需要上一次重建之前的日志。
+      - ./logs:/app/logs
       - ./data/blackland.db:/app/blackland.db
     # Chrome 在容器里默认只有 64MB /dev/shm，本系统有地图、ECharts 大屏、
     # 影像画布这类重页面，渲染进程容易因共享内存不足而崩溃 —— 且崩溃发生在

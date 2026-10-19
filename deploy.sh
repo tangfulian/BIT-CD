@@ -45,7 +45,13 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
-mkdir -p checkpoints results uploads samples/predict
+mkdir -p checkpoints results uploads samples/predict data
+
+# 库文件必须先存在。docker-compose 把 ./data/blackland.db 绑到容器里的
+# /app/blackland.db，而**宿主机上不存在的绑定源会被 Docker 建成目录** ——
+# 于是 SQLite 打开的是一个目录，容器启动即崩、无限重启。
+# 首次部署必踩，所以在这里先把空文件造出来（SQLite 会自动初始化表结构）。
+[ -f data/blackland.db ] || touch data/blackland.db
 
 echo "=== [4/4] 启动服务 ==="
 docker compose up -d --build
