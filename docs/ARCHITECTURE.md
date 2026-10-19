@@ -161,9 +161,33 @@ users ──┬──< detection_results ──┬──< annotations
 
 ### 权重不随仓库分发
 
-放到 `checkpoints/<模型ID>/best_ckpt.pt` 即被识别。缺权重的模型**不会
-报错**，会退回 ImageNet 特征初始化 —— 能出结果，但明显变差。所以界面上
-要如实标注哪些模型权重可用。
+放到 `checkpoints/<模型ID>/best_ckpt.pt` 即被识别。缺权重的模型**显式失败**：
+`get_model()` 抛 `ModelNotAvailableError`，接口返回 503 并说明缺哪个文件。
+
+早期版本是「退回随机/ImageNet 初始化继续跑」—— 能出结果但明显变差，而且
+以 HTTP 200 静默返回，前端与用户无从分辨。现在改成硬失败，理由写在
+`ModelNotAvailableError` 的类注释里。
+
+### 预处理归一化必须与训练一致
+
+这是本项目最隐蔽的一类 bug：**归一化错了不会有任何报错**。模型照样输出一张
+看起来正常的 0~1 概率图，只是整片区域被判成变化。
+
+- 走 `scripts/train.py` → `core.utils.get_loaders` → `datasets.CD_dataset`
+  训练出来的模型，归一化是 `mean=std=0.5`（输入落在 [-1,1]），见
+  `datasets/data_utils.py` 的 `CDDataAugmentation.transform`。
+- `AFCF3D` 有自己的训练流程与推理分支，ImageNet 统计量对它是正确的。
+
+所以 `detect_service._build_transform(model_type)` 是**按模型选**的，
+不再全局共用一份。`detect_change`、`evaluate_models`、`evaluate_scan`
+三处都必须走它 —— 评估页以前也共用错的那份，会直接污染模型指标。
+
+2026-10 实测（30 个 SYSU-CD 样本、阈值 0.5，变化率与真值的平均绝对误差）：
+
+| 模型 | ImageNet 统计量 | `mean=std=0.5` |
+|---|---:|---:|
+| BIT（epoch 97） | 36.6 个百分点，28/30 样本高估 >1.5× | **2.8 个百分点，2/30** |
+| AFCF3D | 1.2 个百分点（本来就对） | — |
 
 ---
 

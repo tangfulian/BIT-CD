@@ -47,6 +47,38 @@ _cd_models = {}
 _model_locks = {}
 _model_lock = threading.Lock()
 
+# ---- 预处理归一化 ----
+# 必须与训练时一致，否则模型吃的是分布外输入：输出仍然是个「看起来正常」
+# 的 0~1 概率图，但整片区域会被判成变化，而没有任何报错。
+#
+#   · 走 scripts/train.py → core.utils.get_loaders → datasets.CD_dataset
+#     → datasets.data_utils.CDDataAugmentation 训练出来的模型，
+#     归一化是 mean=std=0.5（输入落在 [-1,1]）。
+#   · AFCF3D 有自己的训练流程与推理分支，ImageNet 统计量对它是正确的。
+#
+# 实测（30 个 SYSU-CD 样本，阈值 0.5）：BIT 用 ImageNet 统计量时变化率
+# 平均绝对误差 36.6 个百分点、28/30 个样本高估超过 1.5 倍；换回 0.5 后
+# 误差 2.8 个百分点、只有 2/30 高估。
+_IMAGENET_NORM = transforms.Normalize(
+    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+_SYMMETRIC_NORM = transforms.Normalize(
+    mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+
+
+def _build_transform(model_type):
+    """按模型返回与训练一致的预处理。
+
+    判据是「这个模型是否走 CDEvaluator 那条训练链」—— 有新模型加进
+    MODEL_CONFIGS 且不需要特殊处理时，会自动落到对称归一化这一侧，
+    不需要来改这份名单。AFCF3D 是唯一例外（自己的训练流程）。
+    """
+    cfg = MODEL_CONFIGS.get(model_type) or {}
+    symmetric = cfg.get("net_G") is not None and model_type != "AFCF3D"
+    return transforms.Compose([
+        transforms.ToTensor(),
+        _SYMMETRIC_NORM if symmetric else _IMAGENET_NORM,
+    ])
+
 
 def resolve_checkpoint_path(model_type):
     """模型权重的绝对路径；无需权重的模型（如 DIFF）返回 None。"""
@@ -177,10 +209,7 @@ def _get_afcf3d_model():
 def detect_change(img1_pil, img2_pil, threshold, model_type, unique_id):
     device = get_device()
 
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    transform = _build_transform(model_type)
 
     if model_type == "DIFF":
         score_map = _diff_change_detect(img1_pil, img2_pil)
@@ -466,12 +495,12 @@ def evaluate_models(img1_pil, img2_pil, label_pil, model_list, threshold=0.5, sa
     """批量评估多个模型：对同一对影像运行所有模型，与真值标签对比。"""
     device = get_device()
 
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
-    t1_tensor = transform(img1_pil).unsqueeze(0).to(device)
-    t2_tensor = transform(img2_pil).unsqueeze(0).to(device)
+    # 这个循环里同时有 AFCF3D（ImageNet 归一化）和 CDEvaluator 系模型
+    # （对称归一化），所以张量要按模型分别准备，不能共用一批。
+    def _pair(model_name):
+        tf = _build_transform(model_name)
+        return (tf(img1_pil).unsqueeze(0).to(device),
+                tf(img2_pil).unsqueeze(0).to(device))
 
     gt_arr = np.array(label_pil.convert("L"), dtype=np.uint8)
     if gt_arr.max() <= 1:
@@ -479,6 +508,10 @@ def evaluate_models(img1_pil, img2_pil, label_pil, model_list, threshold=0.5, sa
 
     results = {}
     for model_name in model_list:
+        # 预处理放在计时之外，time_ms 仍然只反映推理
+        t1_tensor = t2_tensor = None
+        if model_name != "DIFF":
+            t1_tensor, t2_tensor = _pair(model_name)
         t0 = time.perf_counter()
         if model_name == "DIFF":
             score_map = _diff_change_detect(img1_pil, img2_pil)
@@ -512,12 +545,12 @@ def evaluate_models(img1_pil, img2_pil, label_pil, model_list, threshold=0.5, sa
 def evaluate_scan(img1_pil, img2_pil, label_pil, model_list, thresholds):
     """阈值扫描：对同一对影像用多个阈值评估，返回每模型每阈值的 F1。"""
     device = get_device()
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
-    t1_tensor = transform(img1_pil).unsqueeze(0).to(device)
-    t2_tensor = transform(img2_pil).unsqueeze(0).to(device)
+
+    # 同 evaluate_models：按模型分别准备张量，不能一律用 ImageNet 统计量。
+    def _pair(model_name):
+        tf = _build_transform(model_name)
+        return (tf(img1_pil).unsqueeze(0).to(device),
+                tf(img2_pil).unsqueeze(0).to(device))
 
     gt_arr = np.array(label_pil.convert("L"), dtype=np.uint8)
     if gt_arr.max() <= 1:
@@ -525,6 +558,9 @@ def evaluate_scan(img1_pil, img2_pil, label_pil, model_list, thresholds):
 
     results = {}
     for model_name in model_list:
+        t1_tensor = t2_tensor = None
+        if model_name != "DIFF":
+            t1_tensor, t2_tensor = _pair(model_name)
         if model_name == "DIFF":
             score_map = _diff_change_detect(img1_pil, img2_pil)
         elif model_name == "AFCF3D":
