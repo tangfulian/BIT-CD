@@ -59,8 +59,12 @@
 ### 本地运行
 
 ```bash
-# 1. 依赖
+# 1. 依赖（两步，顺序不能换）
 pip install -r requirements.txt
+# Pillow 必须单独覆盖：browser-use 锁死 pillow==12.3.0，而该版本有 28 个
+# 已修复于 13.0.0 的漏洞，本系统又在解析上传影像。详见 requirements.txt 末尾。
+pip install --no-deps pillow==13.0.0
+
 python -m playwright install chromium     # Agent 功能需要
 
 # 2. 配置
