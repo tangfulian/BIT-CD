@@ -56,8 +56,15 @@ jobs:
       # 写在一起会 ResolutionImpossible。pillow 自身无依赖，--no-deps 覆盖是安全的。
       - name: 其余依赖
         run: |
-          pip install -r requirements.txt pytest
+          pip install -r requirements.txt pytest ruff==0.17.1
           pip install --no-cache-dir --no-deps pillow==13.0.0
+
+      # 为什么要有这道门：2026-10 排查时，flake8 扫出两处错误分支上的
+      # F821「未定义名」和 F901「无效异常类」——164 条 pytest 一条都没抓到，
+      # 因为它们不在被测路径上。静态检查补的就是这块。
+      # 规则集只开 pyflakes（F），配置见 ruff.toml。
+      - name: 静态检查
+        run: ruff check .
 
       # checkpoints/ 在 .gitignore 里，CI 里没有权重文件。而
       # tests/test_model_availability.py 会断言「随附权重的模型报可用」，

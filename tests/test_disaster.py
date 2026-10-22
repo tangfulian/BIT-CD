@@ -8,7 +8,6 @@ import numpy as np
 import pytest
 
 from backend.app.services.disaster_service import (
-    DEFAULT_GRADE_BOUNDS,
     DEFAULT_LOSS_RATES,
     DRAFT_MARKER,
     assess,

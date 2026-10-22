@@ -8,7 +8,7 @@
   · 输入框左侧 2px 竖线形似田埂边界，聚焦时由土褐转作物绿（唯一的记忆点）
 所有表单 ID 原样保留，不影响既有 JS 绑定。
 """
-import pathlib, re, sys, io
+import pathlib, sys, io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 ROOT = pathlib.Path(r"D:\BIT_CD")
 

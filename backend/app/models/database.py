@@ -1,5 +1,4 @@
 import os
-import sys
 import logging
 
 from sqlalchemy import create_engine, inspect, text

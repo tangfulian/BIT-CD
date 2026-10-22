@@ -183,7 +183,7 @@ if r and r.status_code == 200:
     records = r.json().get('data', [])
     if records:
         if 'score' not in records[0] and 'score_url' not in records[0]:
-            print(f'  [BUG] History response missing score_url field')
+            print('  [BUG] History response missing score_url field')
             bugs.append('history-no-score-url')
 # 单条删除的正确路径是 /history/{id}，**不是** /history?record_id=...
 #

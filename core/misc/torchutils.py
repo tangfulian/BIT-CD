@@ -8,7 +8,7 @@ import random
 import os
 from torch.nn import MaxPool1d,AvgPool1d
 from torch import Tensor
-from typing import Iterable, Set, Tuple
+from typing import Iterable, Set
 
 
 __all__ = ['cls_accuracy']

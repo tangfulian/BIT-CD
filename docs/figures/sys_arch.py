@@ -10,7 +10,7 @@
 
 import os
 
-from diagram_kit import (C, FS, FS_GROUP, arrow, band, box, canvas, group,
+from diagram_kit import (C, FS, arrow, band, canvas, group,
                          line, stack_centered)
 
 W, H = 44.0, 30.0

@@ -10,7 +10,7 @@
 
 import os
 
-from diagram_kit import (C, FS, FS_GROUP, band, box, canvas)
+from diagram_kit import (C, FS, band, box, canvas)
 
 W, H = 44.0, 22.6
 

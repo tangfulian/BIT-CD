@@ -6,7 +6,7 @@ import time
 import uuid
 from typing import Dict, Tuple
 
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from PIL import Image, ImageDraw, ImageFont
 
 
 _store: Dict[str, Tuple[str, float]] = {}  # captcha_id -> (answer, expires_at)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """批量修复：models 的 misc 依赖、conftest 的验证码与限流、冒烟脚本移出 tests"""
-import pathlib, shutil, sys, io, os
+import pathlib, shutil, sys, io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 ROOT = pathlib.Path(r"D:\BIT_CD")

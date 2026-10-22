@@ -17,12 +17,10 @@
 不需要先起服务（进程内直调）。会在库里建一条测试记录，跑完自动删掉。
 """
 
-import io
 import json
 import os
 import pathlib
 import random
-import sqlite3
 import sys
 
 import numpy as np

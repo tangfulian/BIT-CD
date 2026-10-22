@@ -6,7 +6,6 @@ import os
 import tempfile
 
 import numpy as np
-import pytest
 from PIL import Image
 
 from backend.app.services.detect_service import (

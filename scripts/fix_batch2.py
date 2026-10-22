@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """第二批修复：前端存储型 XSS 转义、.dockerignore 补齐、检查其他未转义点"""
-import pathlib, sys, io, re
+import pathlib, sys, io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 ROOT = pathlib.Path(r"D:\BIT_CD")
 

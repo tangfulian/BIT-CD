@@ -1,0 +1,38 @@
+# ruff 配置。CI 里跑 `ruff check .`。
+#
+# 选型思路：**只开 pyflakes（F）**，也就是「会真出错」的规则 ——
+# 未定义名、重复定义、无效异常、未使用变量。格式类规则（行宽、引号、
+# import 排序）先不开：这个仓库有大量研究代码，一次全量格式化会把
+# git blame 冲掉，收益远小于成本。
+#
+# 为什么值得加这道门：2026-10 那次排查里，flake8 扫出两处
+# 错误分支上的 F821「未定义名」和 F901「无效异常类」，164 条 pytest
+# 一条都没抓到 —— 因为它们不在被测路径上。静态检查补的就是这块。
+
+target-version = "py312"
+line-length = 120
+
+extend-exclude = [
+    "datasets",
+    "checkpoints",
+    "results",
+    "Visio工具箱",
+    "docs/figures/out",
+    ".venv",
+]
+
+[lint]
+select = ["F"]
+
+# F403 / F405：`from models.networks import *` 是模型层的既有写法
+# （models/networks.py 导出的符号被 evaluator/trainer 大量引用）。
+# 改成显式导入要动整个模型层，风险大于收益，因此放过。
+ignore = ["F403", "F405"]
+
+[lint.per-file-ignores]
+# 以下是研究/训练代码里的历史遗留：未使用的累加器、元组解包的残留变量。
+# 逐个去改要碰模型实现，不值得；但新写的业务代码不应再有这类问题。
+"models/**" = ["F841"]
+"core/misc/**" = ["F841"]
+"core/infer.py" = ["F841"]
+"scripts/**" = ["F841"]

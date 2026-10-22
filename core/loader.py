@@ -29,7 +29,7 @@ def init_model(log, ckpt_path=None):
             model.load_checkpoint(ckpt_path)  # 直接传入路径
         else:
             # 使用默认配置权重
-            log(f"📦 加载配置文件默认权重")
+            log("📦 加载配置文件默认权重")
             model.load_checkpoint(args.checkpoint_name)
 
         model.eval()

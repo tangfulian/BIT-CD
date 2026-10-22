@@ -23,7 +23,6 @@
     python scripts/agent_e2e_test.py
 """
 
-import json
 import os
 import pathlib
 import sys

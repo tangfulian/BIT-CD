@@ -80,10 +80,13 @@ python api.py
 ### 测试
 
 ```bash
+ruff check .                        # 静态检查（pyflakes 规则），配置见 ruff.toml
 pytest                              # 单元/接口测试，不需要起服务
 ```
 
-**推代码和提 PR 时会自动跑这套测试**（[.github/workflows/tests.yml](.github/workflows/tests.yml)）。
+**推代码和提 PR 时会自动跑这两道**（[.github/workflows/tests.yml](.github/workflows/tests.yml)）。
+静态检查只开 pyflakes（未定义名、重复定义、无效异常、未使用变量）——
+2026-10 排查时它扫出了两处 pytest 完全抓不到的错误分支 bug。
 CI 里没有 `checkpoints/`（不入库），workflow 会造三个空占位文件 —— 可用性测试只做
 `os.path.exists`，检测类测试的推理是 mock 的，不会真去加载权重。
 

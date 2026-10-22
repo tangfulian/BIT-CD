@@ -221,7 +221,7 @@ async def _launch_chrome(headless: bool) -> tuple[asyncio.subprocess.Process, st
         "--disable-dev-shm-usage",
         "--no-first-run",
         "--no-default-browser-check",
-        f"--window-size=1280,900",
+        "--window-size=1280,900",
         "about:blank",
     ]
     if headless:
