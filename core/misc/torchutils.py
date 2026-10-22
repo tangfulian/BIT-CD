@@ -158,7 +158,8 @@ def np_to_tensor(image):
             if image.shape[2]==3:
                 image = np.transpose(image,[2,0,1])
         elif image.ndim == 2:
-            image = np.newaxis(image, 0)
+            # np.newaxis 是 None 的别名，不是函数；原先这样调用必然 TypeError
+            image = np.expand_dims(image, 0)
         image = torch.from_numpy(image)
         return image.unsqueeze(0)
 
@@ -490,7 +491,8 @@ def decode_seg(label_mask, toTensor=False):
             return label_mask
         label_mask = image_tensor[0][0].cpu().numpy()
 
-    rgb = np.zeros((label_mask.shape[0], label_mask.shape[1], 3),dtype=np.float)
+    # np.float 是别名，早在 numpy 1.24 就已删除（numpy 2.x 更不会回来）
+    rgb = np.zeros((label_mask.shape[0], label_mask.shape[1], 3), dtype=np.float64)
     r = label_mask % 6
     g = (label_mask % 36) // 6
     b = label_mask // 36

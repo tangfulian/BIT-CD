@@ -51,8 +51,13 @@ jobs:
       # 不该跟着上生产。但 CI 里必须显式装 —— 漏了这一步的后果是
       # "No module named pytest"，而它看起来像测试挂了，其实是测试根本没跑。
       # 这个 workflow 头一次真跑就踩了这个坑（本地能跑只因为开发机装了 pytest）。
+      # 安装分两步，顺序不能换：browser-use 精确锁死 pillow==12.3.0，
+      # 而我们要的是 13.0.0（12.3.0 有 28 个已修复漏洞，见 requirements.txt 末尾）。
+      # 写在一起会 ResolutionImpossible。pillow 自身无依赖，--no-deps 覆盖是安全的。
       - name: 其余依赖
-        run: pip install -r requirements.txt pytest
+        run: |
+          pip install -r requirements.txt pytest
+          pip install --no-cache-dir --no-deps pillow==13.0.0
 
       # checkpoints/ 在 .gitignore 里，CI 里没有权重文件。而
       # tests/test_model_availability.py 会断言「随附权重的模型报可用」，

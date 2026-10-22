@@ -1,19 +1,50 @@
-fastapi>=0.100.0
-uvicorn[standard]>=0.23.0
-python-multipart>=0.0.6
-python-dotenv>=1.0.0
-torch>=2.0.0
-torchvision>=0.15.0
-opencv-python>=4.8.0
-numpy>=1.24.0
-Pillow>=9.5.0
-sqlalchemy>=2.0.0
-bcrypt>=4.0.0
-python-jose[cryptography]>=3.3.0
-httpx>=0.24.0
-einops>=0.6.0
-tifffile>=2024.0.0
-slowapi>=0.1.9
-alembic>=1.13.0
-browser-use>=0.12.0
-playwright>=1.52.0
+# 直接依赖，全部锁到**已验证的精确版本**。
+# 完整传递依赖见 requirements.lock（143 个包）。
+#
+# 为什么不再用 >= 下界：以前全是下界，导致本机、CI、Docker 三处各自解析出
+# 三套不同的依赖 —— 同一次检测在不同机器上跑的可能是不同版本的 numpy/torch，
+# 而 CI 用的是空占位权重、根本不跑真实推理，所以「测试绿」也证明不了结果一致。
+# 2026-10 起改为精确锁。
+
+fastapi==0.159.1
+uvicorn[standard]==0.54.0
+python-multipart==0.0.32
+python-dotenv==1.2.2
+
+# 模型推理
+torch==2.14.1
+torchvision==0.29.1
+numpy==2.5.2
+opencv-python==5.0.0.93
+tifffile==2026.10.15
+einops==0.8.2
+
+# 数据与迁移
+sqlalchemy==2.1.6
+alembic==1.20.1
+
+# 鉴权与接入
+bcrypt==5.0.0
+python-jose[cryptography]==3.5.0
+httpx==0.28.1
+slowapi==0.1.10
+
+# AI Agent
+browser-use==0.13.11
+playwright==1.64.0
+
+# ---------------------------------------------------------------
+# Pillow 故意**不在**上面这个列表里。
+#
+# browser-use 0.13.11 精确锁死 pillow==12.3.0，而 12.3.0 有 28 个
+# 已于 13.0.0 修复的漏洞（TIFF / PDF / MIC 解码器越界与堆溢出），
+# 本系统又要解析用户上传的影像 —— 两者同时写在一个 requirements 里，
+# pip 会直接 ResolutionImpossible。
+#
+# 所以安装固定为两步：
+#     pip install -r requirements.txt
+#     pip install --no-deps pillow==13.0.0
+#
+# pillow 自身没有依赖，用 --no-deps 覆盖这个过严的传递约束是安全的。
+# Dockerfile 与 .github/workflows/tests.yml 都按这个顺序装。
+# ---------------------------------------------------------------

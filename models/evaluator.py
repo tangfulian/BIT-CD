@@ -68,7 +68,14 @@ class CDBatchEvaluator:
         if os.path.exists(os.path.join(self.checkpoint_dir, checkpoint_name)):
             self.logger.write('loading last checkpoint...\n')
             # load the entire checkpoint
-            checkpoint = torch.load(os.path.join(self.checkpoint_dir, checkpoint_name), map_location=self.device)
+            # 必须显式 weights_only=False：torch>=2.6 把它默认成了 True，
+            # 而本仓库训练出的 checkpoint 里带 numpy 标量（best_val_acc 等），
+            # 不在 weights-only 允许列表里 —— 默认值下会抛 UnpicklingError。
+            # 实测 BIT_SYSU / BIT_LuojiaSET / test 三个权重都会失败，
+            # 只有纯 state_dict 的 AFCF3D 能过。
+            # checkpoint 是本仓库自己训练的产物，可信，显式关掉是安全的。
+            checkpoint = torch.load(os.path.join(self.checkpoint_dir, checkpoint_name),
+                                    map_location=self.device, weights_only=False)
 
             self.net_G.load_state_dict(checkpoint['model_G_state_dict'])
 

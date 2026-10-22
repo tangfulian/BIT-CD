@@ -26,7 +26,8 @@ class Netmodel(nn.Module):
         x4 = self.resnet.layer4(x3)
 
         pred_s = self.decoder(x0, x1, x2, x3, x4)
-        pred_s = F.upsample(pred_s, size=size, mode='bilinear', align_corners=True)
+        # F.upsample 早已弃用，新版 torch 里可能直接移除；语义与 interpolate 等价
+        pred_s = F.interpolate(pred_s, size=size, mode='bilinear', align_corners=True)
 
         return pred_s
 

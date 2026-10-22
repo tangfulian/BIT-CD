@@ -190,7 +190,8 @@ def _get_afcf3d_model():
         logger.info("加载 AFCF3D-Net 模型 (checkpoint=%s/%s)",
                     cfg["project_name"], cfg["checkpoint_name"])
 
-        resnet = torchvision.models.resnet18(pretrained=True)
+        # pretrained= 自 torchvision 0.13 起弃用，新版本可能已移除；改用 weights=
+        resnet = torchvision.models.resnet18(weights="DEFAULT")
         model = Netmodel(32, resnet)
         model = model.to(device)
 
