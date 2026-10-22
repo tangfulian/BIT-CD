@@ -1,9 +1,8 @@
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
-from fastapi import Depends, Header, HTTPException
-from jose import JWTError, jwt
-from sqlalchemy.orm import Session
+import jwt
+from fastapi import Header, HTTPException
 
 from backend.app.core.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_HOURS
 from backend.app.models.database import SessionLocal
@@ -34,7 +33,7 @@ def get_current_user(authorization: str = Header(None)) -> UserDB:
         username = payload.get("sub")
         if username is None:
             raise HTTPException(status_code=401, detail="令牌无效")
-    except JWTError:
+    except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="令牌无效")
     db = SessionLocal()
     try:
@@ -58,7 +57,7 @@ def get_optional_user(authorization: str = Header(None)) -> "UserDB | None":
         username = payload.get("sub")
         if username is None:
             return None
-    except JWTError:
+    except jwt.PyJWTError:
         return None
     db = SessionLocal()
     try:

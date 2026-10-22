@@ -14,7 +14,7 @@ def get_user_key(request: Request) -> str:
     auth = request.headers.get("Authorization", "")
     if auth.startswith("Bearer "):
         try:
-            from jose import jwt
+            import jwt
             from backend.app.core.config import SECRET_KEY, ALGORITHM
 
             token = auth.split(" ")[1]

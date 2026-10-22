@@ -1,5 +1,5 @@
 # 完整依赖冻结 —— 2026-10-22 在 Python 3.12.9 上，从验证通过的隔离环境
-# 由 `pip freeze` 生成。共 143 个包。
+# 由 `pip freeze` 生成。共 141 个包。
 #
 # 与 requirements.txt 的分工：
 #   requirements.txt   直接依赖的意图，人读
@@ -44,7 +44,6 @@ cryptography==50.0.2
 Deprecated==3.0.0
 distro==1.9.0
 docstring_parser==0.18.0
-ecdsa==0.19.2
 einops==0.8.2
 fastapi==0.159.1
 fetch-use==0.4.0
@@ -120,7 +119,6 @@ pytest==9.1.1
 python-dateutil==3.0.0
 python-docx==1.2.0
 python-dotenv==1.2.2
-python-jose==3.5.0
 python-multipart==0.0.32
 pywin32==312; sys_platform == "win32"
 PyYAML==6.0.3

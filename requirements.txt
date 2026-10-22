@@ -25,7 +25,10 @@ alembic==1.20.1
 
 # 鉴权与接入
 bcrypt==5.0.0
-python-jose[cryptography]==3.5.0
+# PyJWT 替代 python-jose：后者 3.5.0 有 2 个无修复版本的 CVE
+# （算法混淆 / DER 编码公钥绕过），且库已基本停止维护。
+# 两者签发的 HS256 token 双向兼容，迁移不会让已登录用户掉线 —— 已实测。
+PyJWT==2.15.1
 httpx==0.28.1
 slowapi==0.1.10
 
