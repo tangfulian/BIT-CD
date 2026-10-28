@@ -1373,7 +1373,10 @@ select.form-control {
 
 .result-image-card img {
     width: 100%;
-    max-height: 180px;
+    /* 固定高度而不是 max-height：模型输出都是 256×256 的正方形，
+       用 max-height 的话图片加载前高度为 0、加载后撑到 180px，
+       详情弹窗会明显跳一下（CLS）。 */
+    height: 180px;
     object-fit: contain;
     border-radius: var(--radius-xs);
     background: white;
@@ -4521,6 +4524,11 @@ select.form-control {
     outline: 2px solid var(--primary-light);
     outline-offset: 2px;
 }
+
+/* 暗色下 --primary 是浅绿 #4ea877，白字压上去只有 2.92:1 ——
+   给键盘/读屏用户跳过导航用的链接，自己反而看不清。
+   改成深色字后约 6.4:1。 */
+[data-theme="dark"] .skip-link { color: #0f1612; }
 
 /* ============================================================
    图库/画廊 Gallery

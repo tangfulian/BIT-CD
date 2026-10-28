@@ -330,10 +330,10 @@
                     <div class="land-form-area">
                         <div class="card" style="display: flex; flex-direction: column; gap: 16px;">
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                                <div class="form-group"><label class="form-label" data-i18n="land.t1Time">T1影像拍摄时间</label><input type="month" id="t1_time" value="2021-05" class="form-control"></div>
-                                <div class="form-group"><label class="form-label" data-i18n="land.t2Time">T2影像拍摄时间</label><input type="month" id="t2_time" value="2022-05" class="form-control"></div>
+                                <div class="form-group"><label class="form-label" data-i18n="land.t1Time" for="t1_time">T1影像拍摄时间</label><input type="month" id="t1_time" value="2021-05" class="form-control"></div>
+                                <div class="form-group"><label class="form-label" data-i18n="land.t2Time" for="t2_time">T2影像拍摄时间</label><input type="month" id="t2_time" value="2022-05" class="form-control"></div>
                                 <div class="form-group">
-                                    <label class="form-label" data-i18n="land.province">所在省份</label>
+                                    <label class="form-label" data-i18n="land.province" for="province">所在省份</label>
                                     <select id="province" class="form-control">
                                         <option value="黑龙江省" selected>黑龙江省</option>
                                         <option value="吉林省">吉林省</option>
@@ -341,11 +341,11 @@
                                         <option value="内蒙古自治区">内蒙古自治区</option>
                                     </select>
                                 </div>
-                                <div class="form-group"><label class="form-label" data-i18n="land.city">所在市县</label><input type="text" id="city" value="齐齐哈尔市" class="form-control"></div>
-                                <div class="form-group"><label class="form-label" data-i18n="land.latLng">地块经纬度范围</label><input type="text" id="lat_lng" class="form-control"></div>
-                                <div class="form-group"><label class="form-label" data-i18n="land.area">地块总面积（亩）</label><input type="number" id="area" class="form-control"></div>
+                                <div class="form-group"><label class="form-label" data-i18n="land.city" for="city">所在市县</label><input type="text" id="city" value="齐齐哈尔市" class="form-control"></div>
+                                <div class="form-group"><label class="form-label" data-i18n="land.latLng" for="lat_lng">地块经纬度范围</label><input type="text" id="lat_lng" class="form-control"></div>
+                                <div class="form-group"><label class="form-label" data-i18n="land.area" for="area">地块总面积（亩）</label><input type="number" id="area" class="form-control"></div>
                                 <div class="form-group">
-                                    <label class="form-label" data-i18n="land.landType">耕地类型</label>
+                                    <label class="form-label" data-i18n="land.landType" for="land_type">耕地类型</label>
                                     <select id="land_type" class="form-control">
                                         <option value="黑土核心区旱田" selected>黑土核心区旱田</option>
                                         <option value="水田">水田</option>
@@ -355,7 +355,7 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" data-i18n="land.cropType">主要种植作物</label>
+                                    <label class="form-label" data-i18n="land.cropType" for="crop_type">主要种植作物</label>
                                     <select id="crop_type" class="form-control">
                                         <option value="玉米-大豆轮作" selected>玉米-大豆轮作</option>
                                         <option value="水稻">水稻</option>
@@ -365,7 +365,7 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" data-i18n="land.dataSource">影像数据源</label>
+                                    <label class="form-label" data-i18n="land.dataSource" for="data_source">影像数据源</label>
                                     <select id="data_source" class="form-control">
                                         <option value="无人机航拍光学影像" selected>无人机航拍光学影像</option>
                                         <option value="高分二号卫星影像">高分二号卫星影像</option>
@@ -374,7 +374,7 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" data-i18n="land.changeType">核心变化类型</label>
+                                    <label class="form-label" data-i18n="land.changeType" for="change_type_define">核心变化类型</label>
                                     <select id="change_type_define" class="form-control">
                                         <option value="水蚀沟壑发育">水蚀沟壑发育</option>
                                         <option value="风蚀沙化">风蚀沙化</option>
@@ -410,7 +410,7 @@
                             </div>
                             <div class="config-row">
                                 <div class="form-group" style="flex:2;">
-                                    <label class="form-label" data-i18n="plot.selectPlot">选择地块</label>
+                                    <label class="form-label" data-i18n="plot.selectPlot" for="detectPlotSelect">选择地块</label>
                                     <div style="display: flex; gap: 8px; align-items: center;">
                                         <select id="detectPlotSelect" class="form-control" style="flex:1;">
                                             <option value="">-- 手动填写 --</option>
@@ -421,13 +421,13 @@
                             </div>
                             <div class="config-row">
                                 <div class="form-group" style="flex:2;">
-                                    <label class="form-label" data-i18n="detect.selectModel">选择检测模型</label>
+                                    <label class="form-label" data-i18n="detect.selectModel" for="model_type">选择检测模型</label>
                                     <!-- 选项由 js/models.js 统一渲染。此处原先有一份手抄清单，
                                          与另外 5 份的模型展示名已经漂开（BIT 三种写法、DIFF 四种） -->
                                     <select id="model_type" class="form-control"></select>
                                 </div>
                                 <div class="form-group" style="flex:1;">
-                                    <label class="form-label" data-i18n="detect.threshold">置信度阈值</label>
+                                    <label class="form-label" data-i18n="detect.threshold" for="threshold">置信度阈值</label>
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <input type="number" id="threshold" value="0.5" min="0.1" max="0.99" step="0.01" class="form-control" style="flex:1;">
                                         <button type="button" id="autoThresholdBtn" class="btn-gray" style="width: auto; padding: 8px 16px; font-size: 13px; white-space: nowrap;" data-i18n="detect.autoThreshold">自动</button>
@@ -458,7 +458,7 @@
                                     </div>
                                     <img id="img1" class="upload-preview hidden" loading="lazy" decoding="async" alt="T1 时相影像预览" />
                                     <div id="f1name" class="file-name hidden"></div>
-                                    <input type="file" id="file1" accept="image/*" hidden>
+                                    <input type="file" id="file1" accept="image/*" hidden data-i18n-aria="detect.t1Label">
                                 </div>
                             </div>
 
@@ -479,7 +479,7 @@
                                     </div>
                                     <img id="img2" class="upload-preview hidden" loading="lazy" decoding="async" alt="T2 时相影像预览" />
                                     <div id="f2name" class="file-name hidden"></div>
-                                    <input type="file" id="file2" accept="image/*" hidden>
+                                    <input type="file" id="file2" accept="image/*" hidden data-i18n-aria="detect.t2Label">
                                 </div>
                             </div>
 
@@ -540,7 +540,7 @@
                                 </div>
                                 <div id="thresholdAdjustBar" class="hidden threshold-adjust-bar" style="margin: 16px 0; padding: 14px 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                                     <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;" data-i18n="detect.thresholdSlider">交互调阈值</span>
-                                    <input type="range" id="thresholdSlider" min="1" max="99" value="50" class="threshold-slider" style="flex:1;min-width:120px;">
+                                    <input type="range" id="thresholdSlider" min="1" max="99" value="50" class="threshold-slider" data-i18n-aria="detect.thresholdSlider" style="flex:1;min-width:120px;">
                                     <span id="thresholdSliderVal" style="font-size:13px;font-weight:600;color:var(--primary);min-width:36px;">0.50</span>
                                     <button type="button" id="otsuResultBtn" class="btn-gray" style="padding:6px 12px;font-size:12px;white-space:nowrap;" data-i18n="detect.otsuBtn">Otsu自动</button>
                                     <button type="button" id="saveThresholdBtn" class="btn-action" style="padding:6px 14px;font-size:12px;white-space:nowrap;" data-i18n="detect.saveThreshold">保存阈值</button>
@@ -653,14 +653,14 @@
                             </h3>
                         </div>
                         <div class="form-group">
-                            <label class="form-label" data-i18n="detect.selectModel">选择检测模型</label>
+                            <label class="form-label" data-i18n="detect.selectModel" for="batch_model">选择检测模型</label>
                             <!-- 选项由 js/models.js 统一渲染（此处原为第 3 份手抄副本） -->
                             <select id="batch_model" class="form-control"></select>
                         </div>
-                        <div class="form-group"><label class="form-label" data-i18n="batch.t1Label">T1 时相影像（批量）</label><input type="file" id="batch_t1" multiple accept="image/*" class="form-control"></div>
-                        <div class="form-group"><label class="form-label" data-i18n="batch.t2Label">T2 时相影像（批量）</label><input type="file" id="batch_t2" multiple accept="image/*" class="form-control"></div>
+                        <div class="form-group"><label class="form-label" data-i18n="batch.t1Label" for="batch_t1">T1 时相影像（批量）</label><input type="file" id="batch_t1" multiple accept="image/*" class="form-control"></div>
+                        <div class="form-group"><label class="form-label" data-i18n="batch.t2Label" for="batch_t2">T2 时相影像（批量）</label><input type="file" id="batch_t2" multiple accept="image/*" class="form-control"></div>
                         <div class="form-group">
-                        <label class="form-label" data-i18n="detect.threshold">变化置信度阈值</label>
+                        <label class="form-label" data-i18n="detect.threshold" for="batch_th">变化置信度阈值</label>
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <input type="number" id="batch_th" value="0.5" class="form-control" style="flex:1;">
                             <button type="button" id="batchAutoThresholdBtn" class="btn-gray" style="width: auto; padding: 8px 16px; font-size: 13px; white-space: nowrap;" data-i18n="detect.autoThreshold">自动</button>
@@ -899,7 +899,7 @@
                 <div class="card">
                     <div class="series-toolbar">
                         <div class="form-group" style="flex:1; margin-bottom:0;">
-                            <label class="form-label" data-i18n="timeline.selectSeries">选择序列</label>
+                            <label class="form-label" data-i18n="timeline.selectSeries" for="timelineSeries">选择序列</label>
                             <select id="timelineSeries" class="form-control"></select>
                         </div>
                         <button class="btn-primary" id="timelineCreateBtn" style="width:auto; padding:10px 18px;" data-i18n="series.createBtn">新建序列</button>
@@ -1116,11 +1116,11 @@
                 </div>
                 <div class="compare-selectors">
                     <div class="form-group" style="flex:1;">
-                        <label data-i18n="compare.recordA">记录 A</label>
+                        <label data-i18n="compare.recordA" for="compareId1">记录 A</label>
                         <select id="compareId1" class="form-control"></select>
                     </div>
                     <div class="form-group" style="flex:1;">
-                        <label data-i18n="compare.recordB">记录 B</label>
+                        <label data-i18n="compare.recordB" for="compareId2">记录 B</label>
                         <select id="compareId2" class="form-control"></select>
                     </div>
                     <button class="btn-primary" id="compareBtn" style="width: auto; padding: 10px 20px;" data-i18n="compare.compareBtn">开始对比</button>
@@ -1169,11 +1169,11 @@
                              「评估数量：」会和它的输入框被拆到两行，
                              提示文案还会跟到下一行最左，归属看不出来。 -->
                         <div style="display:flex;gap:8px;align-items:center;flex:0 0 auto;">
-                            <label style="font-size:13px;color:var(--text-secondary);" data-i18n="detect.threshold">阈值：</label>
+                            <label style="font-size:13px;color:var(--text-secondary);" data-i18n="detect.threshold" for="evalThreshold">阈值：</label>
                             <input type="number" id="evalThreshold" value="0.5" min="0.1" max="0.99" step="0.01" class="form-control" style="width:80px;">
                         </div>
                         <div style="display:flex;gap:8px;align-items:center;flex:0 0 auto;">
-                            <label style="font-size:13px;color:var(--text-secondary);" data-i18n="eval.evalCount">评估数量：</label>
+                            <label style="font-size:13px;color:var(--text-secondary);" data-i18n="eval.evalCount" for="evalCount">评估数量：</label>
                             <input type="number" id="evalCount" value="50" min="1" max="9999" step="1" class="form-control" style="width:70px;">
                             <span style="font-size:11px;color:var(--text-tertiary);" data-i18n="eval.evalCountHint">（设为 0 评估全部）</span>
                         </div>
@@ -1261,7 +1261,7 @@
                                 <span class="field-hint" id="agentModeHint"></span>
                             </div>
                             <div class="form-group">
-                                <label class="form-label" data-i18n="agent.instruction">操作指令</label>
+                                <label class="form-label" data-i18n="agent.instruction" for="agentInstruction">操作指令</label>
                                 <textarea id="agentInstruction" class="form-control agent-textarea"
                                           data-i18n="agent.instructionPlaceholder"
                                           placeholder="用自然语言描述您想要执行的操作，例如：打开检测页面，上传两张影像并用 BIT 模型检测..."
@@ -1291,7 +1291,7 @@
                             </div>
                             <div class="agent-controls-row">
                                 <div class="form-group" id="agentMaxStepsGroup" style="display:flex;align-items:center;gap:8px;">
-                                    <label class="form-label" style="margin:0;white-space:nowrap;" data-i18n="agent.maxSteps">最大步数</label>
+                                    <label class="form-label" style="margin:0;white-space:nowrap;" data-i18n="agent.maxSteps" for="agentMaxSteps">最大步数</label>
                                     <input type="number" id="agentMaxSteps" value="25" min="5" max="100" class="form-control" style="width:80px;">
                                 </div>
                                 <div style="display:flex;gap:8px;">
@@ -1384,8 +1384,8 @@
                         <div class="profile-card">
                             <h3 data-i18n="profile.changePassword">修改密码</h3>
                             <div id="profilePwdForm">
-                                <div class="form-group"><label class="form-label" data-i18n="profile.oldPassword">当前密码</label><input type="password" id="profOldPwd" class="form-control" autocomplete="current-password"></div>
-                                <div class="form-group"><label class="form-label" data-i18n="profile.newPassword">新密码</label><input type="password" id="profNewPwd" class="form-control" autocomplete="new-password" data-i18n="profile.newPwdPlaceholder" placeholder="密码≥8位，含字母+数字"></div>
+                                <div class="form-group"><label class="form-label" data-i18n="profile.oldPassword" for="profOldPwd">当前密码</label><input type="password" id="profOldPwd" class="form-control" autocomplete="current-password"></div>
+                                <div class="form-group"><label class="form-label" data-i18n="profile.newPassword" for="profNewPwd">新密码</label><input type="password" id="profNewPwd" class="form-control" autocomplete="new-password" data-i18n="profile.newPwdPlaceholder" placeholder="密码≥8位，含字母+数字"></div>
                                 <button class="btn-primary" id="profChangePwdBtn" style="margin-top:8px;" data-i18n="profile.changePwdBtn">修改密码</button>
                                 <span id="profPwdMsg" style="font-size:13px;margin-left:10px;"></span>
                             </div>
@@ -1450,15 +1450,15 @@
 
                     <div class="disaster-form-grid">
                         <div class="form-group">
-                            <label data-i18n="disaster.record">检测记录</label>
+                            <label data-i18n="disaster.record" for="disasterRecord">检测记录</label>
                             <select id="disasterRecord" class="form-control"></select>
                         </div>
                         <div class="form-group">
-                            <label data-i18n="disaster.area">地块总面积（亩）</label>
+                            <label data-i18n="disaster.area" for="disasterArea">地块总面积（亩）</label>
                             <input type="number" id="disasterArea" class="form-control" min="0" step="0.01" placeholder="必填" data-i18n="disaster.areaPlaceholder">
                         </div>
                         <div class="form-group">
-                            <label data-i18n="disaster.crop">种植作物</label>
+                            <label data-i18n="disaster.crop" for="disasterCrop">种植作物</label>
                             <select id="disasterCrop" class="form-control"></select>
                         </div>
                     </div>
@@ -1469,30 +1469,30 @@
                     </h4>
                     <div class="disaster-form-grid">
                         <div class="form-group">
-                            <label data-i18n="disaster.yield">亩产（kg/亩）</label>
+                            <label data-i18n="disaster.yield" for="disasterYield">亩产（kg/亩）</label>
                             <input type="number" id="disasterYield" class="form-control" min="0" step="0.1">
                             <span class="field-hint" data-i18n="disaster.exampleHint">示例参考值，请替换</span>
                         </div>
                         <div class="form-group">
-                            <label data-i18n="disaster.price">单价（元/kg）</label>
+                            <label data-i18n="disaster.price" for="disasterPrice">单价（元/kg）</label>
                             <input type="number" id="disasterPrice" class="form-control" min="0" step="0.01">
                             <span class="field-hint" data-i18n="disaster.exampleHint">示例参考值，请替换</span>
                         </div>
                         <div class="form-group">
-                            <label data-i18n="disaster.rateMild">轻度减产比例（%）</label>
+                            <label data-i18n="disaster.rateMild" for="disasterRateMild">轻度减产比例（%）</label>
                             <input type="number" id="disasterRateMild" class="form-control" min="0" max="100" step="1">
                             <span class="field-hint" data-i18n="disaster.exampleHint">示例参考值，请替换</span>
                         </div>
                         <div class="form-group">
-                            <label data-i18n="disaster.rateModerate">中度减产比例（%）</label>
+                            <label data-i18n="disaster.rateModerate" for="disasterRateModerate">中度减产比例（%）</label>
                             <input type="number" id="disasterRateModerate" class="form-control" min="0" max="100" step="1">
                         </div>
                         <div class="form-group">
-                            <label data-i18n="disaster.rateSevere">重度减产比例（%）</label>
+                            <label data-i18n="disaster.rateSevere" for="disasterRateSevere">重度减产比例（%）</label>
                             <input type="number" id="disasterRateSevere" class="form-control" min="0" max="100" step="1">
                         </div>
                         <div class="form-group">
-                            <label data-i18n="disaster.rateTotal">绝收减产比例（%）</label>
+                            <label data-i18n="disaster.rateTotal" for="disasterRateTotal">绝收减产比例（%）</label>
                             <input type="number" id="disasterRateTotal" class="form-control" min="0" max="100" step="1">
                         </div>
                     </div>
@@ -1500,15 +1500,15 @@
                     <h4 class="disaster-sub-title" data-i18n="disaster.secBounds">分级下界（变化置信度）</h4>
                     <div class="disaster-form-grid">
                         <div class="form-group">
-                            <label data-i18n="disaster.boundModerate">中度起（≥）</label>
+                            <label data-i18n="disaster.boundModerate" for="disasterBoundModerate">中度起（≥）</label>
                             <input type="number" id="disasterBoundModerate" class="form-control" min="0" max="1" step="0.01">
                         </div>
                         <div class="form-group">
-                            <label data-i18n="disaster.boundSevere">重度起（≥）</label>
+                            <label data-i18n="disaster.boundSevere" for="disasterBoundSevere">重度起（≥）</label>
                             <input type="number" id="disasterBoundSevere" class="form-control" min="0" max="1" step="0.01">
                         </div>
                         <div class="form-group">
-                            <label data-i18n="disaster.boundTotal">绝收起（≥）</label>
+                            <label data-i18n="disaster.boundTotal" for="disasterBoundTotal">绝收起（≥）</label>
                             <input type="number" id="disasterBoundTotal" class="form-control" min="0" max="1" step="0.01">
                         </div>
                     </div>
@@ -1516,11 +1516,11 @@
                     <h4 class="disaster-sub-title" data-i18n="disaster.secSurvey">查勘成本（元/亩）</h4>
                     <div class="disaster-form-grid">
                         <div class="form-group">
-                            <label data-i18n="disaster.manualCost">人工踏勘</label>
+                            <label data-i18n="disaster.manualCost" for="disasterManualCost">人工踏勘</label>
                             <input type="number" id="disasterManualCost" class="form-control" min="0" step="0.1">
                         </div>
                         <div class="form-group">
-                            <label data-i18n="disaster.remoteCost">遥感定损</label>
+                            <label data-i18n="disaster.remoteCost" for="disasterRemoteCost">遥感定损</label>
                             <input type="number" id="disasterRemoteCost" class="form-control" min="0" step="0.1">
                         </div>
                     </div>
@@ -1566,18 +1566,18 @@
                 <div class="modal-content">
                     <div id="plotListContainer" class="plot-list-container"></div>
                     <div id="plotEditForm" class="plot-edit-form hidden">
-                        <div class="form-group"><label class="form-label" data-i18n="plot.plotName">地块名称</label><input type="text" id="plotEditName" class="form-control" data-i18n="plot.plotNamePlaceholder" placeholder="例如：试验田A区"></div>
+                        <div class="form-group"><label class="form-label" data-i18n="plot.plotName" for="plotEditName">地块名称</label><input type="text" id="plotEditName" class="form-control" data-i18n="plot.plotNamePlaceholder" placeholder="例如：试验田A区"></div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                            <div class="form-group"><label class="form-label" data-i18n="land.province">所在省份</label><select id="plotEditProvince" class="form-control"><option value="黑龙江省">黑龙江省</option><option value="吉林省">吉林省</option><option value="辽宁省">辽宁省</option><option value="内蒙古自治区">内蒙古自治区</option></select></div>
-                            <div class="form-group"><label class="form-label" data-i18n="land.city">所在市县</label><input type="text" id="plotEditCity" class="form-control"></div>
-                            <div class="form-group"><label class="form-label" data-i18n="land.latLng">地块经纬度范围</label><input type="text" id="plotEditLatLng" class="form-control"></div>
-                            <div class="form-group"><label class="form-label" data-i18n="land.area">地块总面积（亩）</label><input type="number" id="plotEditArea" class="form-control" step="0.1" min="0"></div>
-                            <div class="form-group"><label class="form-label" data-i18n="land.landType">耕地类型</label><input type="text" id="plotEditLandType" class="form-control"></div>
-                            <div class="form-group"><label class="form-label" data-i18n="land.cropType">主要种植作物</label><input type="text" id="plotEditCropType" class="form-control"></div>
-                            <div class="form-group"><label class="form-label" data-i18n="land.dataSource">影像数据源</label><input type="text" id="plotEditDataSource" class="form-control"></div>
-                            <div class="form-group"><label class="form-label" data-i18n="land.changeType">核心变化类型</label><input type="text" id="plotEditChangeType" class="form-control"></div>
-                            <div class="form-group"><label class="form-label" data-i18n="land.t1Time">T1影像拍摄时间</label><input type="month" id="plotEditT1Time" class="form-control"></div>
-                            <div class="form-group"><label class="form-label" data-i18n="land.t2Time">T2影像拍摄时间</label><input type="month" id="plotEditT2Time" class="form-control"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.province" for="plotEditProvince">所在省份</label><select id="plotEditProvince" class="form-control"><option value="黑龙江省">黑龙江省</option><option value="吉林省">吉林省</option><option value="辽宁省">辽宁省</option><option value="内蒙古自治区">内蒙古自治区</option></select></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.city" for="plotEditCity">所在市县</label><input type="text" id="plotEditCity" class="form-control"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.latLng" for="plotEditLatLng">地块经纬度范围</label><input type="text" id="plotEditLatLng" class="form-control"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.area" for="plotEditArea">地块总面积（亩）</label><input type="number" id="plotEditArea" class="form-control" step="0.1" min="0"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.landType" for="plotEditLandType">耕地类型</label><input type="text" id="plotEditLandType" class="form-control"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.cropType" for="plotEditCropType">主要种植作物</label><input type="text" id="plotEditCropType" class="form-control"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.dataSource" for="plotEditDataSource">影像数据源</label><input type="text" id="plotEditDataSource" class="form-control"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.changeType" for="plotEditChangeType">核心变化类型</label><input type="text" id="plotEditChangeType" class="form-control"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.t1Time" for="plotEditT1Time">T1影像拍摄时间</label><input type="month" id="plotEditT1Time" class="form-control"></div>
+                            <div class="form-group"><label class="form-label" data-i18n="land.t2Time" for="plotEditT2Time">T2影像拍摄时间</label><input type="month" id="plotEditT2Time" class="form-control"></div>
                         </div>
                         <div class="plot-edit-form-actions" style="display:flex;gap:8px;margin-top:16px;">
                             <button class="btn-primary" id="plotSaveBtn" data-i18n="common.save">保存</button>
