@@ -1612,6 +1612,22 @@
     </div>
 
     <div id="reportContainer" style="position: absolute; left: -9999px; top: 0; width: 800px; background: var(--bg-card); padding: 40px; font-family: 'Inter', sans-serif; color: var(--text-primary);"></div>
+
+    <!-- 命令面板：Ctrl/Cmd+K 唤起，键盘驱动，不用鼠标找导航 -->
+    <div id="cmdPalette" class="cmd-overlay" hidden>
+        <div class="cmd-box" role="dialog" aria-modal="true" data-i18n-aria="cmd.title" aria-label="命令面板">
+            <div class="cmd-search-row">
+                <svg class="cmd-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.7" y2="16.7"/></svg>
+                <input id="cmdInput" class="cmd-input" type="text" autocomplete="off" spellcheck="false"
+                       data-i18n="cmd.placeholder" placeholder="搜索页面或命令…"
+                       role="combobox" aria-expanded="true" aria-controls="cmdList" aria-autocomplete="list">
+                <kbd class="cmd-esc">Esc</kbd>
+            </div>
+            <ul id="cmdList" class="cmd-list" role="listbox" aria-label="命令列表"></ul>
+            <div class="cmd-hint" data-i18n="cmd.hint">↑↓ 选择 · Enter 执行 · Esc 关闭</div>
+        </div>
+    </div>
+
     <script type="module" src="js/main.js"></script>
 </body>
 </html>

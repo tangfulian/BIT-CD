@@ -852,5 +852,18 @@ export const en = {
     "series.deleteFailed": "Delete failed",
     "series.deleted": "Series deleted",
     "series.confirmDelete": "Delete this series? Detection records are kept, they just stop belonging to it.",
-    "series.model": "Model"
+    "series.model": "Model",
+
+    "detect.pasteFull": "Both T1 and T2 already have an image. Remove one before pasting.",
+
+    // Command palette
+    "cmd.title": "Command palette",
+    "cmd.placeholder": "Search pages or commands…",
+    "cmd.hint": "↑↓ to move · Enter to run · Esc to close",
+    "cmd.noResult": "No matching command",
+    "cmd.kindPage": "Page",
+    "cmd.kindAction": "Action",
+    "cmd.actionTheme": "Toggle light / dark",
+    "cmd.actionLang": "Switch Chinese / English",
+    "cmd.actionChat": "Open AI assistant"
 };

@@ -29,6 +29,7 @@ import { ImageTools } from './imageTools.js';
 import { NDVIViewer } from './ndviViewer.js';
 import { Agent } from './agent.js';
 import { Disaster } from './disaster.js';
+import { CommandPalette } from './commandPalette.js';
 
 function initEventListeners() {
     const goRegister = document.getElementById("goRegister");
@@ -84,6 +85,9 @@ window.onload = () => {
     safeInit('NDVIViewer', () => NDVIViewer.init());
     safeInit('Agent', () => Agent.init());
     safeInit('Disaster', () => Disaster.init());
+    // 命令面板挂全局快捷键，必须早于登录态渲染也没关系 —— 它只读导航 DOM，
+    // 每次打开时现取，所以权限变化（游客/登录）会自然反映到列表里。
+    safeInit('CommandPalette', () => CommandPalette.init());
     // SystemStatus 此前 import 了却从没 init（原来 init 是空的，没人发现）。
     // 现在它要挂一个 lang-change 监听：运行时长是 JS 按语言拼出来的字符串，
     // 不是 data-i18n 元素，切语言时不会自己重排。
@@ -98,25 +102,60 @@ window.onload = () => {
         };
     }
 
+    // ---- 主题：默认跟随系统，手动切换后以用户选择为准 ----
+    // 以前写死默认 "light"，即使用户系统是深色也给他亮色页面。现在：
+    //   · localStorage 里没有 app_theme  → 跟随 prefers-color-scheme
+    //   · 点过切换按钮                    → 写入 app_theme，从此以它为准
+    // 系统主题变化时，只有「没手动选过」的用户会跟着变。
+    const systemDark = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+
+    const readPreferredTheme = () => {
+        const saved = Utils.safeLocalStorage.getItem("app_theme");
+        if (saved === "dark" || saved === "light") return saved;
+        return systemDark && systemDark.matches ? "dark" : "light";
+    };
+
+    const paintThemeButton = (theme) => {
+        const btn = document.getElementById("toggleThemeBtn");
+        if (!btn) return;
+        btn.setAttribute("aria-pressed", String(theme === "dark"));
+        btn.textContent = theme === "dark" ? I18n.t('theme.dark') : I18n.t('theme.light');
+    };
+
+    const applyTheme = (theme) => {
+        const html = document.documentElement;
+        if (html.getAttribute("data-theme") === theme) return;
+        html.classList.add("theme-transitioning");
+        html.setAttribute("data-theme", theme);
+        // 地图底图不认 CSS 变量，得自己响应（检测地图用它重挑底图样式/滤镜）
+        eventBus.emit("theme-change", theme);
+        paintThemeButton(theme);
+        setTimeout(() => html.classList.remove("theme-transitioning"), 420);
+    };
+
+    const initialTheme = readPreferredTheme();
+    document.documentElement.setAttribute("data-theme", initialTheme);
+    paintThemeButton(initialTheme);
+
     const themeBtn = document.getElementById("toggleThemeBtn");
     if (themeBtn) {
-        const savedTheme = Utils.safeLocalStorage.getItem("app_theme") || "light";
-        document.documentElement.setAttribute("data-theme", savedTheme);
-        themeBtn.textContent = savedTheme === "dark" ? I18n.t('theme.dark') : I18n.t('theme.light');
-        themeBtn.setAttribute("aria-pressed", savedTheme === "dark");
         themeBtn.onclick = () => {
             const current = document.documentElement.getAttribute("data-theme");
             const next = current === "dark" ? "light" : "dark";
-            const html = document.documentElement;
-            html.classList.add("theme-transitioning");
-            html.setAttribute("data-theme", next);
+            // 手动选择落盘，从此不再跟随系统
             Utils.safeLocalStorage.setItem("app_theme", next);
-            // 地图底图不认 CSS 变量，得自己响应（检测地图用它重挑底图样式/滤镜）
-            eventBus.emit("theme-change", next);
-            themeBtn.setAttribute("aria-pressed", next === "dark");
-            themeBtn.textContent = next === "dark" ? I18n.t('theme.dark') : I18n.t('theme.light');
-            setTimeout(() => html.classList.remove("theme-transitioning"), 420);
+            applyTheme(next);
         };
+    }
+
+    if (systemDark) {
+        const onSystemThemeChange = (e) => {
+            // 用户手动选过就不打扰他
+            if (Utils.safeLocalStorage.getItem("app_theme")) return;
+            applyTheme(e.matches ? "dark" : "light");
+        };
+        if (systemDark.addEventListener) systemDark.addEventListener("change", onSystemThemeChange);
+        else if (systemDark.addListener) systemDark.addListener(onSystemThemeChange);  // 旧 Safari
     }
     // 页面卸载时释放所有 blob URL
     window.addEventListener('beforeunload', () => {

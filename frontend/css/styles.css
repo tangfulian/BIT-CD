@@ -5201,3 +5201,125 @@ summary:focus-visible,
     }
     .pagination-btn { min-width: 44px; height: 44px; }
 }
+
+/* ==========================================================================
+   命令面板（Ctrl/Cmd+K）
+   全部走 CSS 变量，暗色主题自动跟随，不需要额外的 [data-theme="dark"] 规则。
+   ========================================================================== */
+.cmd-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;                       /* 高于侧边栏(100)与 toast */
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 12vh;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+.cmd-overlay[hidden] { display: none; }
+
+.cmd-box {
+    width: min(560px, calc(100vw - 32px));
+    max-height: min(460px, 70vh);
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg, 14px);
+    box-shadow: var(--shadow-lg, 0 20px 48px rgba(0,0,0,0.18));
+    overflow: hidden;
+    animation: cmd-in 140ms var(--ease-smooth, ease-out);
+}
+@keyframes cmd-in {
+    from { opacity: 0; transform: translateY(-6px) scale(0.99); }
+    to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .cmd-box { animation: none; }
+}
+
+.cmd-search-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border-light);
+}
+.cmd-search-icon { flex-shrink: 0; color: var(--text-tertiary); }
+.cmd-input {
+    flex: 1;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    padding: 15px 0;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--text-primary);
+}
+.cmd-input::placeholder { color: var(--text-tertiary); }
+/* 全局 input:focus-visible 会给一个 2px 外框，套在搜索行里显得笨重。
+   面板整体已经在最上层，改成「整行底部高亮」更贴合这种浮层交互。 */
+.cmd-input:focus,
+.cmd-input:focus-visible { outline: 0; }
+.cmd-search-row:focus-within { box-shadow: inset 0 -2px 0 var(--primary); }
+.cmd-esc {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-family: inherit;
+    color: var(--text-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 2px 6px;
+}
+
+.cmd-list {
+    list-style: none;
+    margin: 0;
+    padding: 6px;
+    overflow-y: auto;
+    flex: 1;
+}
+.cmd-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+.cmd-item[aria-selected="true"] {
+    background: var(--primary-surface);
+    color: var(--primary);
+}
+.cmd-item-icon { flex-shrink: 0; opacity: 0.65; display: flex; }
+.cmd-item-label { flex: 1; }
+.cmd-item-kind {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    padding: 1px 5px;
+}
+.cmd-empty {
+    padding: 26px 10px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-tertiary);
+}
+.cmd-hint {
+    padding: 8px 14px;
+    border-top: 1px solid var(--border-light);
+    font-size: 11px;
+    color: var(--text-tertiary);
+    background: var(--bg-main);
+}
+
+@media (max-width: 768px) {
+    .cmd-overlay { padding-top: 8vh; }
+    .cmd-item { padding: 12px 10px; }   /* 移动端触控目标 */
+    .cmd-esc { display: none; }
+}

@@ -454,7 +454,11 @@ export const Timeline = {
 
                     <div id="seriesPanePick">
                         <p class="field-hint">${t('series.pickHint', '选择同一地块不同时期的检测记录，并补填每期的影像月份（形如 2024-05）。')}</p>
-                        <div id="seriesRecordList" class="series-record-list">${t('common.loading', '加载中…')}</div>
+                        <div id="seriesRecordList" class="series-record-list skeleton-loading">
+                            <div class="skeleton skeleton-text" style="width:78%"></div>
+                            <div class="skeleton skeleton-text" style="width:64%"></div>
+                            <div class="skeleton skeleton-text" style="width:71%"></div>
+                        </div>
                     </div>
 
                     <div id="seriesPaneUpload" class="hidden">

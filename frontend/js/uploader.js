@@ -36,6 +36,55 @@ export const Uploader = {
             };
             input.onchange = () => this.handleFileSelect(id === 'upload1' ? 1 : 2, input);
         });
+        this._initPaste();
+    },
+
+    /**
+     * 在单张检测页支持直接 Ctrl/Cmd+V 粘贴截图。
+     *
+     * 只对「单张检测」页生效：批量检测与 Agent 的上传区各有自己的状态机，
+     * 在全局 paste 里同时照顾三套逻辑只会让耦合变复杂，收益也不抵。
+     * 粘贴目标取「第一个还空着的输入框」—— T1 空就填 T1，T1 有图就填 T2。
+     */
+    _initPaste() {
+        document.addEventListener('paste', (e) => {
+            const page = document.getElementById('page-single');
+            if (!page || !page.classList.contains('active')) return;
+
+            const items = e.clipboardData && e.clipboardData.items;
+            if (!items) return;
+
+            let blob = null;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].kind === 'file' && items[i].type.indexOf('image/') === 0) {
+                    blob = items[i].getAsFile();
+                    break;
+                }
+            }
+            if (!blob) return;
+
+            const target = ['file1', 'file2']
+                .map((id) => document.getElementById(id))
+                .find((inp) => inp && inp.files.length === 0);
+            if (!target) {
+                // 两张都满了：交给页面自己处理，不静默吞掉
+                e.preventDefault();
+                Modal.alert(I18n.t('detect.pasteFull', 'T1 与 T2 都已选择影像，请先移除一张再粘贴。'));
+                return;
+            }
+
+            // 剪贴板的图片没有有意义的名字（多为 image.png），按 MIME 补一个，
+            // 下游的格式校验看的是类型不是名字，但日志与列表里可读性更好。
+            const ext = (blob.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+            const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            const file = new File([blob], '粘贴影像-' + stamp + '.' + ext, { type: blob.type });
+
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            target.files = dt.files;
+            this.handleFileSelect(target.id === 'file1' ? 1 : 2, target);
+            e.preventDefault();
+        });
     },
 
     handleFileSelect(num, input) {

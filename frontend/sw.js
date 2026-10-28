@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bitcd-v18';
+const CACHE_NAME = 'bitcd-v19';
 
 const PRECACHE_URLS = [
   './',
@@ -42,6 +42,7 @@ const PRECACHE_URLS = [
   './js/toast.js',
   './js/models.js',
   './js/agent.js',
+  './js/commandPalette.js',
   './js/evaluator.js',
   './js/profile.js',
   './js/gallery.js',

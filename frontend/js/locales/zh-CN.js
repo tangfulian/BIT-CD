@@ -891,5 +891,18 @@ export const zhCN = {
     "series.deleteFailed": "删除失败",
     "series.deleted": "序列已删除",
     "series.confirmDelete": "删除该序列？检测记录会保留，只是不再归属本序列。",
-    "series.model": "检测模型"
+    "series.model": "检测模型",
+
+    "detect.pasteFull": "T1 与 T2 都已选择影像，请先移除一张再粘贴。",
+
+    // 命令面板
+    "cmd.title": "命令面板",
+    "cmd.placeholder": "搜索页面或命令…",
+    "cmd.hint": "↑↓ 选择 · Enter 执行 · Esc 关闭",
+    "cmd.noResult": "没有匹配的命令",
+    "cmd.kindPage": "页面",
+    "cmd.kindAction": "操作",
+    "cmd.actionTheme": "切换亮色 / 暗色",
+    "cmd.actionLang": "切换中 / 英文",
+    "cmd.actionChat": "打开 AI 助手"
 };

@@ -30,7 +30,14 @@ export var UserManager = {
 
     loadUsers: async function () {
         var tbody = document.getElementById('umTableBody');
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;">' + I18n.t('common.loading', '加载中...') + '</td></tr>';
+        // 骨架行而不是一句「加载中」：表格的列宽在加载前后不会跳动。
+        // 复用 styles.css 里已有的 .skeleton 系列，不另起一套。
+        var cell = '<div class="skeleton skeleton-cell"></div>';
+        tbody.innerHTML = Array.from({ length: 5 }, function () {
+            return '<tr><td colspan="6" style="padding:10px 12px;">'
+                + '<div class="skeleton skeleton-row">' + cell + cell + cell + cell + cell
+                + '</div></td></tr>';
+        }).join('');
         try {
             var res = await Utils.authFetch(CONFIG.API_BASE_URL + '/admin/users?page=' + this._currentPage + '&limit=' + PAGE_SIZE);
             var data;
