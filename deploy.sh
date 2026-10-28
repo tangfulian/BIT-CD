@@ -45,7 +45,7 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
-mkdir -p checkpoints results uploads samples/predict data
+mkdir -p checkpoints results uploads samples/predict data cache/torch
 
 # 库文件必须先存在。docker-compose 把 ./data/blackland.db 绑到容器里的
 # /app/blackland.db，而**宿主机上不存在的绑定源会被 Docker 建成目录** ——

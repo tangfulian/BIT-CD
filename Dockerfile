@@ -22,7 +22,15 @@ WORKDIR /app
 RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
+# torch 的 CPU 轮子来源。默认官方源；国内服务器建议覆盖成镜像：
+#   docker compose build --build-arg TORCH_FIND_LINKS=https://mirrors.aliyun.com/pytorch-wheels/cpu/
+#
+# 为什么用 --find-links 而不是 --index-url：官方源是 PEP 503 索引，但国内镜像
+# 只是平铺目录，index-url 用不了。--find-links 两种都能吃，依赖仍从上面配置的
+# PyPI 镜像解析。实测官方源在国内约 1.6 KB/s，196 MB 的轮子 40 分钟下不完；
+# 换成阿里云后 28 MB/s。
+ARG TORCH_FIND_LINKS=https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir torch torchvision --find-links "${TORCH_FIND_LINKS}"
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Pillow 必须单独覆盖安装，原因见 requirements.txt 末尾：
@@ -33,6 +41,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir --no-deps pillow==13.0.0
 
 # 安装 Playwright Chromium 浏览器（AI Agent 需要）
+#
+# 浏览器下载源同样做成可覆盖的。国内构建建议：
+#   --build-arg PLAYWRIGHT_DOWNLOAD_HOST=https://registry.npmmirror.com/-/binary/playwright
+# 实测官方 CDN 约 74 KB/s、该镜像约 17 MB/s。留空则走官方源。
+ARG PLAYWRIGHT_DOWNLOAD_HOST=""
+ENV PLAYWRIGHT_DOWNLOAD_HOST=${PLAYWRIGHT_DOWNLOAD_HOST}
 RUN playwright install-deps chromium && playwright install chromium
 
 COPY . .

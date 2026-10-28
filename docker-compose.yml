@@ -28,6 +28,11 @@ services:
       # 一次 docker compose up --build 重建容器就全没了 —— 而排查线上问题
       # 恰恰最需要上一次重建之前的日志。
       - ./logs:/app/logs
+      # torch 的模型缓存：models/networks.py 里 resnet18(pretrained=True) 会去下
+      # ImageNet 权重（45 MB），而它的结果随后被 checkpoint 全量覆盖、一个参数
+      # 都用不上。不挂的话每次重建容器都要重下一遍，期间第一次推理一直卡着 ——
+      # 在国内从官方源下这 45 MB 实测要 5 分钟以上。
+      - ./cache/torch:/root/.cache/torch
       - ./data/blackland.db:/app/blackland.db
     # Chrome 在容器里默认只有 64MB /dev/shm，本系统有地图、ECharts 大屏、
     # 影像画布这类重页面，渲染进程容易因共享内存不足而崩溃 —— 且崩溃发生在
