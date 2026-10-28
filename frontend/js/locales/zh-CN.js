@@ -895,6 +895,9 @@ export const zhCN = {
 
     "detect.pasteFull": "T1 与 T2 都已选择影像，请先移除一张再粘贴。",
 
+    "history.colType": "变化类型",
+    "history.colActions": "操作",
+
     // 命令面板
     "cmd.title": "命令面板",
     "cmd.placeholder": "搜索页面或命令…",

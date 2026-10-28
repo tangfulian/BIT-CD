@@ -766,6 +766,21 @@
                             <div class="empty-state-title" data-i18n="history.noHistory">暂无检测历史</div>
                             <div class="empty-state-desc" data-i18n="history.noHistoryDesc">完成首次检测后，记录将显示在这里</div>
                         </div>
+                        <!-- 表格而不是卡片列表：这是记录密集型数据，
+                             一卡一行的写法在 1440px 下横向浪费约六成。 -->
+                        <table class="data-table" id="historyTable" hidden>
+                            <thead>
+                                <tr>
+                                    <th data-i18n="common.model">模型</th>
+                                    <th class="num" data-i18n="detect.changeRatio">变化比例</th>
+                                    <th data-i18n="history.colType">变化类型</th>
+                                    <th data-i18n="common.location">位置</th>
+                                    <th data-i18n="common.time">时间</th>
+                                    <th class="col-actions"><span class="visually-hidden" data-i18n="history.colActions">操作</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody"></tbody>
+                        </table>
                     </div>
                     <div id="historyPagination" class="pagination"></div>
                 </div>

@@ -1,6 +1,21 @@
 import { I18n } from './i18n.js';
 
-const COLORS = ['#667eea', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+// 分类色板 —— 从黑土地的实物取色，而不是通用彩虹。
+// 顺序即视觉权重：主色打头，后面是麦秆、遥感靛蓝、橄榄、壤土棕、浅绿。
+// 这组颜色彼此可区分，且在亮/暗两套主题下都够稳（明度拉开、饱和度压低）。
+//
+// 注意别和 mapViewer / evaluator 里的那组混用：那组是**严重度**色阶
+// （绿→靛→琥珀→红，对应变化率分档），语义不同，各管各的。
+const COLORS_LIGHT = ['#2c5e44', '#c2852c', '#5b7a99', '#8a8f4a', '#a9673f', '#4ea877'];
+// 暗色下把同一组色相整体提亮：深绿与橄榄压在 #0f1612 上会糊成一片，
+// 环形图相邻扇区直接分不开。色相不动，只调明度与饱和度。
+const COLORS_DARK = ['#6aa887', '#e0a84e', '#7f9fbd', '#b3b874', '#cf8a5f', '#6fc79a'];
+
+/** 当前主题下的分类色板。主题切换时图表会整体重建，所以这里可以读实时状态。 */
+function _palette() {
+    return document.documentElement.getAttribute('data-theme') === 'dark'
+        ? COLORS_DARK : COLORS_LIGHT;
+}
 
 const _instances = {};
 const _lastParams = {};
@@ -9,11 +24,13 @@ let _themeObserver = null;
 
 function _getThemeColors() {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    // 与主题的中性色对齐。原先用的是 Tailwind 的冷灰（slate），
+    // 压在本项目的暖灰底上发青，图与界面像两套东西。
     return {
-        textColor: isDark ? '#94a3b8' : '#475569',
-        bgColor: isDark ? '#1e293b' : '#ffffff',
-        axisColor: isDark ? '#334155' : '#e2e8f0',
-        emphasisLabelColor: isDark ? '#f1f5f9' : '#1e293b',
+        textColor: isDark ? '#99a89f' : '#5a6a60',
+        bgColor: isDark ? '#1a2420' : '#ffffff',
+        axisColor: isDark ? '#2a3630' : '#e0dcd5',
+        emphasisLabelColor: isDark ? '#e6ece8' : '#1a231e',
     };
 }
 
@@ -46,7 +63,7 @@ function _observeResize(domId, instance) {
 }
 
 export const ChartUtils = {
-    COLORS,
+    get COLORS() { return _palette(); },
 
     init(domId) {
         const el = document.getElementById(domId);
@@ -132,7 +149,7 @@ export function createDoughnutOption({ labels, values }) {
             data: labels.map((name, i) => ({
                 name,
                 value: values[i],
-                itemStyle: { color: COLORS[i % COLORS.length] },
+                itemStyle: { color: _palette()[i % _palette().length] },
             })),
         }],
     };
@@ -165,7 +182,7 @@ export function createBarOption({ labels, values }) {
             data: values.map((v, i) => ({
                 value: v,
                 itemStyle: {
-                    color: COLORS[i % COLORS.length],
+                    color: _palette()[i % _palette().length],
                     borderRadius: [4, 4, 0, 0],
                 },
             })),
@@ -199,7 +216,7 @@ export function createTrendBarOption({ labels, values, seriesName }) {
             type: 'bar',
             barMaxWidth: 40,
             itemStyle: {
-                color: COLORS[0],
+                color: _palette()[0],
                 borderRadius: [6, 6, 0, 0],
             },
             data: values,
@@ -253,8 +270,8 @@ export function createLineOption({ labels, values, seriesName, xLabel, yLabel, s
             smooth: true,
             symbol: 'circle',
             symbolSize: 6,
-            lineStyle: { color: COLORS[0], width: 2 },
-            itemStyle: { color: COLORS[0] },
+            lineStyle: { color: _palette()[0], width: 2 },
+            itemStyle: { color: _palette()[0] },
             areaStyle: {
                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                     { offset: 0, color: 'rgba(102,126,234,0.35)' },

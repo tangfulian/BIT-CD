@@ -27,6 +27,13 @@ export var History = {
                 if (e.key === 'Enter') History.applyFilters();
             };
         }
+        // 两个下拉框原先**没有绑定 change** —— 只有搜索框和「筛选」按钮会触发，
+        // 选了模型/类型后必须再点一次「筛选」才生效。搜索是即时的、下拉却要
+        // 二次确认，这种不一致本身就是个坑。改成选中即应用。
+        ['historyTypeFilter', 'historyModelFilter'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.onchange = function () { History.applyFilters(); };
+        });
     },
 
     load: async function () {
@@ -210,52 +217,64 @@ export var History = {
         var start = (this._currentPage - 1) * PAGE_SIZE;
         var filtered = allFiltered.slice(start, start + PAGE_SIZE);
 
-        var dom = document.getElementById("historyList");
+        var table = document.getElementById("historyTable");
+        var tbody = document.getElementById("historyTableBody");
         var skeleton = document.getElementById("historySkeleton");
         var empty = document.getElementById("historyEmpty");
 
         if (skeleton) skeleton.classList.add('hidden');
-        dom.querySelectorAll('.history-item').forEach(function (el) { el.remove(); });
+        if (tbody) tbody.innerHTML = '';
 
         if (filtered.length === 0) {
+            if (table) table.hidden = true;
             if (empty) empty.classList.remove('hidden');
             document.getElementById("historyPagination").innerHTML = '';
             return;
         }
 
         if (empty) empty.classList.add('hidden');
+        if (table) table.hidden = false;
         var t = function (k) { return I18n.t(k); };
 
         filtered.forEach(function (item, idx) {
             var globalIdx = start + idx;
-            var div = document.createElement("div");
-            div.className = 'history-item';
-            div.style.cssText = "padding:14px 16px;background:var(--bg-main);border-radius:var(--radius-md);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;transition:background var(--duration-fast);";
+            var tr = document.createElement("tr");
+
             var displayModel = Utils.escapeHtml(item.model) || t('unknown');
-            var displayRatio = item.ratio != null ? item.ratio + '%' : t('notFilled');
-            var displayTime = item.time || "";
-            var displayLocation = item.location ? ' · ' + Utils.escapeHtml(item.location) : "";
+            var displayLocation = item.location ? Utils.escapeHtml(item.location) : '—';
+            var displayType = item.change_type ? Utils.escapeHtml(item.change_type) : '—';
+            var displayTime = Utils.escapeHtml(item.time || '') || '—';
             var aiTag = item.ai_change_type ? ' <span class="ai-tag-inline">AI</span>' : '';
-            div.innerHTML =
-                '<div style="display:flex;flex-direction:column;gap:4px;overflow:hidden;min-width:0;flex:1;">' +
-                    '<span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + displayModel + aiTag + ' · ' + t('detect.changeRatio') + ' ' + displayRatio + displayLocation + '</span>' +
-                    '<span style="font-size:13px;color:var(--text-secondary);">' + displayTime + '</span>' +
-                '</div>' +
-                '<div style="display:flex;gap:10px;flex-shrink:0;">' +
+
+            // 变化比例按等级着色，与检测地图图例同一套阈值
+            var r = parseFloat(item.ratio);
+            var hasRatio = item.ratio != null && isFinite(r);
+            var lv = !hasRatio ? '' : r > 30 ? 'lv-3' : r > 15 ? 'lv-2' : r > 5 ? 'lv-1' : 'lv-0';
+            var ratioHtml = hasRatio
+                ? '<span class="ratio-pill ' + lv + '">' + r.toFixed(2) + '%</span>'
+                : '<span class="cell-muted">' + t('notFilled') + '</span>';
+
+            tr.innerHTML =
+                '<td class="cell-model">' + displayModel + aiTag + '</td>' +
+                '<td class="num">' + ratioHtml + '</td>' +
+                '<td class="cell-muted">' + displayType + '</td>' +
+                '<td class="cell-muted">' + displayLocation + '</td>' +
+                '<td class="cell-time">' + displayTime + '</td>' +
+                '<td class="col-actions"><div class="row-actions">' +
                     '<button class="btn-view" data-idx="' + globalIdx + '">' + t('common.view') + '</button>' +
                     '<button class="btn-small-danger btn-delete" data-id="' + item.id + '">' + t('common.delete') + '</button>' +
-                '</div>';
-            dom.appendChild(div);
+                '</div></td>';
+            tbody.appendChild(tr);
         });
 
-        dom.querySelectorAll('.btn-view').forEach(function (btn) {
+        tbody.querySelectorAll('.btn-view').forEach(function (btn) {
             btn.onclick = function () {
                 var fl = History._getFilteredList(History.historyCache);
                 var idx = parseInt(btn.dataset.idx);
                 History.showDetail(fl[idx]);
             };
         });
-        dom.querySelectorAll('.btn-delete').forEach(function (btn) {
+        tbody.querySelectorAll('.btn-delete').forEach(function (btn) {
             btn.onclick = function () { History.deleteOne(parseInt(btn.dataset.id)); };
         });
 

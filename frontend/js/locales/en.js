@@ -856,6 +856,9 @@ export const en = {
 
     "detect.pasteFull": "Both T1 and T2 already have an image. Remove one before pasting.",
 
+    "history.colType": "Type",
+    "history.colActions": "Actions",
+
     // Command palette
     "cmd.title": "Command palette",
     "cmd.placeholder": "Search pages or commands…",
