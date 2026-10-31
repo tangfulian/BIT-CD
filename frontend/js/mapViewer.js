@@ -11,7 +11,7 @@ import { eventBus } from './eventBus.js';
  * AMap 自身不报错、map 的 complete 事件照样触发，画布只是整块空白；
  * 这个标志位由 index.html 里的 console 探针捕获 INVALID_USER_DOMAIN 后置位。
  */
-const AUTH_MSG = '底图加载失败：高德 Key 未授权当前域名，标记仍可查看';
+const AUTH_MSG = I18n.t('map.keyUnauthorized', '底图加载失败：高德 Key 未授权当前域名，标记仍可查看');
 
 // 矢量底图的样式与偏好键统一放在 config.js（地块信息页那张地图也用同一份）。
 // 注意 setStyle() 对已渲染的地图不生效，样式只能在 new AMap.Map 时给（见 _buildMap）。
@@ -192,7 +192,7 @@ export const MapViewer = {
         // AMap 脚本可能整个没加载出来（未配 Key、CDN 不可达）
         if (typeof AMap === 'undefined') {
             console.warn('[MapViewer] AMap 未加载');
-            this._showMapHint('地图组件未加载（未配置高德 Key 或网络不可达）');
+            this._showMapHint(I18n.t('map.notLoaded', '地图组件未加载（未配置高德 Key 或网络不可达）'));
             return;
         }
 
@@ -205,7 +205,7 @@ export const MapViewer = {
             });
         } catch (e) {
             console.error('[MapViewer] 地图初始化失败', e);
-            this._showMapHint('底图加载失败，请检查高德 Key 的域名白名单是否包含当前域名');
+            this._showMapHint(I18n.t('map.keyWhitelist', '底图加载失败，请检查高德 Key 的域名白名单是否包含当前域名'));
             return;
         }
 
@@ -246,7 +246,7 @@ export const MapViewer = {
             // complete 在瓦片被拒时也会触发，这条纯粹是兜底猜测
             if (!mapReady) {
                 console.warn('[MapViewer] 底图 8 秒内未就绪，判定为加载失败');
-                this._showMapHint('底图加载失败，标记仍可查看');
+                this._showMapHint(I18n.t('map.basemapFailed', '底图加载失败，标记仍可查看'));
             }
         }, 8000);
 

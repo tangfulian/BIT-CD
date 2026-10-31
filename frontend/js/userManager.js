@@ -41,7 +41,7 @@ export var UserManager = {
         try {
             var res = await Utils.authFetch(CONFIG.API_BASE_URL + '/admin/users?page=' + this._currentPage + '&limit=' + PAGE_SIZE);
             var data;
-            try { data = await res.json(); } catch (e) { throw new Error('响应格式错误'); }
+            try { data = await res.json(); } catch (e) { throw new Error(I18n.t('api.badResponse', '响应格式错误')); }
             if (data.code !== 200) throw new Error(data.detail || I18n.t('history.requestFailed', '获取失败'));
             this._users = data.data || [];
             this._totalCount = data.total || 0;
@@ -135,7 +135,7 @@ export var UserManager = {
         try {
             var res = await Utils.authFetch(CONFIG.API_BASE_URL + '/admin/users/' + userId + '/toggle-status', { method: 'PUT' });
             var data;
-            try { data = await res.json(); } catch (e) { throw new Error('响应格式错误'); }
+            try { data = await res.json(); } catch (e) { throw new Error(I18n.t('api.badResponse', '响应格式错误')); }
             if (data.code === 200) {
                 Toast.success(data.msg || I18n.t('common.success'));
                 this.loadUsers();
@@ -153,7 +153,7 @@ export var UserManager = {
         try {
             var res = await Utils.authFetch(CONFIG.API_BASE_URL + '/admin/users/' + userId + '/password', { method: 'PUT' });
             var data;
-            try { data = await res.json(); } catch (e) { throw new Error('响应格式错误'); }
+            try { data = await res.json(); } catch (e) { throw new Error(I18n.t('api.badResponse', '响应格式错误')); }
             if (data.code === 200) {
                 Toast.success(data.msg || I18n.t('common.success'));
             } else {
@@ -170,7 +170,7 @@ export var UserManager = {
         try {
             var res = await Utils.authFetch(CONFIG.API_BASE_URL + '/admin/users/' + userId, { method: 'DELETE' });
             var data;
-            try { data = await res.json(); } catch (e) { throw new Error('响应格式错误'); }
+            try { data = await res.json(); } catch (e) { throw new Error(I18n.t('api.badResponse', '响应格式错误')); }
             if (data.code === 200) {
                 Toast.success(data.msg || I18n.t('common.success'));
                 this.loadUsers();

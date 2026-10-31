@@ -15,7 +15,7 @@ export const Uploader = {
             zone.setAttribute('role', 'button');
             zone.setAttribute('aria-label',
                 (I18n && I18n.t && I18n.t(id === 'upload1' ? 'detect.t1Label' : 'detect.t2Label'))
-                || (id === 'upload1' ? '选择 T1 影像' : '选择 T2 影像'));
+                || (id === 'upload1' ? '选择 T1 影像' : I18n.t('detect.selectT2', '选择 T2 影像')));
 
             zone.onclick = () => input.click();
             zone.onkeydown = (e) => {
@@ -77,7 +77,7 @@ export const Uploader = {
             // 下游的格式校验看的是类型不是名字，但日志与列表里可读性更好。
             const ext = (blob.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
             const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-            const file = new File([blob], '粘贴影像-' + stamp + '.' + ext, { type: blob.type });
+            const file = new File([blob], I18n.t('detect.pastedImage', '粘贴影像-') + stamp + '.' + ext, { type: blob.type });
 
             const dt = new DataTransfer();
             dt.items.add(file);

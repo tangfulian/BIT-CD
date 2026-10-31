@@ -50,11 +50,11 @@ export const BigScreen = {
         // 后面全部跳过 —— 连「最新检测记录」也一起变空。而那个列表是纯 HTML，
         // 根本不依赖 echarts，不该被图表的失败连坐。
         [
-            ['统计卡', () => this.updateStats(history)],
-            ['变化类型分布', () => this.renderTypeChart(history)],
-            ['模型使用统计', () => this.renderModelChart(history)],
-            ['近 7 天趋势', () => this.renderTrendChart(history)],
-            ['最新检测记录', () => this.renderRecentList(history)],
+            [I18n.t('bigscreen.statsCard', '统计卡'), () => this.updateStats(history)],
+            [I18n.t('bigscreen.byType', '变化类型分布'), () => this.renderTypeChart(history)],
+            [I18n.t('bigscreen.byModel', '模型使用统计'), () => this.renderModelChart(history)],
+            [I18n.t('bigscreen.trend7d', '近 7 天趋势'), () => this.renderTrendChart(history)],
+            [I18n.t('bigscreen.latestRecords', '最新检测记录'), () => this.renderRecentList(history)],
         ].forEach(([name, fn]) => {
             try { fn(); } catch (e) { console.error('大屏「' + name + '」渲染失败:', e); }
         });

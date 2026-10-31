@@ -180,9 +180,9 @@ export const GPSLocator = {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ longitude: lng, latitude: lat })
         });
-        if (!res.ok) throw new Error((await res.json()).detail || "地址解析服务异常");
+        if (!res.ok) throw new Error((await res.json()).detail || I18n.t('gps.regeoError', "地址解析服务异常"));
         const data = await res.json();
-        if (data.code !== 200) throw new Error("地址解析失败");
+        if (data.code !== 200) throw new Error(I18n.t('gps.regeoFailed', "地址解析失败"));
         return data.data;
     },
 
@@ -244,7 +244,7 @@ export const GPSLocator = {
         if (state.marker) state.marker.setMap(null);
         state.marker = new AMap.Marker({
             position: [lng, lat],
-            title: "检测地块位置 (点击地图可移动)",
+            title: I18n.t('land.positionHint', "检测地块位置 (点击地图可移动)"),
             draggable: true,
             icon: new AMap.Icon({
                 size: new AMap.Size(32, 32),

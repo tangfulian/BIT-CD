@@ -56,12 +56,12 @@ export const Notify = {
     aiReply(preview) {
         _notify(
             I18n.t('notify.aiReply', 'AI 分析已生成'),
-            preview?.substring(0, 60) || '点击查看分析结果',
+            preview?.substring(0, 60) || I18n.t('notify.viewResult', '点击查看分析结果'),
             () => eventBus.emit('navigate', 'single')
         );
     },
 
     info(msg) {
-        _notify('Agent 通知', msg?.substring(0, 80) || '');
+        _notify(I18n.t('notify.agentTitle', 'Agent 通知'), msg?.substring(0, 80) || '');
     }
 };

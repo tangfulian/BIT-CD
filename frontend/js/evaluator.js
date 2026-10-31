@@ -45,7 +45,7 @@ export const Evaluator = {
                 pickBtn.style.display = 'none';
                 const hint = document.createElement('span');
                 hint.className = 'field-hint';
-                hint.textContent = '文件夹选择需要 HTTPS 安全连接，当前为 HTTP';
+                hint.textContent = I18n.t('eval.folderHttps', '文件夹选择需要 HTTPS 安全连接，当前为 HTTP');
                 hint.style.color = 'var(--text-tertiary)';
                 hint.style.fontSize = '12px';
                 pickBtn.parentNode?.appendChild(hint);
@@ -59,7 +59,7 @@ export const Evaluator = {
 
     async _pickFolder() {
         if (!window.showDirectoryPicker) {
-            return Modal.alert('此功能需要 Chrome/Edge 浏览器 + HTTPS 安全连接');
+            return Modal.alert(I18n.t('eval.needsBrowser', '此功能需要 Chrome/Edge 浏览器 + HTTPS 安全连接'));
         }
         try {
             const rootHandle = await window.showDirectoryPicker({ mode: 'read' });
@@ -89,17 +89,17 @@ export const Evaluator = {
             this._hasLabels = lH && pairs.some(p => lFiles.has(p.toLowerCase()));
 
             $('evalPairCount').textContent = pairs.length;
-            $('evalHasLabels').textContent = this._hasLabels ? '✅ 已检测到 label 文件夹' : '⚠️ 未找到 label 文件夹（无法计算指标）';
+            $('evalHasLabels').textContent = this._hasLabels ? '✅ 已检测到 label 文件夹' : I18n.t('eval.noLabelFolder', '⚠️ 未找到 label 文件夹（无法计算指标）');
             $('evalHasLabels').style.color = this._hasLabels ? 'var(--primary)' : 'var(--accent)';
             $('evalFolderInfo').classList.remove('hidden');
             $('evalStartBtn').disabled = false;
         } catch(e) {
-            if (e.name !== 'AbortError') Modal.alert('读取文件夹失败：' + e.message);
+            if (e.name !== 'AbortError') Modal.alert(I18n.t('eval.readFolderFailed', '读取文件夹失败：') + e.message);
         }
     },
 
     async _start() {
-        if (this._pairs.length === 0) return Modal.alert('请先选择数据集文件夹');
+        if (this._pairs.length === 0) return Modal.alert(I18n.t('eval.pickFolderFirst', '请先选择数据集文件夹'));
         const selectedModels = this._getSelectedModels();
         if (selectedModels.length === 0) return Modal.alert(I18n.t('eval.selectModel', '请至少选择一个模型'));
 
@@ -442,8 +442,8 @@ export const Evaluator = {
                 }).join('')}</div>`;
         };
 
-        $('evalBestCases').innerHTML = renderGroup('✅ 最佳 3 例', best3);
-        $('evalWorstCases').innerHTML = renderGroup('⚠️ 最差 3 例', worst3);
+        $('evalBestCases').innerHTML = renderGroup(I18n.t('eval.bestCases', '✅ 最佳 3 例'), best3);
+        $('evalWorstCases').innerHTML = renderGroup(I18n.t('eval.worstCases', '⚠️ 最差 3 例'), worst3);
     },
 
     async _loadCaseImages(containerId, pairName) {

@@ -11,9 +11,9 @@ const FIELDS = [
 
 // 后端 /status 的 requests 桶名 → 中文桶名；i18n 键由桶名拼成 status.req.<桶名>。
 const REQ_BUCKETS = {
-    detect: '检测', register: '注册', login: '登录',
-    chat: 'AI 对话', analysis: 'AI 解读', regeo: '地理编码',
-    history: '历史', compare: '对比', recommend: '推荐阈值'
+    detect: I18n.t('status.actionDetect', '检测'), register: I18n.t('status.actionRegister', '注册'), login: I18n.t('status.actionLogin', '登录'),
+    chat: I18n.t('status.actionChat', 'AI 对话'), analysis: I18n.t('status.actionAnalyze', 'AI 解读'), regeo: I18n.t('status.actionRegeo', '地理编码'),
+    history: I18n.t('status.actionHistory', '历史'), compare: I18n.t('status.actionCompare', '对比'), recommend: I18n.t('status.actionRecommend', '推荐阈值')
 };
 
 // 并发保护：来回切页面时，旧的一次 fetch 可能后返回，只有最新一次的写入算数。

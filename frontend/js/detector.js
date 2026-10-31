@@ -49,7 +49,7 @@ export const Detector = {
                 quickPairBtn.style.display = 'none';
                 const hint = document.createElement('span');
                 hint.className = 'field-hint';
-                hint.textContent = 'SYSU-CD 快速配对需要 HTTPS 安全连接，当前为 HTTP';
+                hint.textContent = I18n.t('detect.quickPairHttps', 'SYSU-CD 快速配对需要 HTTPS 安全连接，当前为 HTTP');
                 hint.style.color = 'var(--text-tertiary)';
                 hint.style.fontSize = '12px';
                 quickPairBtn.parentNode?.appendChild(hint);
@@ -206,7 +206,7 @@ export const Detector = {
         } catch (e) {
             if (e.name !== 'AbortError') {
                 console.error('SYSU-CD quick pair error:', e);
-                Modal.alert('读取数据集失败：' + e.message);
+                Modal.alert(I18n.t('detect.readDatasetFailed', '读取数据集失败：') + e.message);
             }
         }
     },
@@ -311,8 +311,8 @@ export const Detector = {
                     t2_time: landData.t2_time,
                     province: landData.province,
                     city: landData.city,
-                    lat_lng: landData.lat_lng || "未填写",
-                    area: landData.area || "未填写",
+                    lat_lng: landData.lat_lng || I18n.t('notFilled', "未填写"),
+                    area: landData.area || I18n.t('notFilled', "未填写"),
                     land_type: landData.land_type,
                     crop_type: landData.crop_type,
                     data_source: landData.data_source,
@@ -363,7 +363,7 @@ export const Detector = {
     showResult(json) {
         const status = document.getElementById("status");
         status.className = "status-badge show success";
-        const cacheHit = json.msg && json.msg.includes('缓存');
+        const cacheHit = json.msg && json.msg.includes(I18n.t('detect.cached', '缓存'));
         status.innerHTML = '<span>' + I18n.t('detect.detectComplete') + (cacheHit ? ' <small>' + I18n.t('detect.fromCache') + '</small>' : '') + '</span>';
         document.getElementById("img1_big").src = document.getElementById("img1").src;
         document.getElementById("img2_big").src = document.getElementById("img2").src;
@@ -698,8 +698,8 @@ export const Detector = {
                         t2_time: landData.t2_time,
                         province: landData.province,
                         city: landData.city,
-                        lat_lng: landData.lat_lng || "未填写",
-                        area: landData.area || "未填写",
+                        lat_lng: landData.lat_lng || I18n.t('notFilled', "未填写"),
+                        area: landData.area || I18n.t('notFilled', "未填写"),
                         land_type: landData.land_type,
                         crop_type: landData.crop_type,
                         data_source: landData.data_source,

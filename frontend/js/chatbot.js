@@ -205,7 +205,7 @@ export const Chatbot = {
                 state.chatHistory.push({ role: "user", content: text });
                 state.chatHistory.push({ role: "assistant", content: data.reply });
             } else {
-                throw new Error(data.error || "AI服务异常");
+                throw new Error(data.error || I18n.t('chat.aiError', "AI服务异常"));
             }
         } catch (e) {
             placeholder.textContent = `${I18n.t('chat.error')}：${e.message}`;

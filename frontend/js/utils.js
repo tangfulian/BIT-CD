@@ -81,11 +81,11 @@ export const Utils = {
      * @returns {{valid: boolean, msg?: string}}
      */
     validateFile(file) {
-        if (!file) return { valid: false, msg: '请选择文件' };
+        if (!file) return { valid: false, msg: I18n.t('upload.pickFile', '请选择文件') };
         const typeOk = CONFIG.ACCEPTED_IMAGE_TYPES.includes(file.type)
             || /\.(png|jpg|jpeg|tif|tiff|bmp)$/i.test(file.name);
-        if (!typeOk) return { valid: false, msg: '不支持的文件类型' };
-        if (file.size > CONFIG.MAX_FILE_SIZE) return { valid: false, msg: '文件过大' };
+        if (!typeOk) return { valid: false, msg: I18n.t('upload.invalidType', '不支持的文件类型') };
+        if (file.size > CONFIG.MAX_FILE_SIZE) return { valid: false, msg: I18n.t('upload.fileTooLarge', '文件过大') };
         return { valid: true };
     },
 

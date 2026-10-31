@@ -176,7 +176,7 @@ export const ReportGenerator = {
         const container = document.getElementById('reportContainer');
         if (!container || batchResults.length === 0) return;
 
-        const completed = batchResults.filter(r => r.status === 'done' || r.status === '完成');
+        const completed = batchResults.filter(r => r.status === 'done' || r.status === I18n.t('report.done', '完成'));
         const avgRatio = completed.length > 0
             ? (completed.reduce((s, r) => s + (r.ratio || 0), 0) / completed.length).toFixed(2)
             : '0';
