@@ -9,6 +9,7 @@ import { MapViewer } from './mapViewer.js';
 import { UserManager } from './userManager.js';
 import { History } from './history.js';
 import { Disaster } from './disaster.js';
+import { Overview } from './overview.js';
 
 export const Navigator = {
     _currentPage: null,
@@ -52,8 +53,8 @@ export const Navigator = {
     },
 
     switchPage(page, navItem, opts) {
-        // 游客只能访问单张检测页
-        if (Auth.isGuest() && page !== 'single') {
+        // 游客只能访问概览与单张检测（概览是首页，锁上等于进门就弹登录框）
+        if (Auth.isGuest() && page !== 'single' && page !== 'overview') {
             Auth.showAuthOverlay('login');
             return;
         }
@@ -91,6 +92,9 @@ export const Navigator = {
                 state.map.resize();
                 if (state.marker) state.map.setFitView([state.marker]);
             }, 100);
+        }
+        if (page === 'overview') {
+            setTimeout(function () { Overview.render(); }, 50);
         }
         if (page === 'dashboard') {
             setTimeout(function () { BigScreen.render(); }, 100);

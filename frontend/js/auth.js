@@ -209,7 +209,9 @@ export const Auth = {
     _setNavLocked(locked) {
         document.querySelectorAll('.nav-item').forEach(item => {
             const page = item.getAttribute('data-page');
-            if (page === 'single') return; // never lock single detection
+            // 单张检测和系统概览都不锁：前者是游客唯一能用的功能，
+            // 后者是首页 —— 把首页也锁上，游客进来只会看到一个弹窗
+            if (page === 'single' || page === 'overview') return;
             if (locked) {
                 item.classList.add('locked');
                 item.setAttribute('tabindex', '-1');

@@ -5659,3 +5659,155 @@ html[data-landing="show"] .chatbot-widget { display: none; }
     transition: border-color .15s, background .15s;
 }
 .empty-state-action:hover { border-color: var(--primary); }
+
+/* ============================================================
+   系统概览（进系统后的默认页）
+   ============================================================ */
+.ov-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: clamp(20px, 3vw, 44px);
+    align-items: center;
+    padding: clamp(18px, 2.4vw, 30px);
+    border-radius: var(--radius-lg, 14px);
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary, var(--bg-card)) 100%);
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+}
+.ov-kicker {
+    margin: 0 0 12px;
+    font-size: 12px;
+    letter-spacing: .18em;
+    color: var(--primary);
+}
+.ov-title {
+    margin: 0 0 14px;
+    font-size: clamp(22px, 2.3vw, 34px);
+    line-height: 1.22;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    color: var(--text-primary);
+}
+/* 断点由标记里的两个 span 决定，不让浏览器按字断 */
+.ov-title span { display: block; }
+.ov-lede {
+    margin: 0 0 22px;
+    max-width: 46em;
+    font-size: 14.5px;
+    line-height: 1.8;
+    color: var(--text-secondary);
+}
+.ov-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.ov-btn {
+    font: inherit;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    transition: border-color .15s, background .15s;
+}
+.ov-btn:hover { border-color: var(--primary); }
+.ov-btn-primary {
+    font-weight: 600;
+    color: #fff;
+    background: var(--primary);
+    border-color: var(--primary);
+}
+.ov-btn-primary:hover { filter: brightness(1.08); }
+
+.ov-figure {
+    margin: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #0a0e0c;
+    line-height: 0;
+}
+/* 图本身是五格胶片条（1178×300）。这里按原始比例铺满，
+   不要用 16:9 + cover —— 那会把上下裁掉、左右留一圈黑边 */
+.ov-figure img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.ov-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 26px;
+}
+.ov-stat {
+    padding: 16px 18px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+}
+.ov-stat b {
+    display: block;
+    font-size: clamp(20px, 2vw, 26px);
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.2;
+}
+.ov-stat span {
+    display: block;
+    margin-top: 4px;
+    font-size: 12.5px;
+    color: var(--text-tertiary);
+}
+
+.ov-caps-title {
+    margin: 0 0 14px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.ov-cap-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+.ov-cap {
+    display: block;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    padding: 18px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: border-color .15s, transform .15s, box-shadow .15s;
+}
+.ov-cap:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .08);
+}
+.ov-cap svg { color: var(--primary); margin-bottom: 10px; }
+.ov-cap h3 {
+    margin: 0 0 6px;
+    font-size: 15px;
+    font-weight: 600;
+}
+.ov-cap p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 1024px) {
+    .ov-hero { grid-template-columns: 1fr; }
+    .ov-figure { order: -1; }
+    .ov-cap-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ov-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+    .ov-cap-grid { grid-template-columns: 1fr; }
+    .ov-title { font-size: 22px; }
+}

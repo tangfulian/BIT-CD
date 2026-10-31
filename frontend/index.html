@@ -237,8 +237,13 @@
                     <span data-i18n="nav.land">地块信息配置</span>
                     <span class="lock-icon">🔒</span>
                 </button>
+                <!-- 系统概览：进系统后的默认页，游客也能进（不是功能页，是首页） -->
+                <button class="nav-item active" data-page="overview">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                    <span data-i18n="nav.overview">系统概览</span>
+                </button>
                 <!-- 单张检测 -->
-                <button class="nav-item active" data-page="single">
+                <button class="nav-item" data-page="single">
                     <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                     <span data-i18n="nav.single">单张变化检测</span>
                 </button>
@@ -466,8 +471,74 @@
                 </div>
             </div>
 
+            <!-- ========== 系统概览 ========== -->
+            <div id="page-overview" class="page-content active">
+                <section class="ov-hero">
+                    <div class="ov-hero-text">
+                        <p class="ov-kicker" data-i18n="overview.kicker">东北黑土地 · 遥感变化检测</p>
+                        <!-- 与首屏同一句话，复用同一组键，断点也由两个 span 定 -->
+                        <h1 class="ov-title">
+                            <span data-i18n="landing.titleA">两期影像，</span>
+                            <span data-i18n="landing.titleB">看清这块地发生了什么</span>
+                        </h1>
+                        <p class="ov-lede" data-i18n="overview.lede">上传同一地块的前后两期卫星影像，几秒内得到变化区域、变化比例与实际受影响面积。再往下是多模型对比、时序趋势、灾害定损与卫星地图。</p>
+                        <div class="ov-actions">
+                            <button type="button" class="ov-btn ov-btn-primary" id="ovStartBtn" data-i18n="overview.start">开始一次检测</button>
+                            <button type="button" class="ov-btn" id="ovSampleBtn" data-i18n="overview.sample">用示例影像试一次</button>
+                        </div>
+                    </div>
+                    <figure class="ov-figure">
+                        <img src="images/overview-evidence.jpg" loading="lazy" decoding="async"
+                             alt="一次检测的完整输出：前时相、后时相、变化掩膜、变化置信度、叠加图">
+                    </figure>
+                </section>
+
+                <section class="ov-stats" aria-label="系统规模">
+                    <div class="ov-stat"><b id="ovStatModels">—</b><span data-i18n="overview.statModels">可用检测模型</span></div>
+                    <div class="ov-stat"><b id="ovStatDetections">—</b><span data-i18n="overview.statDetections">累计检测</span></div>
+                    <div class="ov-stat"><b id="ovStatRegions">—</b><span data-i18n="overview.statRegions">覆盖地区</span></div>
+                    <div class="ov-stat"><b id="ovStatPlots">—</b><span data-i18n="overview.statPlots">在册地块</span></div>
+                </section>
+
+                <section class="ov-caps">
+                    <h2 class="ov-caps-title" data-i18n="overview.capsTitle">系统能做什么</h2>
+                    <div class="ov-cap-grid">
+                        <button type="button" class="ov-cap" data-go="single">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                            <h3 data-i18n="overview.capSingleT">单张检测</h3>
+                            <p data-i18n="overview.capSingleD">上传同一地块的前后两期影像，输出变化比例、实际面积、掩膜与热力图。</p>
+                        </button>
+                        <button type="button" class="ov-cap" data-go="compare">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="18" rx="2"/><rect x="14" y="3" width="7" height="18" rx="2"/></svg>
+                            <h3 data-i18n="overview.capCompareT">多模型对比</h3>
+                            <p data-i18n="overview.capCompareD">同一次输入换不同模型，或两条记录并排，指标差异一眼可见。</p>
+                        </button>
+                        <button type="button" class="ov-cap" data-go="timeline">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 17l5-6 4 4 3-5 6 7"/><path d="M3 21h18"/></svg>
+                            <h3 data-i18n="overview.capTimelineT">时序分析</h3>
+                            <p data-i18n="overview.capTimelineD">同一地块的多期序列，拟合变化速率并标出突变点。</p>
+                        </button>
+                        <button type="button" class="ov-cap" data-go="disaster">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+                            <h3 data-i18n="overview.capDisasterT">灾害定损</h3>
+                            <p data-i18n="overview.capDisasterD">按受灾分级估算面积与经济损失，并对比人工查勘成本。</p>
+                        </button>
+                        <button type="button" class="ov-cap" data-go="mapviewer">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2C7.58 2 4 6.48 4 12c0 5.52 7 10 8 10s8-4.48 8-10c0-5.52-3.58-10-8-10z"/></svg>
+                            <h3 data-i18n="overview.capMapT">检测地图</h3>
+                            <p data-i18n="overview.capMapD">卫星底图上按变化比例分级着色，一眼看出变化集中在哪。</p>
+                        </button>
+                        <button type="button" class="ov-cap" data-go="agent">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="8" width="18" height="12" rx="3"/><circle cx="9" cy="14" r="1.3"/><circle cx="15" cy="14" r="1.3"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1"/></svg>
+                            <h3 data-i18n="overview.capAgentT">AI Agent</h3>
+                            <p data-i18n="overview.capAgentD">用一句话描述任务，智能体自行调用后端工具完成检测并解读。</p>
+                        </button>
+                    </div>
+                </section>
+            </div>
+
             <!-- ========== 单张检测 ========== -->
-            <div id="page-single" class="page-content active">
+            <div id="page-single" class="page-content">
                 <div class="page-header">
                     <div>
                         <h1 data-i18n="detect.title">单张变化检测</h1>
