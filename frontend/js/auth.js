@@ -177,6 +177,18 @@ export const Auth = {
         return next;
     },
 
+    /**
+     * 用服务端返回的数字覆盖本地那份。
+     *
+     * 本地计数只是离线兜底 —— 真正说了算的是服务端（按 IP 按天）。两边不
+     * 一致时以服务端为准，否则换个浏览器、清个缓存，两边就各说各话了。
+     */
+    syncGuestQuota(remaining) {
+        if (typeof remaining !== "number" || remaining < 0) return;
+        Utils.safeLocalStorage.setItem(CONFIG.GUEST_QUOTA_KEY, String(remaining));
+        this.updateQuotaDisplay();
+    },
+
     updateQuotaDisplay() {
         const row = document.getElementById('guestQuotaRow');
         if (!row) return;

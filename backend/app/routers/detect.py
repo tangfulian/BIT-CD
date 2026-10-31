@@ -30,6 +30,7 @@ from backend.app.services.detect_service import (
     recommend_threshold_from_images,
 )
 from backend.app.services.detect_service import imwrite
+from backend.app.services import guest_quota
 from backend.app.services.detection_pipeline import (
     SUPPORTED_MODELS,
     decode_image as _decode_image,
@@ -115,6 +116,8 @@ async def detect(
         t2_time=t2_time,
         series_id=series_id,
         phase_index=phase_index,
+        # 游客按 IP 计额度；登录用户传空串，走不到那条分支
+        guest_key=(request.client.host if current_user is None else ""),
     )
     return JSONResponse(content=result)
 
@@ -162,6 +165,12 @@ async def detect_compare(
     img2_bytes = await img2.read()
     img_t1 = _decode_image(img1_bytes, "T1 影像")
     img_t2 = _decode_image(img2_bytes, "T2 影像")
+
+    # 游客额度在这里也要兜住。这条路径有自己的一份编排（没走 run_detection），
+    # 只在 /detect 上拦的话，换个接口就绕过去了。
+    guest_key = request.client.host if current_user is None else ""
+    if guest_key and guest_quota.remaining(db, guest_key) <= 0:
+        raise HTTPException(status_code=429, detail="免费试用次数已用完，登录后可继续使用")
 
     results = {}
     first_detection_id = None
@@ -227,10 +236,12 @@ async def detect_compare(
     else:
         logger.info("游客模型对比: models=%s threshold=%.2f", model_list, threshold)
 
+    guest_remaining = guest_quota.consume(db, guest_key) if guest_key else None
     return JSONResponse(
         content={
             "code": 200,
             "msg": "模型对比检测完成",
+            "guest_remaining": guest_remaining,
             "detection_id": first_detection_id,
             "results": results,
         }

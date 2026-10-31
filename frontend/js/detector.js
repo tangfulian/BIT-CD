@@ -330,9 +330,15 @@ export const Detector = {
                 Notify.detectComplete(state.currentDetectResult);
                 History.load();
                 if (json.detection_id) this._runClassification(json.detection_id);
-                // 游客配额递减
+                // 游客配额：服务端返回的才是准数，本地那份只做离线兜底
                 if (Auth.isGuest()) {
-                    const remaining = Auth.useGuestQuota();
+                    let remaining;
+                    if (typeof json.guest_remaining === "number") {
+                        Auth.syncGuestQuota(json.guest_remaining);
+                        remaining = json.guest_remaining;
+                    } else {
+                        remaining = Auth.useGuestQuota();
+                    }
                     if (remaining <= 0) {
                         setTimeout(() => {
                             Modal.alert(I18n.t('guest.quotaExhausted'));
@@ -710,9 +716,15 @@ export const Detector = {
                     Notify.detectComplete(state.currentDetectResult);
                     History.load();
                     if (json.detection_id) this._runClassification(json.detection_id);
-                    // 游客配额递减
+                    // 游客配额：服务端返回的才是准数，本地那份只做离线兜底
                     if (Auth.isGuest()) {
-                        const remaining = Auth.useGuestQuota();
+                        let remaining;
+                        if (typeof json.guest_remaining === "number") {
+                            Auth.syncGuestQuota(json.guest_remaining);
+                            remaining = json.guest_remaining;
+                        } else {
+                            remaining = Auth.useGuestQuota();
+                        }
                         if (remaining <= 0) {
                             setTimeout(() => {
                                 Modal.alert(I18n.t('guest.quotaExhausted'));

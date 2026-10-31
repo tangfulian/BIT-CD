@@ -32,7 +32,7 @@ from backend.app.models.detection import DetectionResultDB
 # 绑进本模块命名空间，之后对 detect_service 的替换就再也影响不到这里 ——
 # 那样桩会静默失效，测试会真的去跑一遍模型推理，而且**仍然通过**，
 # 只是测的东西已经不是原来那个了。按模块属性调用才能让打桩始终生效。
-from backend.app.services import detect_service
+from backend.app.services import detect_service, guest_quota
 from backend.app.services.record_access import (
     RESULTS_DIR,
     find_owned_series,
@@ -89,6 +89,7 @@ def run_detection(
     t2_time: str = "",
     series_id: int = 0,
     phase_index: int = -1,
+    guest_key: str = "",
 ) -> dict:
     """跑一次单张变化检测，返回与 HTTP 接口完全一致的响应体。
 
@@ -107,6 +108,16 @@ def run_detection(
             raise HTTPException(status_code=401, detail="指定序列需要登录")
         if not find_owned_series(db, user_id, series_id):
             raise HTTPException(status_code=404, detail="序列不存在")
+
+    # 游客额度在服务端兜底。此前只有前端 localStorage 里那个数字在拦，
+    # 清缓存或直接打接口就绕过去了。检查放在推理之前 —— 第四次请求不该
+    # 先把 CPU 吃满再说不行。
+    if user_id is None and guest_key:
+        if guest_quota.remaining(db, guest_key) <= 0:
+            raise HTTPException(
+                status_code=429,
+                detail="免费试用次数已用完，登录后可继续使用",
+            )
 
     unique_id = str(uuid.uuid4())
 
@@ -215,7 +226,7 @@ def run_detection(
     else:
         logger.info("游客检测: model=%s threshold=%.2f", model, threshold)
 
-    return {
+    result = {
         "code": 200,
         "msg": "检测成功！",
         "model": model,
@@ -226,3 +237,7 @@ def run_detection(
         "score": result_url(base_url, score_filename),
         "stats": stats,
     }
+    if user_id is None and guest_key:
+        # 成功之后才扣 —— 图片损坏、模型不可用这些失败不该吃掉免费次数
+        result["guest_remaining"] = guest_quota.consume(db, guest_key)
+    return result

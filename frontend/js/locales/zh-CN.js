@@ -885,7 +885,7 @@ export const zhCN = {
     "cmd.kindAction": "操作",
     "cmd.actionTheme": "切换亮色 / 暗色",
     "cmd.actionLang": "切换中 / 英文",
-    "cmd.actionChat": "打开 AI 助手"
+    "cmd.actionChat": "打开 AI 助手",
     "notClassified": "未分类",
     "notFilled": "未填写",
     "unknown": "未知",

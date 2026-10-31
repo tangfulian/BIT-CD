@@ -115,6 +115,14 @@ ALLOWED_ORIGINS = os.getenv(
     "http://localhost:63342,http://localhost:3000,http://127.0.0.1:8000"
 ).split(",")
 
+# --- 游客免费额度 ---
+# 未登录用户每个 IP 每天能跑几次检测。0 = 不限制。
+#
+# 早先这个数字只活在前端 localStorage 里，清缓存就归零；现在服务端计数，
+# 前端显示的数字也改成接口返回的。语义是「按 IP 按天」，不是按生命周期 ——
+# 共用出口 IP 的场景（教室、办公室）下，永久计数太苛刻。
+GUEST_DAILY_QUOTA = int(os.getenv("GUEST_DAILY_QUOTA", "3"))
+
 # --- 数据库 ---
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./blackland.db")
 

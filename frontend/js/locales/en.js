@@ -843,7 +843,7 @@ export const en = {
     "cmd.kindAction": "Action",
     "cmd.actionTheme": "Toggle light / dark",
     "cmd.actionLang": "Switch Chinese / English",
-    "cmd.actionChat": "Open AI assistant"
+    "cmd.actionChat": "Open AI assistant",
     "notClassified": "Unclassified",
     "notFilled": "Not Filled",
     "unknown": "Unknown",

@@ -29,6 +29,7 @@ import backend.app.models.plot  # noqa: E402, F401
 import backend.app.models.series  # noqa: E402, F401
 import backend.app.models.oauth  # noqa: E402, F401
 import backend.app.models.paper  # noqa: E402, F401
+import backend.app.models.guest_usage  # noqa: E402, F401
 
 
 @pytest.fixture(autouse=True)
