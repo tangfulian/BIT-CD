@@ -891,4 +891,7 @@ export const en = {
     "upload.invalidType": "Unsupported file type",
     "upload.fileTooLarge": "File is too large",
 
+    "batch.uploadFailed": "Batch upload failed",
+    "batch.pollFailed": "Lost connection to the server. The job may still be running — reload to check.",
+
 };

@@ -114,11 +114,9 @@ export const BatchDetector = {
 
         const t1Files = document.getElementById("batch_t1").files;
         const t2Files = document.getElementById("batch_t2").files;
-
         if (t1Files.length === 0 || t2Files.length === 0 || t1Files.length !== t2Files.length) {
             return Modal.alert(I18n.t('upload.matchCount'));
         }
-
         for (let i = 0; i < t1Files.length; i++) {
             const v1 = Utils.validateFile(t1Files[i]);
             const v2 = Utils.validateFile(t2Files[i]);
@@ -137,7 +135,6 @@ export const BatchDetector = {
         status.className = "status-badge show loading";
         status.innerHTML = `<span>⏳</span> ${I18n.t('batch.detecting')}`;
         tableBody.innerHTML = "";
-        state.batchResult = [];
         exportBtn.style.display = 'none';
         exportPDFBtn.style.display = 'none';
         progressContainer.classList.remove('hidden');
@@ -146,144 +143,168 @@ export const BatchDetector = {
         _batchTotal = t1Files.length;
         _batchDone = 0;
         _showBatchSummary();
+        this._setProgress(0, _batchTotal);
         status.textContent = I18n.t('batch.detecting') + '... (0/' + _batchTotal + ')';
 
-        const modelName = document.getElementById("batch_model").value;
-        const threshold = parseFloat(document.getElementById("batch_th").value);
-        const currentLatLng = document.getElementById("lat_lng")?.value || '';
-        const currentProvince = document.getElementById("province")?.value || '';
-        const currentCity = document.getElementById("city")?.value || '';
-        const currentLocation = `${currentProvince}${currentCity}`;
-        let currentChangeType = document.getElementById("change_type_define")?.value || '';
-        if (!currentChangeType) currentChangeType = "黑土层变薄退化";
-        const currentArea = parseFloat(document.getElementById("area")?.value) || 0;
-
-        // 预生成所有缩略图URL（含TIFF解码）
-        const previewUrls = await Promise.all(
-            Array.from(t1Files).map(function(f, i) {
+        // 缩略图先出：用户上传完立刻能看出配对对不对
+        const previews = await Promise.all(
+            Array.from(t1Files).map(function (f, i) {
                 return Promise.all([
                     Utils.createImagePreview(f),
-                    Utils.createImagePreview(t2Files[i])
+                    Utils.createImagePreview(t2Files[i]),
                 ]);
             })
         );
 
-        const ids = [];
+        const rows = [];
         for (let i = 0; i < t1Files.length; i++) {
-            const index = i;
-            const t1Url = previewUrls[index][0];
-            const t2Url = previewUrls[index][1];
-
             const tr = document.createElement("tr");
-            tr.dataset.taskId = '';
+            tr.dataset.idx = String(i);
             tr.innerHTML = `
-                <td style="padding:14px 16px;border-bottom:1px solid var(--border);">${index + 1}</td>
-                <td class="thumb-cell" style="padding:8px 12px;border-bottom:1px solid var(--border);"><span style="color:var(--text-light);font-size:12px;">${I18n.t('batch.queued')}</span></td>
-                <td style="padding:14px 16px;border-bottom:1px solid var(--border);">${t1Files[index].name}</td>
-                <td style="padding:14px 16px;border-bottom:1px solid var(--border);">-</td>
-                <td class="action-cell" style="padding:8px 10px;border-bottom:1px solid var(--border);"><button class="btn-small-action btn-pause">⏸</button> <button class="btn-small-action btn-cancel">✕</button></td>
+                <td style="padding:14px 16px;border-bottom:1px solid var(--border);">${i + 1}</td>
+                <td class="thumb-cell" style="padding:8px 12px;border-bottom:1px solid var(--border);"><img src="${previews[i][0]}" style="width:44px;height:44px;object-fit:cover;border-radius:4px;" alt=""></td>
+                <td style="padding:14px 16px;border-bottom:1px solid var(--border);">${t1Files[i].name}</td>
+                <td class="ratio-cell" style="padding:14px 16px;border-bottom:1px solid var(--border);">-</td>
+                <td class="action-cell" style="padding:8px 10px;border-bottom:1px solid var(--border);"></td>
                 <td class="status-cell" style="padding:14px 16px;border-bottom:1px solid var(--border);">${I18n.t('batch.queued')}</td>
             `;
             tableBody.appendChild(tr);
-
-            const id = taskQueue.add(async (signal) => {
-                const statusCell = tr.querySelector('.status-cell');
-                const thumbCell = tr.querySelector('.thumb-cell');
-                statusCell.textContent = I18n.t('batch.running');
-                statusCell.style.color = '';
-
-                const fd = new FormData();
-                fd.append("img1", t1Files[index]);
-                fd.append("img2", t2Files[index]);
-                fd.append("model", modelName);
-                fd.append("threshold", threshold);
-                fd.append("lat_lng", currentLatLng);
-                fd.append("location", currentLocation);
-                fd.append("change_type", currentChangeType);
-                fd.append("t1_time", "");
-                fd.append("t2_time", "");
-
-                try {
-                    const res = await Utils.authFetch(`${CONFIG.API_BASE_URL}/detect`, {
-                        method: 'POST',
-                        body: fd,
-                        signal
-                    });
-                    const json = await res.json();
-                    if (json.code !== 200) throw new Error(json.msg || I18n.t('detect.detectFailed'));
-
-                    const actualArea = (currentArea > 0 && json.stats.total_pixel > 0)
-                        ? parseFloat(((json.stats.change_pixel / json.stats.total_pixel) * currentArea).toFixed(2))
-                        : null;
-                    tr.children[3].textContent = json.stats.ratio + "%" + (actualArea != null ? ' (' + actualArea + I18n.t('unit.mu', '亩') + ')' : '');
-                    thumbCell.innerHTML = '<div class="batch-thumb"><img src="' + t1Url + '" class="thumb-img thumb-t1"><img src="' + t2Url + '" class="thumb-img thumb-t2"></div>';
-                    statusCell.textContent = I18n.t('batch.done');
-                    statusCell.style.color = "#4ade80";
-                    tr.querySelector('.action-cell').innerHTML = '';
-                    _putBatchResult({
-                        name: t1Files[index].name,
-                        ratio: json.stats.ratio,
-                        changePixel: json.stats.change_pixel,
-                        totalPixel: json.stats.total_pixel,
-                        model: modelName,
-                        threshold: threshold,
-                        time: new Date().toLocaleString(),
-                        status: 'done',
-                        maskUrl: json.mask,
-                        heatUrl: json.heat,
-                        fusionUrl: json.fusion,
-                        t1Url: t1Url, t2Url: t2Url,
-                        actualArea: actualArea
-                    });
-                    _batchDone++;
-                    state.persist();
-                    return json;
-                } catch (e) {
-                    statusCell.textContent = e.name === 'AbortError' ? I18n.t('batch.cancelled') : I18n.t('batch.failed', '失败');
-                    statusCell.style.color = '#f87171';
-                    _putBatchResult({
-                        name: t1Files[index].name,
-                        ratio: null,
-                        changePixel: null,
-                        totalPixel: null,
-                        model: modelName,
-                        threshold: threshold,
-                        time: new Date().toLocaleString(),
-                        status: 'error',
-                        maskUrl: null,
-                        heatUrl: null,
-                        fusionUrl: null,
-                        t1Url: t1Url, t2Url: t2Url,
-                        actualArea: null,
-                        error: e.message || String(e)
-                    });
-                    state.persist();
-                    throw e;
-                }
-            }, { tr, index });
-
-            tr.dataset.taskId = id;
-            _taskMeta[id] = { tr, t1Url, t2Url, name: t1Files[index].name, index, t1File: t1Files[index], t2File: t2Files[index], modelName, threshold, currentLatLng, currentLocation, currentChangeType };
-            ids.push(id);
-
-            // Persist file data to IndexedDB
-            _persistTaskToDB(id, index, t1Files[index], t2Files[index], modelName, threshold, currentLatLng, currentLocation, currentChangeType);
+            rows.push(tr);
         }
 
-        _onBatchComplete = () => {
-            status.className = "status-badge show success";
-            status.innerHTML = `<span>✅</span> ${I18n.t('batch.complete')}`;
-            btn.disabled = false;
-            exportBtn.style.display = "block";
-            exportPDFBtn.style.display = "block";
-            progressContainer.classList.add('hidden');
+        // 整批一次性交给服务端。任务从这一刻起归服务端管 —— 关掉标签页也会跑完，
+        // 再打开还能看到结果。这正是它从「前端循环」搬过来的理由。
+        const fd = new FormData();
+        for (let i = 0; i < t1Files.length; i++) {
+            fd.append('img1', t1Files[i]);
+            fd.append('img2', t2Files[i]);
+        }
+        fd.append('model', document.getElementById("batch_model").value);
+        fd.append('threshold', String(parseFloat(document.getElementById("batch_th").value)));
 
-            const doneCount = state.batchResult.filter(r => r.status === 'done').length;
-            const errCount = state.batchResult.filter(r => r.status === 'error').length;
-            Notify.batchComplete(_batchTotal, doneCount, errCount);
-            History.load();
-            _onBatchComplete = null;
+        let job;
+        try {
+            const res = await Utils.authFetch(`${CONFIG.API_BASE_URL}/batch`, {
+                method: 'POST', body: fd,
+            });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(body.detail || ('HTTP ' + res.status));
+            job = body.data;
+        } catch (e) {
+            btn.disabled = false;
+            status.className = "status-badge show error";
+            status.textContent = I18n.t('batch.uploadFailed');
+            Modal.alert(String(e.message || e));
+            return;
+        }
+
+        await this._pollJob(job.id, rows, previews);
+    },
+
+    _setProgress(done, total) {
+        const percent = total ? Math.round((done / total) * 100) : 0;
+        const bar = document.getElementById("batchProgressBar");
+        const text = document.getElementById("batchProgressText");
+        if (bar) bar.style.width = percent + '%';
+        if (text) text.textContent = percent + '%';
+    },
+
+    async _pollJob(jobId, rows, previews) {
+        const status = document.getElementById("batch_status");
+        const btn = document.getElementById("batchStart");
+        const progressContainer = document.getElementById("batchProgressContainer");
+        const label = {
+            queued: I18n.t('batch.queued'),
+            running: I18n.t('batch.running'),
+            done: I18n.t('batch.done'),
+            failed: I18n.t('batch.failed'),
         };
+        let misses = 0;
+
+        for (;;) {
+            await new Promise(r => setTimeout(r, 1500));
+            let data;
+            try {
+                const res = await Utils.authFetch(`${CONFIG.API_BASE_URL}/batch/${jobId}`);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                data = (await res.json()).data;
+                misses = 0;
+            } catch (e) {
+                // 网络抖动不该把一整批的结果丢掉；连续失败多次才收手
+                if (++misses >= 5) {
+                    btn.disabled = false;
+                    status.className = "status-badge show error";
+                    status.textContent = I18n.t('batch.pollFailed');
+                    return;
+                }
+                continue;
+            }
+
+            (data.items || []).forEach((it, i) => {
+                const tr = rows[i];
+                if (!tr) return;
+                const cell = tr.querySelector('.status-cell');
+                if (cell) cell.textContent = label[it.status] || label.queued;
+                const rc = tr.querySelector('.ratio-cell');
+                if (!rc) return;
+                if (it.status === 'done' && it.result && it.result.stats) {
+                    rc.textContent = it.result.stats.ratio + '%';
+                } else if (it.status === 'failed') {
+                    rc.textContent = '--';
+                }
+            });
+
+            const finished = data.done + data.failed;
+            this._setProgress(finished, data.total);
+            status.textContent = I18n.t('batch.detecting') + '... (' + finished + '/' + data.total + ')';
+
+            if (['done', 'failed', 'cancelled'].indexOf(data.status) >= 0) {
+                this._buildResults(data, previews);
+                _updateBatchSummary();
+                progressContainer.classList.add('hidden');
+                btn.disabled = false;
+                status.className = 'status-badge show ' + (data.status === 'done' ? 'success' : 'error');
+                status.textContent = data.status === 'done'
+                    ? I18n.t('batch.complete')
+                    : (data.message || I18n.t('batch.failed'));
+                this._afterFinish();
+                break;
+            }
+        }
+    },
+
+    _buildResults(data, previews) {
+        state.batchResult = (data.items || []).map(function (it, i) {
+            const r = it.result || {};
+            const stats = r.stats || {};
+            return {
+                name: it.name,
+                t1Url: previews[i] ? previews[i][0] : '',
+                t2Url: previews[i] ? previews[i][1] : '',
+                maskUrl: r.mask || '',
+                heatUrl: r.heat || '',
+                fusionUrl: r.fusion || '',
+                ratio: stats.ratio,
+                changePixel: stats.change_pixel,
+                totalPixel: stats.total_pixel,
+                threshold: stats.threshold,
+                model: r.model || data.model,
+                time: data.updated_at || '',
+                actualArea: '',
+                status: it.status === 'done' ? 'done' : 'error',
+                error: it.error || '',
+                detectionId: it.detection_id,
+            };
+        });
+    },
+
+    _afterFinish() {
+        if (state.batchResult.some(function (r) { return r.status === 'done'; })) {
+            document.getElementById("batchExport").style.display = '';
+            document.getElementById("batchExportPDF").style.display = '';
+        }
+        if (Notify.batchComplete) Notify.batchComplete(state.batchResult);
+        History.load();
     },
 
     _saveSettings() {

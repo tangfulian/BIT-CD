@@ -30,6 +30,7 @@ from backend.app.routers import (
     amap,
     annotation,
     auth,
+    batch,
     compare,
     detect,
     disaster,
@@ -161,12 +162,25 @@ def create_app() -> FastAPI:
     app.mount("/results", _results_with_cors, name="results")
 
     init_db()
-    _init_admin()
+
+    # 批量任务执行器。测试里设 BATCH_WORKER=0 关掉 —— 用例各自重建库，
+    # 常驻线程会在用例之间抢任务，制造出难查的偶发失败。
+    if os.getenv("BATCH_WORKER", "1") == "1":
+        from backend.app.services.batch_runner import (
+            reset_stuck_jobs,
+            start_worker,
+            stop_worker,
+        )
+
+        reset_stuck_jobs()
+        start_worker()
+        app.on_event("shutdown")(stop_worker)
 
     app.include_router(agent.router)
     app.include_router(auth.router)
     app.include_router(oauth.router)
     app.include_router(insights.router)
+    app.include_router(batch.router)
     app.include_router(detect.router)
     app.include_router(history.router)
     app.include_router(ai.router)

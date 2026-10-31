@@ -24,6 +24,7 @@ import backend.app.models.series  # noqa: E402, F401
 import backend.app.models.oauth  # noqa: E402, F401
 import backend.app.models.paper  # noqa: E402, F401
 import backend.app.models.guest_usage  # noqa: E402, F401
+import backend.app.models.batch  # noqa: E402, F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", DATABASE_URL)

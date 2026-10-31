@@ -933,4 +933,7 @@ export const zhCN = {
     "upload.invalidType": "不支持的文件类型",
     "upload.fileTooLarge": "文件过大",
 
+    "batch.uploadFailed": "批量上传失败",
+    "batch.pollFailed": "与服务器的连接中断，任务可能仍在后台执行，刷新页面可查看",
+
 };

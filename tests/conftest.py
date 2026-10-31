@@ -11,6 +11,8 @@ _TEST_DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_bitcd.
 os.environ["DATABASE_URL"] = "sqlite:///" + _TEST_DB
 # 固定"管理员重置用户密码"所用的常量：未设置时 config.py 会生成随机值，测试无法预期
 os.environ.setdefault("USER_RESET_PASSWORD", "testreset123")
+# 关掉批量执行器：用例各自重建库，常驻线程会在用例之间抢任务
+os.environ["BATCH_WORKER"] = "0"
 
 import pytest
 from fastapi.testclient import TestClient
@@ -30,6 +32,7 @@ import backend.app.models.series  # noqa: E402, F401
 import backend.app.models.oauth  # noqa: E402, F401
 import backend.app.models.paper  # noqa: E402, F401
 import backend.app.models.guest_usage  # noqa: E402, F401
+import backend.app.models.batch  # noqa: E402, F401
 
 
 @pytest.fixture(autouse=True)
