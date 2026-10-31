@@ -5663,8 +5663,8 @@ html[data-landing="show"] .chatbot-widget { display: none; }
    ============================================================ */
 .ov-hero {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-    gap: clamp(20px, 3vw, 44px);
+    grid-template-columns: minmax(0, 0.76fr) minmax(0, 1.24fr);
+    gap: clamp(20px, 2.4vw, 36px);
     align-items: center;
     padding: clamp(18px, 2.4vw, 30px);
     border-radius: var(--radius-lg, 14px);
@@ -5718,13 +5718,17 @@ html[data-landing="show"] .chatbot-widget { display: none; }
 
 .ov-figure {
     margin: 0;
+    /* 图本身自带深色边，再包一层背景就成了「盒子里套盒子」，
+       右侧看着空荡荡。这里不画自己的底，让图直接贴到卡片上。 */
     border-radius: 10px;
     overflow: hidden;
-    background: #0a0e0c;
     line-height: 0;
 }
 /* 图本身是五格胶片条（1178×300）。这里按原始比例铺满，
    不要用 16:9 + cover —— 那会把上下裁掉、左右留一圈黑边 */
+/* 暗色下图片自带的深底和卡片几乎同色，会糊成一整块；给一条极细的边把它框出来 */
+[data-theme="dark"] .ov-figure { border: 1px solid var(--border); }
+
 .ov-figure img {
     display: block;
     width: 100%;
@@ -5738,11 +5742,32 @@ html[data-landing="show"] .chatbot-widget { display: none; }
     margin-bottom: 26px;
 }
 .ov-stat {
+    display: block;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
     padding: 16px 18px;
     border-radius: 10px;
     border: 1px solid var(--border);
     background: var(--bg-card);
+    color: var(--text-primary);
+    transition: border-color .15s, transform .15s;
 }
+.ov-stat:hover { border-color: var(--primary); transform: translateY(-1px); }
+.ov-stat:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* 0 / 未知不是「成绩」，别用强调色摆着。弱化成灰，读者一眼知道这里是空的，
+   也不会把「0 个地块」当成系统出问题。 */
+.ov-stat.is-empty b { color: var(--text-tertiary); font-weight: 600; }
+.ov-stat-empty {
+    display: none;
+    margin-left: 6px;
+    font-size: 12px;
+    font-style: normal;
+    color: var(--text-tertiary);
+}
+.ov-stat.is-empty .ov-stat-empty { display: inline; }
 .ov-stat b {
     display: block;
     font-size: clamp(20px, 2vw, 26px);
@@ -5769,6 +5794,7 @@ html[data-landing="show"] .chatbot-widget { display: none; }
     gap: 14px;
 }
 .ov-cap {
+    position: relative;
     display: block;
     width: 100%;
     text-align: left;
@@ -5787,6 +5813,16 @@ html[data-landing="show"] .chatbot-widget { display: none; }
     box-shadow: 0 6px 18px rgba(0, 0, 0, .08);
 }
 .ov-cap svg { color: var(--primary); margin-bottom: 10px; }
+.ov-cap::after {
+    content: "→";
+    position: absolute;
+    right: 18px;
+    bottom: 16px;
+    font-size: 15px;
+    color: var(--text-tertiary);
+    transition: color .15s, transform .15s;
+}
+.ov-cap:hover::after { color: var(--primary); transform: translateX(3px); }
 .ov-cap h3 {
     margin: 0 0 6px;
     font-size: 15px;

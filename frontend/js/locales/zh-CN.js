@@ -941,4 +941,6 @@ export const zhCN = {
 
     "about.logV11": "首屏与系统概览、前沿资讯（arXiv 论文 + AI 中文摘要）、GitHub 登录、批量检测改服务端队列、游客额度改服务端计数、全站 i18n 收口",
 
+    "overview.none": "暂无",
+
 };

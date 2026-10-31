@@ -899,4 +899,6 @@ export const en = {
 
     "about.logV11": "Landing page and overview, research digest (arXiv papers + AI summaries), GitHub sign-in, server-side batch queue, server-side guest quota, i18n cleanup",
 
+    "overview.none": "none yet",
+
 };

@@ -25,7 +25,7 @@ export const Overview = {
         on('ovStartBtn', () => this.go('single'));
         on('ovSampleBtn', () => Landing.runSample());
 
-        document.querySelectorAll('#page-overview .ov-cap').forEach((card) => {
+        document.querySelectorAll('#page-overview .ov-cap, #page-overview .ov-stat').forEach((card) => {
             card.onclick = () => this.go(card.dataset.go);
         });
 
@@ -39,7 +39,15 @@ export const Overview = {
 
     _set(id, value) {
         const el = document.getElementById(id);
-        if (el) el.textContent = value;
+        if (!el) return;
+        el.textContent = value;
+        // 「0」和「—」不是成绩，别用强调色摆着；顺带在标签后補一句「暂无」，
+        // 免得读者以为是系统出错
+        const cell = el.closest('.ov-stat');
+        if (cell) {
+            const empty = value === '—' || value === '0' || value === '0 / 0';
+            cell.classList.toggle('is-empty', empty);
+        }
     },
 
     async render() {
