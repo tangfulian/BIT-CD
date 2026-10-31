@@ -39,7 +39,7 @@ export const zhCN = {
     "unit.mu": "亩",
 
     // 认证
-    "auth.title": "黑土地遥感变化检测系统",
+    "auth.title": "壤镜 SoilScope",
     "auth.subtitle": "上传两期影像，识别耕地变化位置与面积",
     "auth.username": "用户名",
     "auth.password": "密码",
@@ -636,7 +636,7 @@ export const zhCN = {
     "profile.pwdChangeFailed": "密码修改失败",
 
     // 关于
-    "about.title": "BlackLand CD 黑土地遥感变化检测系统",
+    "about.title": "壤镜 SoilScope · 黑土地遥感变化检测系统",
     "about.description": "基于深度学习与 GIS 的黑土地遥感变化检测平台",
     "about.techStack": "技术栈",
     "about.frontend": "前端",

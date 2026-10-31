@@ -7,6 +7,18 @@
 
 ## 未发布
 
+### 产品改名：BIT_CD → 壤镜 SoilScope
+
+`BIT_CD` 是模型代号（Binary-change Transformer + Change Detection），当技术标识
+没问题，当产品名太重、读起来像仓库名。改名为**壤镜 / SoilScope**：
+
+- 「壤」是土壤本体，比「土」雅；「镜」指观测这件事本身 —— 遥感就是一面镜子
+- `SoilScope` 是自然复合词（telescope / microscope 的构词），英文读者一眼懂
+- 仓库名 `tangfulian/BIT-CD` **不变**：已有链接、克隆地址、文档引用都不受影响，
+  技术语境里继续叫 BIT_CD 也不冲突
+
+界面、页脚、PWA 清单、页面标题、分享卡片、README 与截图已同步。
+
 ### 前沿资讯
 
 - 新增「前沿资讯」页：上半部分是 arXiv 上最新的农业遥感论文（标题、作者、

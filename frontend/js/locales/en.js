@@ -36,7 +36,7 @@ export const en = {
     "common.loadFailed": "Failed to load data. Please retry.",
     "unit.mu": "mu",
 
-    "auth.title": "Black Soil Remote Sensing Change Detection",
+    "auth.title": "SoilScope",
     "auth.subtitle": "Upload two-date imagery; detect cropland change and area",
     "auth.username": "Username",
     "auth.password": "Password",
@@ -597,7 +597,7 @@ export const en = {
     "profile.pwdChangeFailed": "Password change failed",
 
     // About
-    "about.title": "BlackLand CD — Black Soil Remote Sensing Change Detection",
+    "about.title": "SoilScope — Black Soil Remote Sensing Change Detection",
     "about.description": "Black soil remote sensing change detection platform built on deep learning and GIS",
     "about.techStack": "Tech Stack",
     "about.frontend": "Frontend",
@@ -616,7 +616,7 @@ export const en = {
     "about.logV1": "First official release: single/batch detection, multi-model comparison, AI interpretation, plot management, annotation system, timeline analysis, GIS map visualization, user management, Docker deployment",
 
     // Footer
-    "footer.copyright": "BlackLand Change Detection System",
+    "footer.copyright": "Black Soil Remote Sensing Change Detection",
     "footer.aboutLink": "About",
     "footer.version": "Version",
 

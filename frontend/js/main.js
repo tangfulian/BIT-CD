@@ -188,9 +188,9 @@ window.onload = () => {
 
     // Inject manifest as blob URL (bypasses JetBrains server MIME restriction on .json)
     const manifest = {
-        name: 'BIT_CD 黑土地遥感变化检测系统',
-        short_name: 'BIT_CD',
-        description: '黑土地保护智能平台 - 遥感变化检测与AI分析',
+        name: '壤镜 SoilScope · 黑土地遥感变化检测系统',
+        short_name: '壤镜',
+        description: '壤镜 SoilScope —— 黑土地遥感变化检测与变化分析',
         start_url: './index.html',
         display: 'standalone',
         background_color: '#f8fafc',
