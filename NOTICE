@@ -1,0 +1,14 @@
+BIT_CD · 黑土地遥感变化检测系统
+Copyright (c) 2026 tangfulian. All rights reserved.
+
+本仓库全部内容（含源代码、文档、图表、截图）保留所有权利。
+
+本仓库公开托管，仅用于学习、研究与竞赛交流用途。未提供任何开源许可：
+除 GitHub 服务条款所允许的浏览与 fork 之外，未经著作权人书面许可，
+不得复制、修改、分发、再许可或用于商业目的。
+
+模型权重（checkpoints/）、示例影像与训练数据不在本仓库内分发；
+如引用，其版权归各自权利人所有。
+
+第三方依赖（PyTorch、FastAPI、ECharts 等）遵循各自的许可协议，
+详见 requirements.txt 与 frontend/vendor/ 中的对应文件。

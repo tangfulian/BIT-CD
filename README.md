@@ -5,6 +5,8 @@
 
 后端 FastAPI，前端原生 JavaScript 单页应用（无构建步骤），模型侧基于 PyTorch。
 
+![单张检测页：左侧选地块与模型、上传前后两期影像，右侧给出变化比例 17.92%、实际变化面积 215.06 亩，以及 T1/T2、变化掩膜、热力图、叠加图](docs/screenshots/01-detect.png)
+
 ![系统架构图：客户端 → 前端应用 → 接入层 → 后端服务 → AI 与模型；下方为部署、数据存储、文件与权重、外部依赖](docs/figures/out/系统架构图_Visio导出.png)
 
 > 图是**脚本画的**，源码在 [docs/figures/](docs/figures/) —— 改 Python 重跑，
@@ -36,6 +38,34 @@
 | 关于 | 版本与更新记录 |
 
 **中文 / English 双语**，界面右上角切换；**明暗双主题**。
+
+---
+
+## 界面一览
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/03-dashboard.png" alt="数据看板：检测总量、累计变化像素、变化类型分布环形图、模型使用统计、近 7 天趋势与最新记录"><br><sub><b>数据看板</b> —— 检测总量 / 变化类型分布 / 模型使用统计 / 近 7 天趋势</sub></td>
+    <td width="50%"><img src="docs/screenshots/04-map.jpg" alt="检测结果地图：东北地区卫星底图上按变化比例分色标注全部带坐标的检测记录"><br><sub><b>检测地图</b> —— 卫星底图 + 按变化比例分级的点位</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/05-timeline.png" alt="时序分析：多期影像序列的累计变化速率、拟合优度、突变点提示"><br><sub><b>时序分析</b> —— 同一地块多期序列的速率拟合与突变点</sub></td>
+    <td width="50%"><img src="docs/screenshots/06-compare.png" alt="结果对比：两条记录并排显示掩膜、热力图与叠加图"><br><sub><b>结果对比</b> —— 两条记录并排看掩膜 / 热力图 / 叠加图</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/07-history.png" alt="检测历史：表格化记录，变化比例按阈值分色"><br><sub><b>检测历史</b> —— 变化比例按 <5% / 5–15% / 15–30% / >30% 分色</sub></td>
+    <td width="50%"><img src="docs/screenshots/08-dark-command.png" alt="暗色主题下的命令面板（Ctrl+K）"><br><sub><b>暗色主题 + 命令面板</b> —— <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>K</kbd> 直接跳页</sub></td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="docs/screenshots/02-result-panel.png" width="380" alt="检测结果面板：总像素 / 变化像素 / 变化比例 / 阈值 / 实际变化面积五张统计卡，交互调阈值，AI 变化类型建议，T1/T2/变化掩膜/热力图/叠加图，以及对比查看、修正掩膜、下载报告、NDVI 分析等后续操作">
+  <br>
+  <sub><b>检测结果面板</b> —— 统计卡 → 阈值调节 → AI 类型建议 → 掩膜 / 热力图 / 叠加图 → 后续操作</sub>
+</p>
+
+所有截图都是脚本在本地实例上用真实 SYSU-CD 影像跑出来的（不是设计稿），
+生成用的浏览器脚本没有入库 —— 它们依赖本地数据和登录态，放进仓库别人也跑不起来。
 
 ---
 
