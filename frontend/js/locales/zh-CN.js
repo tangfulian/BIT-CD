@@ -6,7 +6,6 @@ export const zhCN = {
     "nav.history": "检测历史",
     "nav.dashboard": "数据看板",
     "nav.timeline": "时序分析",
-    "nav.bigscreen": "数字大屏",
     "nav.mapviewer": "检测地图",
     "nav.compare": "结果对比",
     "nav.status": "系统状态",
@@ -19,7 +18,6 @@ export const zhCN = {
     "common.save": "保存",
     "common.delete": "删除",
     "common.retry": "重试",
-    "common.export": "导出",
     "common.download": "下载",
     "common.loading": "加载中...",
     "common.view": "查看",
@@ -27,7 +25,6 @@ export const zhCN = {
     "common.compare": "对比查看",
     "common.noData": "暂无数据",
     "common.edit": "编辑",
-    "common.search": "搜索",
     "common.filter": "筛选",
     "common.reset": "重置",
     "common.success": "操作成功",
@@ -131,8 +128,6 @@ export const zhCN = {
     "overview.capMapD": "卫星底图上按变化比例分级着色，一眼看出变化集中在哪。",
     "overview.capAgentT": "AI Agent",
     "overview.capAgentD": "用一句话描述任务，智能体自行调用后端工具完成检测并解读。",
-    "auth.loginSuccess": "登录成功",
-    "auth.registerSuccess": "注册成功",
     "auth.usernamePlaceholder": "请输入用户名",
     "auth.passwordPlaceholder": "密码≥8位，含字母+数字",
     "auth.setUsername": "设置用户名",
@@ -157,9 +152,7 @@ export const zhCN = {
 
     // 游客模式
     "guest.notLoggedIn": "未登录",
-    "guest.remainingQuota": "剩余 <strong>{0}</strong> 次免费检测",
     "guest.quotaExhausted": "免费试用次数已用完，请登录后继续使用",
-    "guest.loginToUse": "请先登录以使用此功能",
     "guest.login": "登录",
     "guest.register": "注册",
 
@@ -180,7 +173,6 @@ export const zhCN = {
     "land.getGPS": "获取当前位置",
     "land.drawArea": "绘制地块",
     "land.gpsLabel": "GPS地理定位",
-    "land.clearDraw": "清除绘制",
     "land.infoSaved": "✅ 地块配置保存成功！",
     "land.defaultChangeType": "黑土层变薄退化",
     "land.gpsHint": "获取当前位置，或手动绘制地块范围",
@@ -192,23 +184,19 @@ export const zhCN = {
     "detect.emptyDesc": "上传 T1/T2 影像后开始检测，结果与统计显示在这里",
     "detect.t1Label": "T1 前时相",
     "detect.t2Label": "T2 后时相",
-    "detect.model": "检测模型",
     "detect.threshold": "置信度阈值",
     "detect.autoThreshold": "自动",
     "detect.start": "开始检测",
-    "detect.clear": "清除全部",
     "detect.retry": "再次检测",
     "detect.aiAnalysis": "AI智能解读",
     "detect.downloadMask": "下载掩膜",
     "detect.downloadReport": "下载报告",
     "detect.compareView": "对比查看",
     "detect.annotate": "修正掩膜",
-    "detect.annotated": "已修正",
     "detect.resultTitle": "检测结果",
     "detect.totalPixel": "总像素",
     "detect.changePixel": "变化像素",
     "detect.changeRatio": "变化比例",
-    "detect.timeUsed": "检测用时",
     "detect.aiReportTitle": "AI 专业解读报告",
     "detect.config": "检测配置",
     "detect.revertMask": "还原掩膜",
@@ -241,7 +229,6 @@ export const zhCN = {
     "batch.detecting": "批量检测中...",
     "batch.complete": "批量检测完成！",
     "batch.persistFailed": "进度无法保存，刷新页面会丢失当前队列",
-    "batch.progress": "进度",
     // 批量汇总条的三个标签。此前 HTML 里写了 data-i18n="batch.sumTotal" 等，
     // 但两份 locale 都没有这些键，而 _translateElement 在找不到键时会把**原始
     // key 写进 textContent**（`key in dict ? dict[key] : key`），HTML 里的中文
@@ -252,7 +239,6 @@ export const zhCN = {
     "batch.queued": "排队中",
     "batch.running": "检测中",
     "batch.done": "完成",
-    "batch.error": "错误",
     "batch.failed": "失败",
     "batch.paused": "已暂停",
     "batch.cancelled": "已取消",
@@ -281,19 +267,13 @@ export const zhCN = {
     "history.detailModel": "检测模型",
     "history.detailRatio": "变化比例",
     "history.detailChangePixel": "变化像素",
-    "history.detailTotalPixel": "总像素",
     "history.detailThreshold": "置信阈值",
     "history.detailChangeType": "变化类型",
     "history.detailLocation": "地块位置",
-    "history.detailLatLng": "经纬度",
-    "history.detailT1Time": "T1 时相",
-    "history.detailT2Time": "T2 时相",
     "history.detailMask": "变化掩膜",
     "history.detailHeat": "热力图",
     "history.detailFusion": "叠加图",
-    "history.confirmClear": "确定要清空所有历史记录吗？",
     "history.searchPlaceholder": "搜索模型/比率/位置/时间...",
-    "history.deleteNotOpen": "删除单条功能暂未开放，请使用清空按钮。",
     "history.confirmDeleteOne": "确定删除此检测记录吗？此操作不可恢复！",
     "history.deleted": "已删除",
     "history.deleteFailed": "删除失败",
@@ -303,28 +283,19 @@ export const zhCN = {
     "history.rateLimited": "请求过于频繁，请稍后重试",
     "history.allModels": "所有模型",
     "history.allTypes": "所有类型",
-    "history.noMatch": "暂无匹配的检测历史",
 
     // 数据看板
-    "dashboard.title": "数据看板",
-    "dashboard.subtitle": "检测结果统计概览",
     "dashboard.running": "系统运行中",
     "dashboard.mainTitle": "黑土地遥感监测数据大屏",
     "dashboard.chartFailed": "数据加载失败，请刷新页面",
     "dashboard.unitWan": "万",
-    "dashboard.byType": "按变化类型分布",
-    "dashboard.byModel": "按模型使用统计",
-    "dashboard.recentRecords": "最近检测记录",
 
     // 时序分析
     "timeline.title": "多时相时序分析",
     "timeline.subtitle": "多期影像序列的变化速率与趋势",
     "timeline.selectSeries": "选择序列",
-    "timeline.changeTrend": "变化比例趋势",
-    "timeline.selectPlot": "选择地块",
 
     // 数字大屏
-    "bigscreen.title": "数字大屏",
     "bigscreen.totalDetections": "检测总次数",
     // 单位「万」不写进标签：它由 .tech-unit span 单独渲染，写进来会重复。
     // 此前这条值是「累计变化像素 (万)」且**没有任何地方引用**，所以问题没暴露。
@@ -345,8 +316,6 @@ export const zhCN = {
     "map.baseStandard": "标准",
     "map.baseSatellite": "卫星",
     "map.markerMode": "标记点模式",
-    "map.noGeoData": "暂无带地理位置的检测记录",
-    "map.noGeoHint": "请先在地块信息配置中设置经纬度",
     "map.viewResult": "查看结果",
     "map.statsTitle": "检测统计",
     "map.geoRecords": "带坐标记录：",
@@ -359,8 +328,6 @@ export const zhCN = {
     "compare.subtitle": "两条记录并排比较",
     "compare.emptyTitle": "还没有对比结果",
     "compare.emptyDesc": "选择记录 A 与 B 后开始对比，指标差异显示在这里",
-    "compare.select1": "选择记录 1",
-    "compare.select2": "选择记录 2",
     "compare.compareBtn": "开始对比",
     "compare.ratioDiff": "变化率差异",
     "compare.pixelDiff": "像素差异",
@@ -434,7 +401,6 @@ export const zhCN = {
     "usermgr.detections": "检测数",
     "usermgr.createdAt": "注册时间",
     "usermgr.actions": "操作",
-    "usermgr.toggleStatus": "启用/禁用",
     "usermgr.resetPwd": "重置密码",
     "usermgr.confirmResetPwd": "确定将密码重置为 blackland123？",
     "usermgr.confirmDelete": "确定要删除该用户及关联数据？",
@@ -447,13 +413,6 @@ export const zhCN = {
     "chat.thinking": "思考中...",
     "chat.error": "抱歉，出错啦",
     "chat.send": "发送",
-    "chat.agentPrefix": "操作",
-    "chat.agentExecuting": "🤖 AI 正在操控浏览器执行任务，请稍候…",
-    "chat.agentCompleted": "Agent 已完成，耗时 {0} 秒",
-    "chat.agentRateLimit": "操作过于频繁，请 1 分钟后再试（限流 3次/分钟）",
-    "chat.agentFailed": "执行失败",
-    "chat.agentTimeout": "操作超时（10分钟），请尝试更简短的指令",
-    "chat.agentNetworkError": "网络错误",
 
     // AI Agent 全页视图
     "nav.agent": "AI Agent",
@@ -482,9 +441,7 @@ export const zhCN = {
     "agent.result": "执行结果",
     "agent.completed": "已完成",
     "agent.failed": "执行失败",
-    "agent.cancelled": "已取消执行",
     "agent.timeout": "操作超时（10分钟），请尝试更简短的指令",
-    "agent.rateLimit": "操作过于频繁，请 1 分钟后再试（限流 3次/分钟）",
     "agent.networkError": "网络错误",
     "agent.emptyInstruction": "请输入操作指令",
     "agent.duration": "耗时",
@@ -508,9 +465,7 @@ export const zhCN = {
     "detect.thresholdSaved": "阈值已保存",
     "detect.fromCache": "(缓存命中)",
     "detect.adjustThresholdHint": "拖动滑块实时调整变化检测阈值",
-    "detect.swapPair": "交换 T1/T2",
     "detect.swapDone": "T1 ↔ T2 已交换",
-    "detect.susycdQuick": "SYSU-CD 快速配对",
     "detect.susycdNeedChrome": "此功能需要 Chrome/Edge 浏览器 + HTTPS 安全连接。当前使用 HTTP，请改用 HTTPS 地址访问。也可手动选择：T1 选 A 文件夹中的图，T2 选 B 文件夹中的同名图。",
     "detect.susycdNoDir": "未找到 A/ 或 B/ 子目录。请选择 SYSU-CD 数据集的根目录（应包含 A 和 B 两个文件夹）。",
     "detect.susycdNoMatch": "A/ 和 B/ 文件夹中没有同名图片文件。SYSU-CD 标准结构要求两文件夹中的图片文件名完全一致。",
@@ -533,7 +488,6 @@ export const zhCN = {
     "eval.radarChart": "模型能力雷达图",
     "eval.bestCases": "最佳案例",
     "eval.worstCases": "最差案例",
-    "eval.allModels": "全部模型",
     "eval.evalCount": "评估数量：",
     "eval.evalCountHint": "（设为 0 评估全部）",
     "eval.avgTime": "平均耗时",
@@ -548,7 +502,6 @@ export const zhCN = {
     "eval.threshold": "阈值",
     "share.copied": "链接已复制到剪贴板",
     "share.title": "检测结果分享",
-    "share.viewOriginal": "查看原始检测页",
 
     // 快捷键
     "shortcuts.help": "快捷键帮助",
@@ -577,14 +530,6 @@ export const zhCN = {
     "slider.t2Label": "T2 后时相（右）",
 
     // 报告
-    "report.title": "黑土地变化检测报告",
-    "report.batchTitle": "批量检测报告",
-    "report.detectionCount": "检测总数",
-    "report.successCount": "成功完成",
-    "report.avgRatio": "平均变化率",
-    "report.models": "使用模型",
-    "report.exportTime": "导出时间",
-    "report.resultImages": "检测结果图片",
 
     // 标注
     "annotate.corsError": "图片跨域导致无法保存，请联系管理员",
@@ -598,14 +543,10 @@ export const zhCN = {
     "annotate.hint": "画笔=添加变化区域（白色） | 橡皮=移除变化区域（黑色）",
 
     // 文件上传
-    "upload.invalidType": "不支持的文件类型",
-    "upload.fileTooLarge": "文件过大",
-    "upload.selectFile": "请选择文件",
     "upload.hint": "支持 JPG、PNG、TIFF，最大 10MB",
     "upload.matchCount": "请上传相同数量的T1和T2影像",
 
     // 系统
-    "system.startup": "黑土地遥感系统启动完成！",
     "system.langSwitch": "中/EN",
 
     // 未知/未分类
@@ -613,7 +554,6 @@ export const zhCN = {
     "gps.acquiring": "获取中...",
     "gps.requesting": "正在获取GPS定位，请授权...",
     "gps.resolving": "GPS成功，正在解析地址...",
-    "gps.unsupported": "当前浏览器不支持GPS定位",
     "gps.failed": "定位失败",
     "gps.initMapFirst": "请先点击\"获取当前位置\"初始化地图",
     "gps.redo": "📍 重新获取位置",
@@ -625,21 +565,9 @@ export const zhCN = {
 
     "chart.detectionCount": "检测次数",
     "chart.singleDetection": "单张检测",
-    "chart.changeRatio": "变化比例",
-    "chart.changeRatioPercent": "变化比例 (%)",
-    "chart.detectionTime": "检测时间",
     "chart.unknown": "未知",
-    "timeline.selectPlotPrompt": "请选择地块",
-    "timeline.detectionCountSuffix": " 次检测",
 
     // 时序增强
-    "timeline.totalDetections": "检测总次数",
-    "timeline.firstDetection": "首次检测",
-    "timeline.latestDetection": "最近检测",
-    "timeline.trendDirection": "变化趋势",
-    "timeline.trendUp": "上升中 ⬆",
-    "timeline.trendDown": "下降中 ⬇",
-    "timeline.trendStable": "趋于稳定 ➡",
     "timeline.detectionHistory": "各期检测详情",
     "timeline.compareTwo": "对比所选 (2)",
     "timeline.compareMasks": "掩膜对比",
@@ -652,13 +580,8 @@ export const zhCN = {
     "classify.override": "保持手动",
     "classify.accepted": "已采纳AI分类建议",
     "classify.applied": "已应用",
-    "classify.classifying": "AI分类中...",
     "classify.confidence": "置信度",
-    "classify.aiTag": "AI",
 
-    "unknown": "未知",
-    "notFilled": "未填写",
-    "notClassified": "未分类",
 
     // 地块管理
     "plot.selectPlot": "选择地块",
@@ -666,32 +589,25 @@ export const zhCN = {
     "plot.noPlot": "无已保存地块",
     "plot.createPlot": "新建地块",
     "plot.editPlot": "编辑地块",
-    "plot.deletePlot": "删除地块",
     "plot.plotName": "地块名称",
     "plot.plotNamePlaceholder": "例如：试验田A区",
     "plot.confirmDelete": "确定删除该地块吗？",
     "plot.created": "地块创建成功",
     "plot.updated": "地块更新成功",
     "plot.deleted": "地块已删除",
-    "plot.loadFailed": "加载地块列表失败",
     "plot.saveFailed": "保存地块失败",
 
     // 模型对比
-    "modelCompare.title": "模型对比",
-    "modelCompare.start": "开始模型对比",
     "modelCompare.selectHint": "勾选 2 个以上模型可进行对比",
     "modelCompare.aiModel": "AI模型",
     "modelCompare.basicMethod": "基础方法",
     "modelCompare.results": "对比结果",
-    "modelCompare.sameResultNote": "注：各模型算法不同，结果会有差异；DIFF 为像素级差分，其余为深度学习模型",
     "modelCompare.statsTitle": "统计对比",
     "modelCompare.chartTitle": "变化比例对比",
     "modelCompare.modelCol": "模型",
     "modelCompare.deltaFromBIT": "相对BIT偏差",
     "modelCompare.highest": "最高",
     "modelCompare.lowest": "最低",
-    "modelCompare.detectionFailed": "检测失败",
-    "modelCompare.threshold": "阈值",
     // 模型展示名的唯一定义处。此前这四行散在 6 个地方且写法各不相同
     // （BIT 有「…（推荐）」/「…」/裸名三种），见 js/models.js 的说明。
     "model.BIT.label": "BIT 变化检测模型（推荐）",
@@ -700,10 +616,8 @@ export const zhCN = {
     "model.BIT_LuojiaSET.label": "BIT LuojiaSET（珞珈数据集）",
 
     // 批量恢复
-    "batch.restoreBanner": "检测到未完成的批量任务（已完成 {done}/{total}），是否恢复？",
     "batch.restore": "恢复任务",
     "batch.dismiss": "放弃",
-    "batch.noRestorable": "没有可恢复的批量任务",
 
     // 导航新增
     "nav.profile": "个人中心",
@@ -767,17 +681,11 @@ export const zhCN = {
     "usermgr.resetPwd": "重置密码",
 
     // Toast
-    "toast.success": "操作成功",
-    "toast.error": "操作失败",
-    "toast.warning": "请注意",
-    "toast.info": "提示信息",
 
     // 图库/画廊
     "gallery.prev": "上一张",
     "gallery.next": "下一张",
-    "gallery.close": "关闭",
     "gallery.viewGallery": "图库浏览",
-    "gallery.noImages": "没有可浏览的图片",
 
     // 影像预处理
     "imageTools.title": "影像预处理工具",
@@ -807,7 +715,6 @@ export const zhCN = {
     "ndvi.uploadFirst": "请先上传影像",
     "ndvi.failed": "NDVI计算失败",
     "ndvi.compute": "NDVI分析",
-    "ndvi.scale": "NDVI 色标",
     "ndvi.approxBadge": "近似值",
     "ndvi.approxNote": "上传影像为 RGB，不含近红外波段。此处以蓝波段近似计算，不是定量 NDVI —— 数值仅可在同一批影像内作相对比较，不可作为植被覆盖度或用于跨影像对比。",
 
@@ -963,7 +870,6 @@ export const zhCN = {
     "series.deleteFailed": "删除失败",
     "series.deleted": "序列已删除",
     "series.confirmDelete": "删除该序列？检测记录会保留，只是不再归属本序列。",
-    "series.model": "检测模型",
 
     "detect.pasteFull": "T1 与 T2 都已选择影像，请先移除一张再粘贴。",
 
@@ -980,4 +886,8 @@ export const zhCN = {
     "cmd.actionTheme": "切换亮色 / 暗色",
     "cmd.actionLang": "切换中 / 英文",
     "cmd.actionChat": "打开 AI 助手"
+    "notClassified": "未分类",
+    "notFilled": "未填写",
+    "unknown": "未知",
+
 };

@@ -118,6 +118,41 @@ def main() -> int:
         if len(drift) > 15:
             print(f"    …另有 {len(drift) - 15} 处")
 
+    # ---- 反向检查：locale 里有、但前端哪都没引用的键 ----
+    #
+    # 这一节是为 2026-10-31 那次清理加的。当时按「静态引用集合」删掉了 94 个
+    # 孤儿键，其中 notClassified / notFilled / unknown 是**无点的短键**，
+    # 上面的 T_SHORT 正则要求带点，所以它们既没被算进 used、也没被这个脚本
+    # 报缺失 —— 删完界面直接显示 "notClassified"。教训是：判定孤儿必须比
+    # 判定缺失更保守，否则删掉的就是正在用的。
+    #
+    # 保守规则：前端任何位置出现过、形状像键、且在 locale 里存在的字符串字面量，
+    # 一律算「可能用到」；只报完全没出现过的。动态拼接的族按前缀排除。
+    QUOTED = re.compile(r"""['"`]([a-zA-Z][a-zA-Z0-9_]*(?:\.[a-zA-Z0-9_]+)+)['"`]""")
+    DYN_PREFIXES = {"unit.", "status.req.", "model."}
+    appeared: set[str] = set()
+    for f in targets:
+        appeared |= set(QUOTED.findall(f.read_text(encoding="utf-8")))
+        appeared |= {
+            m.group(1)
+            for m in re.finditer(
+                r"I18n\.t\(\s*['\"]([a-zA-Z][\w.]*\.)['\"]\s*\+", f.read_text(encoding="utf-8")
+            )
+        }
+    orphans = sorted(
+        k
+        for k in zh
+        if k not in appeared
+        and "." in k
+        and not any(k.startswith(p) for p in DYN_PREFIXES)
+    )
+    if orphans:
+        print(f"\n⚠ locale 里有 {len(orphans)} 个键前端从未引用（可清理，不影响功能）：")
+        for k in orphans[:15]:
+            print(f"    {k}")
+        if len(orphans) > 15:
+            print(f"    …另有 {len(orphans) - 15} 个")
+
     return 1 if (problems and "--strict" in sys.argv) else 0
 
 
