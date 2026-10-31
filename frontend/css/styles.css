@@ -3482,18 +3482,6 @@ select.form-control {
 .batch-summary-lbl { display: block; font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
 [data-theme="dark"] .batch-summary-item { background: var(--bg-sidebar); }
 
-/* ---- 批量恢复提示条 ---- */
-.batch-restore-banner {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 12px 20px; margin-bottom: 16px;
-    background: var(--accent-surface);
-    border: 1px solid rgba(194,133,44,0.25);
-    border-radius: var(--radius-md);
-    font-size: var(--font-sm); color: var(--text-primary);
-    flex-wrap: wrap;
-}
-.batch-restore-banner.hidden { display: none; }
-
 /* ---- 网格布局 ---- */
 /* 轨道必须写成 minmax(0, 1fr)：1fr 等价于 minmax(auto, 1fr)，auto 最小尺寸
    让轨道无法收缩到内容 min-content 以下，移动端批量检测的 6 列表格会因此

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bitcd-v25';
+const CACHE_NAME = 'bitcd-v26';
 
 const PRECACHE_URLS = [
   './',
@@ -47,7 +47,6 @@ const PRECACHE_URLS = [
   './js/profile.js',
   './js/gallery.js',
   './js/imageTools.js',
-  './js/indexedDB.js',
   './js/ndviViewer.js',
   './js/shareView.js',
   './js/shortcuts.js',

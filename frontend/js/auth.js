@@ -156,7 +156,6 @@ export const Auth = {
         // Load land info from localStorage only (no API calls without auth)
         LandInfo.load();
         // Skip PlotManager.init() and History.load() — they require auth
-        _checkRestore();
     },
 
     isGuest() {
@@ -399,7 +398,6 @@ export const Auth = {
         LandInfo.load();
         PlotManager.init();
         History.load();
-        _checkRestore();
     },
 
     isLoggedIn() {
@@ -457,37 +455,3 @@ export const Auth = {
         return true;
     }
 };
-
-async function _checkRestore() {
-    try {
-        const { BatchStore } = await import('./indexedDB.js');
-        const tasks = await BatchStore.getAllTasks();
-        if (!tasks || tasks.length === 0) return;
-        const incomplete = tasks.filter(t => t.status !== 'completed');
-        if (incomplete.length === 0) {
-            await BatchStore.clearAll().catch(() => {});
-            return;
-        }
-        const doneCount = tasks.length - incomplete.length;
-        const banner = document.getElementById('batchRestoreBanner');
-        const textEl = document.getElementById('batchRestoreText');
-        const restoreBtn = document.getElementById('batchRestoreBtn');
-        const dismissBtn = document.getElementById('batchDismissBtn');
-        if (!banner || !textEl) return;
-
-        textEl.textContent = `检测到未完成的批量任务（已完成 ${doneCount}/${tasks.length}），是否恢复？`;
-        banner.classList.remove('hidden');
-
-        restoreBtn.onclick = async () => {
-            banner.classList.add('hidden');
-            const navBtn = document.querySelector('.nav-item[data-page="batch"]');
-            if (navBtn) navBtn.click();
-            const { BatchDetector } = await import('./batchDetector.js');
-            await BatchDetector.restore(tasks);
-        };
-        dismissBtn.onclick = async () => {
-            banner.classList.add('hidden');
-            await BatchStore.clearAll().catch(() => {});
-        };
-    } catch { /* IndexedDB not available, skip */ }
-}

@@ -216,7 +216,6 @@ export const en = {
     "batch.exportPDF": "Export PDF",
     "batch.detecting": "Batch processing...",
     "batch.complete": "Batch Complete!",
-    "batch.persistFailed": "Progress could not be saved. Refreshing will lose the current queue.",
     // 见 zh-CN.js 同处注释：这三个键缺失时汇总条会直接显示原始 key 字符串
     "batch.sumTotal": "Total",
     "batch.sumDone": "Done",
@@ -225,9 +224,6 @@ export const en = {
     "batch.running": "Running",
     "batch.done": "Done",
     "batch.failed": "Failed",
-    "batch.paused": "Paused",
-    "batch.cancelled": "Cancelled",
-    "batch.retrying": "Retrying...",
     "batch.noData": "No data. Upload images to start detection.",
     "batch.uploadFirst": "Please upload images first",
     "batch.previewTitle": "Detection Preview",
@@ -577,8 +573,6 @@ export const en = {
     "model.BIT_LuojiaSET.label": "BIT LuojiaSET",
 
     // Batch Restore
-    "batch.restore": "Resume",
-    "batch.dismiss": "Dismiss",
 
     // Navigation
     "nav.profile": "My Account",

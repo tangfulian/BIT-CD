@@ -228,7 +228,6 @@ export const zhCN = {
     "batch.exportPDF": "导出PDF报告",
     "batch.detecting": "批量检测中...",
     "batch.complete": "批量检测完成！",
-    "batch.persistFailed": "进度无法保存，刷新页面会丢失当前队列",
     // 批量汇总条的三个标签。此前 HTML 里写了 data-i18n="batch.sumTotal" 等，
     // 但两份 locale 都没有这些键，而 _translateElement 在找不到键时会把**原始
     // key 写进 textContent**（`key in dict ? dict[key] : key`），HTML 里的中文
@@ -240,9 +239,6 @@ export const zhCN = {
     "batch.running": "检测中",
     "batch.done": "完成",
     "batch.failed": "失败",
-    "batch.paused": "已暂停",
-    "batch.cancelled": "已取消",
-    "batch.retrying": "重试中...",
     "batch.noData": "暂无数据，请上传影像后开始检测",
     "batch.uploadFirst": "请先上传影像",
     "batch.previewTitle": "检测预览",
@@ -616,8 +612,6 @@ export const zhCN = {
     "model.BIT_LuojiaSET.label": "BIT LuojiaSET（珞珈数据集）",
 
     // 批量恢复
-    "batch.restore": "恢复任务",
-    "batch.dismiss": "放弃",
 
     // 导航新增
     "nav.profile": "个人中心",
