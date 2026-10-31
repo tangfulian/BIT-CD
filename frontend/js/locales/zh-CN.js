@@ -939,4 +939,6 @@ export const zhCN = {
     "detect.susycdQuick": "SYSU-CD 快速配对",
     "about.amap": "高德地图",
 
+    "about.logV11": "首屏与系统概览、前沿资讯（arXiv 论文 + AI 中文摘要）、GitHub 登录、批量检测改服务端队列、游客额度改服务端计数、全站 i18n 收口",
+
 };

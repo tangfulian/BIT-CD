@@ -897,4 +897,6 @@ export const en = {
     "detect.susycdQuick": "SYSU-CD quick pair",
     "about.amap": "AMap",
 
+    "about.logV11": "Landing page and overview, research digest (arXiv papers + AI summaries), GitHub sign-in, server-side batch queue, server-side guest quota, i18n cleanup",
+
 };
