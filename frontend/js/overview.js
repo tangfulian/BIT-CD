@@ -50,6 +50,14 @@ export const Overview = {
         }
     },
 
+    // 初值是 HTML 里的「—」，没经过 _set；这里按屏幕上的实际内容再算一遍
+    _refreshEmptyFlags() {
+        document.querySelectorAll('#page-overview .ov-stat').forEach((cell) => {
+            const v = (cell.querySelector('b') || {}).textContent || '';
+            cell.classList.toggle('is-empty', v.trim() === '—' || v.trim() === '0');
+        });
+    },
+
     async render() {
         // 模型数走公开接口，游客也拿得到
         try {
@@ -65,7 +73,10 @@ export const Overview = {
         }
 
         // 其余三项要登录；游客看到的是「—」，这也是个显式的邀请
-        if (Auth.isGuest() || this._loaded) return;
+        if (Auth.isGuest() || this._loaded) {
+            this._refreshEmptyFlags();
+            return;
+        }
         try {
             const [history, plots] = await Promise.all([API.fetchHistory(), API.fetchPlots()]);
             const records = Array.isArray(history) ? history : (history && history.data) || [];
@@ -84,5 +95,6 @@ export const Overview = {
         } catch {
             /* 同上，保持「—」 */
         }
+        this._refreshEmptyFlags();
     },
 };
