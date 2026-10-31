@@ -12,6 +12,13 @@ import { Disaster } from './disaster.js';
 import { Overview } from './overview.js';
 import { Insights } from './insights.js';
 
+// 页面切到可见之后再渲染。
+//
+// 原先每处都是 setTimeout(…, 50)，那是「赌 50ms 够布局跑完」——慢机器上会赌输，
+// 图表容器还没尺寸就初始化，画出来是空的。requestAnimationFrame 套两层是
+// 「等这一帧画完」的确定写法，两者都保证容器此时已有尺寸，但后者不等死时间。
+const afterPaint = (fn) => requestAnimationFrame(() => requestAnimationFrame(fn));
+
 export const Navigator = {
     _currentPage: null,
 
@@ -77,59 +84,57 @@ export const Navigator = {
         var target = document.getElementById("page-" + page);
         if (target) {
             target.classList.add("active");
-            target.classList.add("fade-in");
         } else {
             // 页面不存在时展示 404
             target = document.getElementById("page-notfound");
             if (target) {
                 target.classList.add("active");
-                target.classList.add("fade-in");
             }
             return;
         }
 
         if (page === 'land' && state.map) {
-            setTimeout(function () {
+            afterPaint(function () {
                 state.map.resize();
                 if (state.marker) state.map.setFitView([state.marker]);
-            }, 100);
+            });
         }
         if (page === 'overview') {
-            setTimeout(function () { Overview.render(); }, 50);
+            afterPaint(function () { Overview.render(); });
         }
         if (page === 'insights') {
-            setTimeout(function () { Insights.render(); }, 50);
+            afterPaint(function () { Insights.render(); });
         }
         if (page === 'dashboard') {
-            setTimeout(function () { BigScreen.render(); }, 100);
+            afterPaint(function () { BigScreen.render(); });
         }
         if (page === 'timeline') {
-            setTimeout(function () { Timeline.render(); }, 50);
+            afterPaint(function () { Timeline.render(); });
         }
         if (page === 'compare') {
-            setTimeout(function () { Compare.render(); }, 50);
+            afterPaint(function () { Compare.render(); });
         }
         if (page === 'status') {
-            setTimeout(function () { SystemStatus.render(); }, 50);
+            afterPaint(function () { SystemStatus.render(); });
         }
         if (page === 'mapviewer') {
-            setTimeout(function () { MapViewer.render(); }, 150);
+            afterPaint(function () { MapViewer.render(); });
         }
         if (page === 'usermgr') {
-            setTimeout(function () { UserManager.render(); }, 50);
+            afterPaint(function () { UserManager.render(); });
         }
         if (page === 'history') {
             // 此前没有这一条：History.init() 只绑事件不拉数据，于是切回历史页
             // 永远是上次的旧列表（别处新产生的检测看不到）。
-            setTimeout(function () { History.load(); }, 50);
+            afterPaint(function () { History.load(); });
         }
         if (page === 'disaster') {
-            setTimeout(function () { Disaster.render(); }, 50);
+            afterPaint(function () { Disaster.render(); });
         }
         if (page === 'profile') {
             // 动态导入个人中心模块
             import('./profile.js').then(function (m) {
-                setTimeout(function () { m.Profile.render(); }, 50);
+                afterPaint(function () { m.Profile.render(); });
             }).catch(function (e) { console.error('Failed to load profile module:', e); });
         }
     }

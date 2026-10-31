@@ -234,8 +234,8 @@ body {
     to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 @keyframes pageEnter {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { transform: translateY(6px); }
+    to   { transform: none; }
 }
 /* ---- 骨架屏 ----
    规则本体在文件后部的「Skeleton 骨架屏」段（那里还带暗色主题覆盖）。
@@ -2045,11 +2045,21 @@ select.form-control {
 /* ---- 视野控制 ---- */
 .hidden { display: none !important; }
 .page-content { display: none; }
-.page-content.active { display: block; animation: pageEnter var(--duration-page) var(--ease-smooth); }
 
-.page-content.active .card:nth-child(1) { animation: pageEnter var(--duration-page) var(--ease-smooth) 0.05s both; }
-.page-content.active .card:nth-child(2) { animation: pageEnter var(--duration-page) var(--ease-smooth) 0.1s both; }
-.page-content.active .card:nth-child(3) { animation: pageEnter var(--duration-page) var(--ease-smooth) 0.15s both; }
+/* 切页动画：只走位移，不走透明度。
+ *
+ * 原先是从 opacity:0 淡入，350ms。问题在抓帧里看得很清楚 —— 点「数据看板」
+ * 的瞬间，浅色的上一页已经 display:none 消失，而深色大屏正从 0 淡入，
+ * 中间那几十毫秒整片内容区是**灰白的**，看着像闪了一下。
+ * 页面的底色差异越大，这一下越明显。
+ *
+ * 改成纯位移（6px 上浮）+ 很短的时长：有动作，但不会出现任何中间色。
+ * 卡片那三条错峰动画也一并去掉 —— 它们让内容分三批出现（最晚到 500ms），
+ * 数据页读起来像「还在组装」。 */
+.page-content.active {
+    display: block;
+    animation: pageEnter 160ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
 
 /* ---- 自定义滚动条 ---- */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
