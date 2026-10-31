@@ -233,6 +233,7 @@ DEPLOY_HOST=root@your.server.ip ./upload_checkpoints.sh
 | [docs/测试报告.md](docs/测试报告.md) | 六种测试手段的结果、本轮发现并处理的缺陷、明确未覆盖的范围 |
 | [docs/上线方案.md](docs/上线方案.md) | 部署步骤、配置项、验证清单、回滚与运维、已知限制 |
 | [docs/AGENT.md](docs/AGENT.md) | Agent 的两条通道（工具 / 浏览器）、7 个工具清单、提示词设计、模型选型约束 |
+| [docs/工程经验.md](docs/工程经验.md) | 开发过程中踩过的坑，按「验证 / 改代码 / 环境 / 外部依赖 / 部署 / 交互」分类 —— **与具体业务无关，可直接搬到别的项目** |
 | [docs/figures/](docs/figures/) | 系统架构图与业务架构图的**源码**与 Visio 源文件 —— 图是脚本画的，改 Python 重跑 |
 
 ---
