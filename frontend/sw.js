@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bitcd-v24';
+const CACHE_NAME = 'bitcd-v25';
 
 const PRECACHE_URLS = [
   './',
@@ -54,6 +54,7 @@ const PRECACHE_URLS = [
   './js/config.local.js',
   './js/landing.js',
   './js/overview.js',
+  './js/insights.js',
   // 首屏背景与示例影像。首屏是未登录用户的第一印象，离线时也不该是空白；
   // 示例影像更要缓存 —— 「用示例试一次」就是给网络不好的人准备的。
   './images/og-card.jpg',

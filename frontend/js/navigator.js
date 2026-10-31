@@ -10,6 +10,7 @@ import { UserManager } from './userManager.js';
 import { History } from './history.js';
 import { Disaster } from './disaster.js';
 import { Overview } from './overview.js';
+import { Insights } from './insights.js';
 
 export const Navigator = {
     _currentPage: null,
@@ -95,6 +96,9 @@ export const Navigator = {
         }
         if (page === 'overview') {
             setTimeout(function () { Overview.render(); }, 50);
+        }
+        if (page === 'insights') {
+            setTimeout(function () { Insights.render(); }, 50);
         }
         if (page === 'dashboard') {
             setTimeout(function () { BigScreen.render(); }, 100);

@@ -319,6 +319,12 @@
                     <span data-i18n="nav.profile">个人中心</span>
                     <span class="lock-icon">🔒</span>
                 </button>
+                <!-- 前沿资讯 -->
+                <button class="nav-item" data-page="insights">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span data-i18n="nav.insights">前沿资讯</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
                 <!-- 关于系统 -->
                 <button class="nav-item" data-page="about">
                     <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
@@ -1543,6 +1549,55 @@
             </div>
 
             <!-- ========== 关于系统 ========== -->
+            <!-- ========== 前沿资讯 ========== -->
+            <div id="page-insights" class="page-content">
+                <div class="page-header">
+                    <div>
+                        <h1 data-i18n="insights.title">前沿资讯</h1>
+                        <p data-i18n="insights.subtitle">arXiv 上最新的农业遥感论文，以及这个领域的基本常识</p>
+                    </div>
+                    <button type="button" class="btn-gray" id="insightsRefreshBtn" data-i18n="insights.refresh">刷新</button>
+                </div>
+
+                <section class="card">
+                    <div class="ins-head">
+                        <h2 data-i18n="insights.papersTitle">最新论文</h2>
+                        <span class="ins-meta" id="insightsMeta"></span>
+                    </div>
+                    <div id="insightsPapers" class="ins-list"></div>
+                </section>
+
+                <section class="ins-kb">
+                    <h2 class="ov-caps-title" data-i18n="insights.kbTitle">基础知识</h2>
+                    <div class="ins-kb-grid">
+                        <article class="ins-kb-card">
+                            <h3 data-i18n="insights.kb1T">变化检测在看什么</h3>
+                            <p data-i18n="insights.kb1D">同一地点两个时间点的影像逐一比对，找出「变了」的像素。输出通常是一张二值掩膜：变化的像素为白，其余为黑。</p>
+                        </article>
+                        <article class="ins-kb-card">
+                            <h3 data-i18n="insights.kb2T">T1 / T2 是什么</h3>
+                            <p data-i18n="insights.kb2D">前、后两期影像。要求同一区域、同一传感器、季节尽量接近——光照和物候差异会被模型误判为变化。</p>
+                        </article>
+                        <article class="ins-kb-card">
+                            <h3 data-i18n="insights.kb3T">常用公开数据集</h3>
+                            <p data-i18n="insights.kb3D">LEVIR-CD（建筑变化）、SYSU-CD（城市变化）、CDD（季节变化）、WHU-CD。本系统的示例影像取自 SYSU-CD。</p>
+                        </article>
+                        <article class="ins-kb-card">
+                            <h3 data-i18n="insights.kb4T">怎么判断模型好不好</h3>
+                            <p data-i18n="insights.kb4D">精确率、召回率、F1 与 IoU。只看变化比例准不准不够——边界画得对不对才是真正的难点。</p>
+                        </article>
+                        <article class="ins-kb-card">
+                            <h3 data-i18n="insights.kb5T">黑土地为什么特殊</h3>
+                            <p data-i18n="insights.kb5D">东北黑土区是重要粮仓，黑土层形成极慢，退化后很难恢复。遥感的价值在于用很低的成本做年际追踪。</p>
+                        </article>
+                        <article class="ins-kb-card">
+                            <h3 data-i18n="insights.kb6T">分辨率决定能看见什么</h3>
+                            <p data-i18n="insights.kb6D">亚米级能看到田块与建筑轮廓；10 米级（如 Sentinel-2）更适合看大范围的轮作、长势与物候变化。</p>
+                        </article>
+                    </div>
+                </section>
+            </div>
+
             <div id="page-about" class="page-content">
                 <div class="about-hero">
                     <div class="about-logo"><img src="images/logo.png" alt="BlackLand CD" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain;"></div>

@@ -30,6 +30,7 @@ import { NDVIViewer } from './ndviViewer.js';
 import { Agent } from './agent.js';
 import { Landing } from './landing.js';
 import { Overview } from './overview.js';
+import { Insights } from './insights.js';
 import { Disaster } from './disaster.js';
 import { CommandPalette } from './commandPalette.js';
 
@@ -66,6 +67,7 @@ window.onload = () => {
     safeInit('Landing', () => Landing.init());
     // 概览是默认页，init 里会顺手把统计数字拉一遍
     safeInit('Overview', () => Overview.init());
+    safeInit('Insights', () => Insights.init());
     safeInit('Navigator', () => Navigator.init());
     safeInit('Uploader', () => Uploader.init());
     safeInit('GPSLocator', () => GPSLocator.init());
