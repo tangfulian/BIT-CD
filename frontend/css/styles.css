@@ -631,7 +631,16 @@ input[type="button"]:disabled {
     border-right: 1px solid rgba(255,255,255,0.06);
 }
 
+.sidebar::before {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: 0; height: 260px;
+    background: radial-gradient(120% 100% at 0% 0%, rgba(78, 168, 119, .16), transparent 68%);
+    pointer-events: none;
+}
+
 .sidebar-header {
+    position: relative;
     padding: 28px 20px 20px;
     border-bottom: 1px solid rgba(255,255,255,0.08);
 }
@@ -675,19 +684,19 @@ input[type="button"]:disabled {
 .nav-item {
     display: flex; align-items: center; gap: 12px;
     width: 100%;
-    min-height: 44px;
-    padding: 11px 14px;
+    min-height: 38px;
+    padding: 8px 14px;
     border-radius: var(--radius-md);
     color: rgba(255,255,255,0.58);
     cursor: pointer;
     transition: background var(--duration-fast) var(--ease-smooth),
                 color var(--duration-fast) var(--ease-smooth),
-                padding-left var(--duration-normal) var(--ease-smooth);
-    margin-bottom: 2px;
+                transform var(--duration-fast) var(--ease-smooth);
+    margin-bottom: 1px;
     background: none;
     border: none;
     font-family: inherit;
-    font-size: var(--font-base);
+    font-size: 13.5px;
     font-weight: 500;
     letter-spacing: 0.01em;
     line-height: 1.4;
@@ -697,9 +706,10 @@ input[type="button"]:disabled {
 
 .nav-item:hover {
     background: rgba(255,255,255,0.06);
-    color: rgba(255,255,255,0.85);
-    padding-left: 18px;
+    color: rgba(255,255,255,0.88);
+    transform: translateX(2px);
 }
+.nav-item:hover .nav-icon-svg { color: rgba(255,255,255,0.9); }
 
 .nav-item:focus-visible {
     outline: 2px solid rgba(255,255,255,0.6);
@@ -707,10 +717,64 @@ input[type="button"]:disabled {
 }
 
 .nav-item.active {
-    background: rgba(255,255,255,0.1);
-    color: white;
+    background: linear-gradient(90deg, rgba(78,168,119,.26), rgba(78,168,119,.05));
+    color: #fff;
     font-weight: 600;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+    box-shadow: inset 0 0 0 1px rgba(78,168,119,.28);
+}
+.nav-item.active::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 50%;
+    width: 3px; height: 58%;
+    transform: translateY(-50%);
+    border-radius: 0 3px 3px 0;
+    background: #4ea877;
+    box-shadow: 0 0 10px rgba(78,168,119,.55);
+}
+.nav-item.active .nav-icon-svg { color: #86d8ab; }
+
+/* ---- 侧栏：分组标题 + 命令入口 ---- */
+.nav-group-title {
+    padding: 10px 14px 4px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    color: rgba(255, 255, 255, .30);
+    user-select: none;
+}
+.nav-group-title:first-of-type { padding-top: 2px; }
+
+.nav-search {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    margin: 2px 0 8px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, .55);
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .09);
+    transition: background .15s, border-color .15s, color .15s;
+}
+.nav-search:hover {
+    background: rgba(255, 255, 255, .09);
+    border-color: rgba(255, 255, 255, .18);
+    color: rgba(255, 255, 255, .85);
+}
+.nav-search span { flex: 1; text-align: left; }
+.nav-search kbd {
+    font: inherit;
+    font-size: 10.5px;
+    padding: 2px 6px;
+    border-radius: 5px;
+    color: rgba(255, 255, 255, .45);
+    background: rgba(255, 255, 255, .08);
+    border: 1px solid rgba(255, 255, 255, .08);
 }
 
 .nav-item.active::before {
@@ -733,13 +797,40 @@ input[type="button"]:disabled {
 .nav-item.active .nav-icon-svg { opacity: 1; }
 
 .sidebar-footer {
-    padding: 20px;
+    position: relative;
+    padding: 14px 16px 16px;
     border-top: 1px solid rgba(255,255,255,0.08);
+}
+/* 导航区是可滚动的，底部总会露出半截菜单项。加一层渐变让它淡出，
+   比一刀切掉半个图标好看，也顺带暗示「下面还有」。 */
+.sidebar-footer::before {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: -30px; height: 30px;
+    background: linear-gradient(to top, var(--bg-sidebar), transparent);
+    pointer-events: none;
 }
 
 .user-info {
-    display: flex; align-items: center; gap: 12px;
-    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+}
+
+.user-logout {
+    margin-left: auto;
+    width: 32px; height: 32px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, .10);
+    background: transparent;
+    color: rgba(255, 255, 255, .55);
+    cursor: pointer;
+    transition: color .15s, border-color .15s, background .15s;
+}
+.user-logout:hover {
+    color: #f08a7a;
+    border-color: rgba(240, 138, 122, .5);
+    background: rgba(240, 138, 122, .08);
 }
 
 .user-avatar {
@@ -3782,6 +3873,18 @@ select.form-control {
 }
 .mobile-menu-toggle.active .hamburger-line:nth-child(3) {
     transform: translateY(-7px) rotate(-45deg);
+}
+/* 抽屉打开时这颗按钮变成关闭键，必须挪到抽屉右上角 ——
+   留在左上角会正好压在 logo 上。 */
+/* 抽屉本身是深色，浅色主题下汉堡线是深色 —— 变成关闭键后必须改白，否则看不见 */
+.mobile-menu-toggle.active .hamburger-line { background: rgba(255, 255, 255, .78); }
+
+.mobile-menu-toggle.active {
+    left: calc(280px - 56px);
+    background: transparent;
+    border-color: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 .sidebar-backdrop {

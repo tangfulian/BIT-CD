@@ -231,101 +231,94 @@
                 </div>
             </div>
             <nav class="sidebar-nav">
-                <!-- 地块信息配置 -->
-                <button class="nav-item" data-page="land">
-                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2C7.58 2 4 6.48 4 12c0 5.52 7 10 8 10s8-4.48 8-10c0-5.52-3.58-10-8-10z"/></svg>
-                    <span data-i18n="nav.land">地块信息配置</span>
-                    <span class="lock-icon">🔒</span>
+                <!-- 命令面板入口：Ctrl/Cmd+K 也能开，这里给一个看得见的入口 -->
+                <button type="button" class="nav-search" id="navSearchBtn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                    <span data-i18n="nav.search">搜索页面</span>
+                    <kbd>Ctrl K</kbd>
                 </button>
-                <!-- 系统概览：进系统后的默认页，游客也能进（不是功能页，是首页） -->
+                <div class="nav-group-title" data-i18n="nav.groupWorkbench">工作台</div>
                 <button class="nav-item active" data-page="overview">
                     <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
                     <span data-i18n="nav.overview">系统概览</span>
                 </button>
-                <!-- 单张检测 -->
                 <button class="nav-item" data-page="single">
                     <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                     <span data-i18n="nav.single">单张变化检测</span>
                 </button>
-                <!-- 批量检测 -->
                 <button class="nav-item" data-page="batch">
                     <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                     <span data-i18n="nav.batch">批量变化检测</span>
                     <span class="lock-icon">🔒</span>
                 </button>
-                <!-- 检测历史 -->
+                <div class="nav-group-title" data-i18n="nav.groupData">数据</div>
                 <button class="nav-item" data-page="history">
                     <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     <span data-i18n="nav.history">检测历史</span>
                     <span class="lock-icon">🔒</span>
                 </button>
-                <!-- 数据大屏 -->
                 <button class="nav-item" data-page="dashboard">
                     <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                     <span data-i18n="nav.dashboard">数据大屏</span>
                     <span class="lock-icon">🔒</span>
                 </button>
-                <!-- 时序分析 -->
-                <button class="nav-item" data-page="timeline">
-                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                    <span data-i18n="nav.timeline">时序分析</span>
-                    <span class="lock-icon">🔒</span>
-                </button>
-                <!-- 系统状态 -->
-                <button class="nav-item" data-page="status">
-                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                    <span data-i18n="nav.status">系统状态</span>
-                    <span class="lock-icon">🔒</span>
-                </button>
-                <!-- 结果对比 -->
-                <button class="nav-item" data-page="compare">
-                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-                    <span data-i18n="nav.compare">结果对比</span>
-                    <span class="lock-icon">🔒</span>
-                </button>
-                <!-- 模型评估 -->
-                <button class="nav-item" data-page="evaluate">
-                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                    <span data-i18n="nav.evaluate">模型评估</span>
-                    <span class="lock-icon">🔒</span>
-                </button>
-                <!-- 灾害定损 -->
-                <button class="nav-item" data-page="disaster">
-                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.9 4.9l2.8 2.8"/><path d="M16.3 16.3l2.8 2.8"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.9 19.1l2.8-2.8"/><path d="M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="3"/></svg>
-                    <span data-i18n="nav.disaster">灾害定损</span>
-                    <span class="lock-icon">🔒</span>
-                </button>
-                <!-- AI Agent 浏览器操控 -->
-                <button class="nav-item" data-page="agent">
-                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="4"/><circle cx="9" cy="9" r="2"/><circle cx="15" cy="9" r="2"/><path d="M9 15c.83.67 1.83 1 3 1s2.17-.33 3-1"/><line x1="12" y1="13" x2="12" y2="17"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg>
-                    <span data-i18n="nav.agent">AI Agent</span>
-                    <span class="lock-icon">🔒</span>
-                </button>
-                <!-- 检测地图 -->
                 <button class="nav-item" data-page="mapviewer">
                     <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2C7.58 2 4 6.48 4 12c0 5.52 7 10 8 10s8-4.48 8-10c0-5.52-3.58-10-8-10z"/></svg>
                     <span data-i18n="nav.mapviewer">检测地图</span>
                     <span class="lock-icon">🔒</span>
                 </button>
-                <!-- 用户管理（仅管理员可见） -->
-                <button class="nav-item admin-only hidden" data-page="usermgr">
-                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    <span data-i18n="nav.usermgr">用户管理</span>
+                <button class="nav-item" data-page="land">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2C7.58 2 4 6.48 4 12c0 5.52 7 10 8 10s8-4.48 8-10c0-5.52-3.58-10-8-10z"/></svg>
+                    <span data-i18n="nav.land">地块信息配置</span>
                     <span class="lock-icon">🔒</span>
                 </button>
-                <!-- 个人中心 -->
-                <button class="nav-item" data-page="profile">
-                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    <span data-i18n="nav.profile">个人中心</span>
+                <div class="nav-group-title" data-i18n="nav.groupAnalysis">分析</div>
+                <button class="nav-item" data-page="timeline">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <span data-i18n="nav.timeline">时序分析</span>
                     <span class="lock-icon">🔒</span>
                 </button>
-                <!-- 前沿资讯 -->
+                <button class="nav-item" data-page="compare">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                    <span data-i18n="nav.compare">结果对比</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <button class="nav-item" data-page="evaluate">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    <span data-i18n="nav.evaluate">模型评估</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <button class="nav-item" data-page="disaster">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.9 4.9l2.8 2.8"/><path d="M16.3 16.3l2.8 2.8"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.9 19.1l2.8-2.8"/><path d="M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span data-i18n="nav.disaster">灾害定损</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <button class="nav-item" data-page="agent">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="4"/><circle cx="9" cy="9" r="2"/><circle cx="15" cy="9" r="2"/><path d="M9 15c.83.67 1.83 1 3 1s2.17-.33 3-1"/><line x1="12" y1="13" x2="12" y2="17"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg>
+                    <span data-i18n="nav.agent">AI Agent</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <div class="nav-group-title" data-i18n="nav.groupSystem">系统</div>
+                <button class="nav-item" data-page="status">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <span data-i18n="nav.status">系统状态</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
                 <button class="nav-item" data-page="insights">
                     <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
                     <span data-i18n="nav.insights">前沿资讯</span>
                     <span class="lock-icon">🔒</span>
                 </button>
-                <!-- 关于系统 -->
+                <button class="nav-item" data-page="profile">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span data-i18n="nav.profile">个人中心</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
+                <button class="nav-item admin-only hidden" data-page="usermgr">
+                    <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span data-i18n="nav.usermgr">用户管理</span>
+                    <span class="lock-icon">🔒</span>
+                </button>
                 <button class="nav-item" data-page="about">
                     <svg class="nav-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                     <span data-i18n="nav.about">关于系统</span>
@@ -351,11 +344,12 @@
                         <div class="user-avatar" id="userAvatar">U</div>
                         <div class="user-details">
                             <h4 id="showUser">用户</h4>
-                            <p data-i18n="auth.loggedIn">已登录</p>
                             <p id="userRole" style="font-size: 13px;">角色：普通用户</p>
                         </div>
+                        <button class="user-logout" id="logoutBtn" data-i18n-aria="auth.logout" title="退出登录">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        </button>
                     </div>
-                    <button class="btn-danger" id="logoutBtn" data-i18n="auth.logout" aria-label="退出登录">退出登录</button>
                 </div>
                 <button class="btn-theme-toggle" id="toggleThemeBtn" aria-label="切换深色/亮色模式" aria-pressed="false">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>

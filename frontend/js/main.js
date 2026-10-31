@@ -29,10 +29,10 @@ import { ImageTools } from './imageTools.js';
 import { NDVIViewer } from './ndviViewer.js';
 import { Agent } from './agent.js';
 import { Landing } from './landing.js';
+import { CommandPalette } from './commandPalette.js';
 import { Overview } from './overview.js';
 import { Insights } from './insights.js';
 import { Disaster } from './disaster.js';
-import { CommandPalette } from './commandPalette.js';
 
 function initEventListeners() {
     const goRegister = document.getElementById("goRegister");
@@ -48,6 +48,8 @@ function initEventListeners() {
     if (registerBtn) registerBtn.onclick = () => Auth.handleRegister();
     if (loginBtn) loginBtn.onclick = () => Auth.handleLogin();
     if (githubLoginBtn) githubLoginBtn.onclick = () => Auth.startGithubLogin();
+    const navSearch = document.getElementById('navSearchBtn');
+    if (navSearch) navSearch.onclick = () => CommandPalette.open();
     if (logoutBtn) logoutBtn.onclick = () => Auth.handleLogout();
     if (clearAllHistory) clearAllHistory.onclick = () => History.clearAll();
 }

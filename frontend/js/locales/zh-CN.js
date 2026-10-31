@@ -943,4 +943,10 @@ export const zhCN = {
 
     "overview.none": "暂无",
 
+    "nav.search": "搜索页面",
+    "nav.groupWorkbench": "工作台",
+    "nav.groupData": "数据",
+    "nav.groupAnalysis": "分析",
+    "nav.groupSystem": "系统",
+
 };

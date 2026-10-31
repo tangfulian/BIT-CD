@@ -901,4 +901,10 @@ export const en = {
 
     "overview.none": "none yet",
 
+    "nav.search": "Search pages",
+    "nav.groupWorkbench": "WORKSPACE",
+    "nav.groupData": "DATA",
+    "nav.groupAnalysis": "ANALYSIS",
+    "nav.groupSystem": "SYSTEM",
+
 };
