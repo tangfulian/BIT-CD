@@ -105,3 +105,79 @@ class TestRecommendThreshold:
         data = resp.json()
         assert data["code"] == 200
         assert 0.1 <= data["threshold"] <= 0.9
+
+
+class TestDetectCache:
+    """缓存键与元数据的边界。
+
+    影像 + 模型 + 阈值决定像素，元数据（地名 / 变化类型 / 前后时相 /
+    序列归属）只是描述 —— 但描述也是用户填的，不能被上一轮的值顶掉。
+    """
+
+    def _post(self, client, headers, b1, b2, **data):
+        payload = {"model": "BIT", "threshold": 0.5}
+        payload.update(data)
+        return client.post(
+            "/detect",
+            files=[
+                ("img1", ("t1.png", io.BytesIO(b1), "image/png")),
+                ("img2", ("t2.png", io.BytesIO(b2), "image/png")),
+            ],
+            data=payload,
+            headers=headers,
+        )
+
+    def test_same_input_reuses_the_same_record(self, client, auth_headers):
+        b1 = _fake_image().getvalue()
+        b2 = _fake_image().getvalue()
+        a = self._post(client, auth_headers, b1, b2, location="甲市")
+        b = self._post(client, auth_headers, b1, b2, location="甲市")
+        assert a.status_code == 200 and b.status_code == 200
+        assert a.json()["detection_id"] == b.json()["detection_id"]
+
+    def test_metadata_is_refreshed_on_cache_hit(self, client, auth_headers):
+        from backend.app.models.database import SessionLocal
+        from backend.app.models.detection import DetectionResultDB
+
+        b1 = _fake_image().getvalue()
+        b2 = _fake_image().getvalue()
+        first = self._post(
+            client, auth_headers, b1, b2,
+            location="甲市", change_type="耕地退化", t1_time="2021-05",
+        )
+        did = first.json()["detection_id"]
+
+        second = self._post(
+            client, auth_headers, b1, b2,
+            location="乙市", change_type="风蚀沙化", t1_time="2022-06",
+        )
+        # 像素完全一样，不该重新推理
+        assert second.json()["detection_id"] == did
+
+        db = SessionLocal()
+        try:
+            rec = db.query(DetectionResultDB).filter(DetectionResultDB.id == did).first()
+            # 但记录上的描述必须是这次填的，否则历史里会挂着上一个地块的县名
+            assert rec.location == "乙市"
+            assert rec.change_type == "风蚀沙化"
+            assert rec.t1_time == "2022-06"
+        finally:
+            db.close()
+
+    def test_different_series_gets_its_own_record(self, client, auth_headers):
+        b1 = _fake_image().getvalue()
+        b2 = _fake_image().getvalue()
+
+        def make_series(name):
+            resp = client.post(
+                "/series", json={"name": name, "location": "甲市"}, headers=auth_headers
+            )
+            return resp.json()["series"]["id"]
+
+        s1, s2 = make_series("序列一"), make_series("序列二")
+
+        a = self._post(client, auth_headers, b1, b2, series_id=s1)
+        b = self._post(client, auth_headers, b1, b2, series_id=s2)
+        assert a.status_code == 200 and b.status_code == 200
+        # 同一对影像挂到另一个序列上是另一条记录 —— 否则新序列里空空如也
+        assert a.json()["detection_id"] != b.json()["detection_id"]

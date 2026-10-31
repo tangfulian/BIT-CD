@@ -113,16 +113,39 @@ def run_detection(
     image_hash = None
     if user_id is not None:
         image_hash = hashlib.md5(img1_bytes + img2_bytes).hexdigest()
+        # 键里必须有 series_id：同一次影像在同一序列里重复跑要复用，
+        # 但挂到**另一个序列**上是另一条记录。早先漏了它，结果是同一对影像
+        # 换个序列再跑，拿回来的是旧序列那条记录，新序列里什么都看不到。
         cached = db.query(DetectionResultDB).filter(
             DetectionResultDB.image_pair_hash == image_hash,
             DetectionResultDB.model == model,
             DetectionResultDB.threshold == float(threshold),
             DetectionResultDB.user_id == user_id,
+            DetectionResultDB.series_id == (series_id or None),
         ).first()
         if cached and cached.score_url:
             score_path = url_to_path(cached.score_url)
             if os.path.exists(score_path):
-                logger.info("命中缓存: image_hash=%s model=%s", image_hash, model)
+                # 影像 + 模型 + 阈值决定像素，这三样没变就复用推理结果；
+                # 但地名、变化类型、前后时相是**描述性**元数据，必须按本次
+                # 请求覆盖 —— 否则「同一对影像换一个地块再跑一次」，记录上
+                # 还是上一个地块的县名和年份，检测历史里看起来像是错的。
+                meta_now = (lat_lng, location, change_type, t1_time, t2_time, phase_index)
+                meta_old = (
+                    cached.lat_lng, cached.location, cached.change_type,
+                    cached.t1_time, cached.t2_time, cached.phase_index,
+                )
+                if meta_now != meta_old:
+                    cached.lat_lng = lat_lng
+                    cached.location = location
+                    cached.change_type = change_type
+                    cached.t1_time = t1_time
+                    cached.t2_time = t2_time
+                    cached.phase_index = phase_index if phase_index >= 0 else None
+                    db.commit()
+                    logger.info("缓存命中并更新元数据: id=%s", cached.id)
+                else:
+                    logger.info("命中缓存: image_hash=%s model=%s", image_hash, model)
                 return {
                     "code": 200,
                     "msg": "检测完成（缓存）",
