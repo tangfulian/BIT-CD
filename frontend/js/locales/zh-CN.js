@@ -936,4 +936,13 @@ export const zhCN = {
     "batch.uploadFailed": "批量上传失败",
     "batch.pollFailed": "与服务器的连接中断，任务可能仍在后台执行，刷新页面可查看",
 
+    "detect.quickPairTitle": "SYSU-CD 快速配对",
+    "detect.quickPairFound": "找到",
+    "detect.quickPairChoose": "对匹配图片，点击选择：",
+    "land.manualFill": "-- 手动填写 --",
+
+    "detect.swapPair": "交换前后时相",
+    "detect.susycdQuick": "SYSU-CD 快速配对",
+    "about.amap": "高德地图",
+
 };

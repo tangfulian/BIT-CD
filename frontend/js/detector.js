@@ -214,9 +214,9 @@ export const Detector = {
     _showPairPicker(pairs) {
         return new Promise((resolve) => {
             const html = '<div class="modal-box" style="max-width:500px;max-height:80vh;display:flex;flex-direction:column;">' +
-                '<div class="modal-title">SYSU-CD 快速配对 <button id="modalCloseBtn" style="float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-tertiary);">&times;</button></div>' +
+                '<div class="modal-title">' + I18n.t('detect.quickPairTitle', 'SYSU-CD 快速配对') + ' <button id="modalCloseBtn" style="float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-tertiary);">&times;</button></div>' +
                 '<div style="overflow-y:auto;flex:1;padding:0 4px;">' +
-                '<p style="margin-bottom:12px;color:var(--text-secondary);font-size:13px;">找到 <strong>' + pairs.length + '</strong> 对匹配图片，点击选择：</p>' +
+                '<p style="margin-bottom:12px;color:var(--text-secondary);font-size:13px;">' + I18n.t('detect.quickPairFound', '找到') + ' <strong>' + pairs.length + '</strong> ' + I18n.t('detect.quickPairChoose', '对匹配图片，点击选择：') + '</p>' +
                 pairs.map(p => '<button class="btn-gray susycd-pair-btn" data-name="' + p + '" style="display:block;width:100%;text-align:left;margin-bottom:4px;padding:10px 14px;font-family:monospace;font-size:13px;">📷 ' + p + '</button>').join('') +
                 '</div></div>';
             const { overlay, close } = Modal.createOverlay(html);

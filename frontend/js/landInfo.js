@@ -110,7 +110,7 @@ export const PlotManager = {
     _populateSelect() {
         const select = document.getElementById('detectPlotSelect');
         if (!select) return;
-        select.innerHTML = '<option value="">-- 手动填写 --</option>';
+        select.innerHTML = '<option value="">' + I18n.t('land.manualFill', '-- 手动填写 --') + '</option>';
         if (!Array.isArray(this._plots)) return;
         this._plots.forEach(p => {
             const opt = document.createElement('option');

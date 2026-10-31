@@ -894,4 +894,13 @@ export const en = {
     "batch.uploadFailed": "Batch upload failed",
     "batch.pollFailed": "Lost connection to the server. The job may still be running — reload to check.",
 
+    "detect.quickPairTitle": "SYSU-CD quick pair",
+    "detect.quickPairFound": "Found",
+    "detect.quickPairChoose": "matching image pairs. Click one to use it:",
+    "land.manualFill": "-- Enter manually --",
+
+    "detect.swapPair": "Swap T1/T2",
+    "detect.susycdQuick": "SYSU-CD quick pair",
+    "about.amap": "AMap",
+
 };
