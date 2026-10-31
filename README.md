@@ -174,6 +174,8 @@ DEPLOY_HOST=your.server.ip bash deploy.sh
 | `LLM_BASE_URL` / `LLM_MODEL` / `LLM_AGENT_MODEL` | 服务商与模型。默认 DeepSeek |
 | `LLM_DAILY_CALL_LIMIT` | 每日调用次数上限（默认 500，0 = 不限制），用来拦住失控的循环调用 |
 | `AMAP_WEB_KEY` | 高德地图。缺失时地图页降级 |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub 第三方登录。**两项都填才启用**，缺一项前端就不显示按钮 |
+| `GITHUB_REDIRECT_URI` | 回调地址，留空则按请求 host 自动推导 |
 | `ALLOWED_ORIGINS` | CORS 白名单，逗号分隔 |
 | `DATABASE_URL` | 默认 `sqlite:///./blackland.db` |
 | `AGENT_*` | Agent 的目标地址、注入账号、无头模式、最大步数 |
@@ -261,6 +263,11 @@ Service Worker 的预缓存清单与之同步，断网也能打开。
   实际测算前应按当地统计年鉴或保险条款替换。
 - **游客额度记在浏览器 localStorage 里**，后端只做 30 次/分钟的限流，不做总量约束。
 - AI 相关功能依赖所配 LLM 服务商的可用性与账号配额，接口不可用时仅这些功能降级。
+- **第三方登录只有 GitHub**。微信与 QQ 都要求**已备案域名**（微信开放平台的
+  「网站应用」还要求企业主体 + 300 元认证），个人暂时申请不到；本项目跑在裸 IP
+  上，过不了这一关。provider 的结构已经留好，等主体和备案下来只需要加一个 router。
+  另外 GitHub 登录**一律新建独立账号**，不按用户名合并 —— GitHub 用户名可以被
+  别人注册，自动合并等于让人接管你的本地账号。
 - **Agent 用途的模型必须同时支持视觉与 Function Calling**。当前默认
   `deepseek-v4-flash`（实测两项都支持）。换模型时注意 `deepseek-v4-pro`
   **不接受图片输入**，会让 Agent 失效。

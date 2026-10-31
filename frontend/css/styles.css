@@ -449,6 +449,30 @@ body {
 }
 .auth-form .btn-secondary:hover { color: #E9E5DC; border-color: #7A5F3E; }
 
+/* 第三方登录。分隔线与按钮的显隐由 Auth 按 /auth/providers 的返回决定 ——
+   服务端没配 client_id 时就不显示按钮，而不是给一个点了必然报错的入口。 */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 0 0;
+    color: #948A7C;
+    font-size: 12px;
+}
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #453626;
+}
+.auth-form .btn-github {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
 /* 窄屏：标识折到顶部。
    不用 flex 横排 —— 标题与说明会被挤成窄条，改为块级堆叠 */
 @media (max-width: 760px) {

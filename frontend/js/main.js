@@ -36,6 +36,7 @@ function initEventListeners() {
     const goLogin = document.getElementById("goLogin");
     const registerBtn = document.getElementById("registerBtn");
     const loginBtn = document.getElementById("loginBtn");
+    const githubLoginBtn = document.getElementById("githubLoginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
     const clearAllHistory = document.getElementById("clearAllHistory");
 
@@ -43,6 +44,7 @@ function initEventListeners() {
     if (goLogin) goLogin.onclick = () => Auth.toggleAuthForm(true);
     if (registerBtn) registerBtn.onclick = () => Auth.handleRegister();
     if (loginBtn) loginBtn.onclick = () => Auth.handleLogin();
+    if (githubLoginBtn) githubLoginBtn.onclick = () => Auth.startGithubLogin();
     if (logoutBtn) logoutBtn.onclick = () => Auth.handleLogout();
     if (clearAllHistory) clearAllHistory.onclick = () => History.clearAll();
 }

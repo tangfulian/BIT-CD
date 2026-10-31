@@ -33,6 +33,7 @@ from backend.app.routers import (
     detect,
     disaster,
     history,
+    oauth,
     plot,
     series,
     status,
@@ -162,6 +163,7 @@ def create_app() -> FastAPI:
 
     app.include_router(agent.router)
     app.include_router(auth.router)
+    app.include_router(oauth.router)
     app.include_router(detect.router)
     app.include_router(history.router)
     app.include_router(ai.router)

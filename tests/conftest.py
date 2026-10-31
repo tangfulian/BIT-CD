@@ -27,12 +27,23 @@ import backend.app.models.detection  # noqa: E402, F401
 import backend.app.models.annotation  # noqa: E402, F401
 import backend.app.models.plot  # noqa: E402, F401
 import backend.app.models.series  # noqa: E402, F401
+import backend.app.models.oauth  # noqa: E402, F401
 
 
 @pytest.fixture(autouse=True)
 def setup_db():
     """每个用例都从干净的表结构开始"""
+    from sqlalchemy import text
+
     Base.metadata.drop_all(bind=engine)
+    # alembic_version 不在 Base.metadata 里，drop_all 删不掉它。留着它的后果：
+    # init_db 看到"有版本表"就直接 upgrade(head)，而此刻表已经被 create_all
+    # 建好了 —— 只要 head 比库里的版本新一步，就会撞
+    # "table XXX already exists"。删掉它，init_db 走"已有库 → stamp head"
+    # 这条路，迁移与建表两条路才不会互相踩。
+    with engine.connect() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS alembic_version"))
+        conn.commit()
     Base.metadata.create_all(bind=engine)
     yield
 

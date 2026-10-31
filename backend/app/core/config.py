@@ -44,6 +44,21 @@ USER_RESET_PASSWORD = _user_reset
 AMAP_WEB_KEY = os.getenv("AMAP_WEB_KEY")
 AMAP_API_BASE = "https://restapi.amap.com/v3"
 
+# --- 第三方登录 ---
+# 目前只接了 GitHub：微信开放平台的「网站应用」要求企业主体 + 已备案域名，
+# QQ 互联同样要求已备案域名，两者都不是改代码能解决的，所以先把 provider
+# 的结构留好，等主体和备案下来再加。
+#
+# 配齐 client_id / client_secret 即启用；缺任意一个就当作未配置，
+# 前端不显示按钮、接口直接 503，而不是半死不活地跳到一个报错的 GitHub 页面。
+GITHUB_CLIENT_ID = (os.getenv("GITHUB_CLIENT_ID") or "").strip()
+GITHUB_CLIENT_SECRET = (os.getenv("GITHUB_CLIENT_SECRET") or "").strip()
+GITHUB_OAUTH_ENABLED = bool(GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET)
+
+# 回调地址必须与 GitHub OAuth App 里登记的一致（GitHub 允许它是登记值的子路径）。
+# 留空则按请求的 host 推导 —— 本地 127.0.0.1 和线上公网地址能共用同一份配置。
+GITHUB_REDIRECT_URI = (os.getenv("GITHUB_REDIRECT_URI") or "").strip()
+
 # --- LLM 服务商（可切换，不需要改代码） ---
 # 三个消费方（ai_service / agent_service / tool_agent_service）都从这里取值。
 # 换服务商 = 改 .env 里的这几个变量，不用动任何 .py。

@@ -7,13 +7,19 @@ import { LandInfo, PlotManager } from './landInfo.js';
 import { I18n } from './i18n.js';
 import { History } from './history.js';
 
-function _isTokenExpired(token) {
+function _decodeToken(token) {
     try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        return payload.exp * 1000 < Date.now();
+        // JWT 的 payload 是 base64url，atob 只认标准 base64，得先换字符表
+        const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        return JSON.parse(atob(b64));
     } catch {
-        return true;
+        return null;
     }
+}
+
+function _isTokenExpired(token) {
+    const payload = _decodeToken(token);
+    return !payload || !payload.exp || payload.exp * 1000 < Date.now();
 }
 
 export const Auth = {
@@ -21,6 +27,7 @@ export const Auth = {
     _isGuest: null, // null=uninitialized, true=guest, false=logged-in
 
     init() {
+        this._consumeOAuthFragment();
         const token = Utils.safeLocalStorage.getItem(CONFIG.TOKEN_KEY);
         const savedUser = Utils.safeLocalStorage.getItem(CONFIG.LOGIN_KEY);
         if (token && savedUser && !_isTokenExpired(token)) {
@@ -53,6 +60,70 @@ export const Auth = {
             });
         }
 
+        this._loadOAuthProviders();
+        if (this._oauthWelcome) {
+            Toast.success(this._oauthWelcome);
+            this._oauthWelcome = null;
+        }
+        if (this._oauthError) {
+            Modal.alert(this._oauthError);
+            this._oauthError = null;
+        }
+    },
+
+    // ========== 第三方登录 ==========
+
+    // GitHub 回跳时把 token 放在 URL fragment 里：fragment 不会发给服务器、
+    // 不进 Referer。但它仍会留在浏览器历史里，所以读到后立刻从地址栏抹掉。
+    _consumeOAuthFragment() {
+        const hash = window.location.hash || '';
+        if (!hash.startsWith('#oauth_')) return;
+
+        const params = new URLSearchParams(hash.slice(1));
+        const token = params.get('oauth_token');
+        const err = params.get('oauth_error');
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+
+        if (token) {
+            const payload = _decodeToken(token);
+            if (!payload || !payload.sub) {
+                this._oauthError = I18n.t('auth.oauthError');
+                return;
+            }
+            // 名字和角色直接从 token 里取 —— 回调地址里只带 token，不多塞参数
+            Utils.safeLocalStorage.setItem(CONFIG.TOKEN_KEY, token);
+            Utils.safeLocalStorage.setItem(CONFIG.LOGIN_KEY, payload.sub);
+            Utils.safeLocalStorage.setItem(CONFIG.LOGIN_KEY + '_role', payload.role || 'user');
+            this._oauthWelcome = I18n.t('auth.oauthWelcome');
+            return;
+        }
+
+        if (err) {
+            const known = { denied: 'auth.oauthDenied', disabled: 'auth.oauthDisabled' };
+            this._oauthError = I18n.t(known[err] || 'auth.oauthError');
+        }
+    },
+
+    // 服务端没配 client_id 时不显示按钮。拿不到结果就按未配置处理 ——
+    // 宁可少一个入口，也不要给用户一个点了必然失败的按钮。
+    async _loadOAuthProviders() {
+        try {
+            const res = await Utils.fetchWithTimeout(`${CONFIG.API_BASE_URL}/auth/providers`);
+            if (!res.ok) return;
+            const body = await res.json();
+            const enabled = !!(body && body.data && body.data.github);
+            ['oauthDivider', 'githubLoginBtn'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.classList.toggle('hidden', !enabled);
+            });
+        } catch {
+            /* 静默：第三方登录只是附加入口，连不上后端不影响账号密码登录 */
+        }
+    },
+
+    startGithubLogin() {
+        // 授权页在 github.com 下，不能 fetch，必须整页跳转
+        window.location.href = `${CONFIG.API_BASE_URL}/auth/github/authorize`;
     },
 
     // ========== Guest Mode ==========
