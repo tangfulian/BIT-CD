@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from pathlib import Path
 
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _project_root not in sys.path:
@@ -8,7 +9,7 @@ if _project_root not in sys.path:
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -179,6 +180,21 @@ def create_app() -> FastAPI:
     # 挂载前端静态文件（必须在所有 router include 之后，确保 API 路由优先匹配）
     frontend_dir = os.path.join(_project_root, "frontend")
     if os.path.isdir(frontend_dir):
+
+        @app.get("/", include_in_schema=False)
+        @app.get("/index.html", include_in_schema=False)
+        def _index(request: Request):
+            """返回 index.html，顺手把 __OG_BASE__ 换成当前站点的绝对地址。
+
+            分享卡片（Open Graph）只认绝对 URL，相对路径在微信/QQ/Twitter
+            一律取不到图；而把域名写死在 HTML 里又等于把服务器地址提交进仓库。
+            所以放到请求时再填 —— 本地和线上共用同一份文件。
+            """
+            html = Path(frontend_dir, "index.html").read_text(encoding="utf-8")
+            base = str(request.base_url).rstrip("/")
+            return HTMLResponse(html.replace("__OG_BASE__", base))
+
+        # 这条 mount 必须留在最后：静态托管会吞掉一切未匹配的路径
         app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
 
     return app

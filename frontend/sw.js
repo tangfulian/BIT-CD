@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bitcd-v22';
+const CACHE_NAME = 'bitcd-v23';
 
 const PRECACHE_URLS = [
   './',
@@ -52,6 +52,15 @@ const PRECACHE_URLS = [
   './js/shareView.js',
   './js/shortcuts.js',
   './js/config.local.js',
+  './js/landing.js',
+  // 首屏背景与示例影像。首屏是未登录用户的第一印象，离线时也不该是空白；
+  // 示例影像更要缓存 —— 「用示例试一次」就是给网络不好的人准备的。
+  './images/og-card.jpg',
+  './images/landing/slide-1-map.jpg',
+  './images/landing/slide-2-dashboard.jpg',
+  './images/landing/slide-3-result.jpg',
+  './images/samples/sample-t1.jpg',
+  './images/samples/sample-t2.jpg',
   // 这四个库与三份字体已改为自托管。原先这里预缓存的是 jsdelivr / cdnjs 的地址，
   // 自托管之后那几条既不生效（图表库那条还会因为 jsdelivr 被重置而静默失败），
   // 真正在用的 /vendor/ 文件反而没有离线副本。

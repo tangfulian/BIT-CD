@@ -5466,3 +5466,196 @@ summary:focus-visible,
     .data-table .row-actions .btn-view,
     .data-table .row-actions .btn-small-danger { opacity: 1; }   /* 触屏没有 hover */
 }
+
+/* ============================================================
+   首屏（未登录用户的第一屏）
+   ------------------------------------------------------------
+   显示与否由 <html data-landing="show"> 决定，而不是 .hidden ——
+   这个属性由 <head> 里的内联脚本在首次绘制前写上，否则已登录用户
+   会先看到一帧首屏，未登录用户会先看到一帧应用界面。
+   ============================================================ */
+.landing {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 900;          /* 在应用之上、模态框之下 */
+    flex-direction: column;
+    background: #0a0e0c;
+    color: #f2efe8;
+    overflow: hidden;
+}
+html[data-landing="show"] .landing { display: flex; }
+
+.landing-slides { position: absolute; inset: 0; }
+.landing-slide {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transform: scale(1.04);
+    transition: opacity 1.4s ease;
+}
+.landing-slide.is-active {
+    opacity: 1;
+    animation: landingDrift 18s ease-out forwards;
+}
+/* 极慢的推近，让静态图看起来不是死的 */
+@keyframes landingDrift {
+    from { transform: scale(1.04); }
+    to   { transform: scale(1.12); }
+}
+
+.landing-scrim {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(90deg, rgba(8,12,10,.94) 0%, rgba(8,12,10,.80) 34%,
+                        rgba(8,12,10,.32) 64%, rgba(8,12,10,.16) 100%),
+        linear-gradient(180deg, rgba(8,12,10,.72) 0%, rgba(8,12,10,0) 30%, rgba(8,12,10,.58) 100%);
+}
+
+.landing-top {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px clamp(20px, 5vw, 64px);
+}
+.landing-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 15px;
+}
+.landing-brand img { width: 30px; height: 30px; object-fit: contain; border-radius: 8px; }
+.landing-top-actions { display: flex; gap: 10px; }
+
+.landing-body {
+    position: relative;
+    z-index: 2;
+    margin: auto 0;
+    padding: 0 clamp(20px, 5vw, 64px);
+    max-width: 780px;
+}
+.landing-kicker {
+    margin: 0 0 14px;
+    font-size: 12px;
+    letter-spacing: .2em;
+    color: #7fc9a4;
+}
+.landing-title {
+    margin: 0 0 18px;
+    font-size: clamp(30px, 4.2vw, 56px);
+    line-height: 1.18;
+    font-weight: 700;
+    letter-spacing: -.012em;
+}
+/* 断点由标记里的两个 span 决定，不让浏览器按字断 */
+.landing-title span { display: block; }
+
+/* 首屏盖住整个应用时，右下角的 AI 助手悬浮球会压在上面 */
+html[data-landing="show"] .chatbot-widget { display: none; }
+.landing-lede {
+    margin: 0 0 30px;
+    max-width: 620px;
+    font-size: clamp(14px, 1.15vw, 17px);
+    line-height: 1.75;
+    color: rgba(242, 239, 232, .78);
+}
+.landing-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 34px; }
+
+.landing-points {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 13px;
+    color: rgba(242, 239, 232, .62);
+}
+.landing-points li { position: relative; padding-left: 14px; }
+.landing-points li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: .62em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #4ea877;
+}
+
+.landing-solid,
+.landing-ghost {
+    font: inherit;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+}
+.landing-solid {
+    font-weight: 600;
+    color: #fff;
+    background: #2f7d5b;
+    border: 1px solid #2f7d5b;
+}
+.landing-solid:hover { background: #37916a; border-color: #37916a; }
+.landing-ghost {
+    color: #f2efe8;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .22);
+}
+.landing-ghost:hover { background: rgba(255, 255, 255, .13); border-color: rgba(255, 255, 255, .4); }
+.landing-lg { padding: 14px 28px; font-size: 15px; }
+
+.landing-dots {
+    position: absolute;
+    z-index: 2;
+    right: clamp(20px, 5vw, 64px);
+    bottom: 28px;
+    display: flex;
+    gap: 8px;
+}
+.landing-dot {
+    width: 26px;
+    height: 3px;
+    padding: 0;
+    border: 0;
+    border-radius: 2px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, .28);
+    transition: background .2s;
+}
+.landing-dot.is-active { background: #4ea877; }
+
+@media (max-width: 700px) {
+    .landing-scrim {
+        background: linear-gradient(180deg, rgba(8,12,10,.55) 0%,
+                    rgba(8,12,10,.40) 28%, rgba(8,12,10,.94) 100%);
+    }
+    .landing-body { margin: auto 0 76px; }
+    .landing-points { display: none; }
+    .landing-top { padding-top: 16px; }
+    .landing-brand span { display: none; }
+}
+
+/* 空状态里的行动按钮（单张检测的「用示例试一次」） */
+.empty-state-action {
+    margin-top: 16px;
+    font: inherit;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--primary);
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+}
+.empty-state-action:hover { border-color: var(--primary); }

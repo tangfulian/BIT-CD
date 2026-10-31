@@ -361,6 +361,8 @@ export const Auth = {
     enterSystem(username) {
         this._isGuest = false;
         state.currentUser = username;
+        // 登录成功后首屏就该让位 —— 它只在未登录时有意义
+        document.documentElement.removeAttribute("data-landing");
         document.getElementById("authPage").classList.add("hidden");
         document.getElementById("mainApp").classList.remove("hidden");
         // Sidebar bars

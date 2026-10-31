@@ -46,7 +46,9 @@ def _callback(client, state, code="the-code"):
 
 
 class TestProviders:
-    def test_disabled_by_default(self, client):
+    def test_disabled_when_not_configured(self, client, monkeypatch):
+        # 不能依赖「本地没配 .env」—— 开发机上配了真凭据时这条会假失败
+        monkeypatch.setattr(cfg, "GITHUB_OAUTH_ENABLED", False)
         resp = client.get("/auth/providers")
         assert resp.status_code == 200
         assert resp.json()["data"]["github"] is False

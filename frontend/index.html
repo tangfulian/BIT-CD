@@ -7,9 +7,32 @@
     <meta name="description" content="黑土地遥感变化检测智能平台，融合深度学习与GIS技术，为东北黑土地保护提供精准的变化检测与数据分析">
     <meta name="theme-color" content="#2d6a4f">
     <meta property="og:title" content="黑土地遥感变化检测系统 - BlackLand CD">
-    <meta property="og:description" content="黑土地保护智能平台 — 遥感变化检测与AI分析">
-    <meta property="og:image" content="images/logo.png">
+    <meta property="og:description" content="上传同一地块的前后两期卫星影像，输出变化区域、变化比例与实际受影响面积。7 种变化检测模型 · 多时相趋势 · 灾害定损 · 卫星地图。">
     <meta property="og:type" content="website">
+    <meta property="og:site_name" content="BlackLand CD">
+    <!-- __OG_BASE__ 由后端在返回 index.html 时替换成当前站点的绝对地址。
+         Open Graph 只认绝对 URL，写相对路径微信/QQ/Twitter 一律取不到图；
+         而写死域名又等于把服务器地址提交进仓库，所以放到请求时再填。 -->
+    <meta property="og:url" content="__OG_BASE__/">
+    <meta property="og:image" content="__OG_BASE__/images/og-card.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="__OG_BASE__/images/og-card.jpg">
+
+    <script>
+      /* 首屏显不显示，必须在第一次绘制之前定下来，否则未登录用户会先闪一下
+         应用界面。规则与 landing.js 保持一致：已登录 或 本会话已关过 → 不显示。 */
+      (function () {
+        try {
+          var tok = localStorage.getItem("auth_token");
+          var seen = sessionStorage.getItem("landing_dismissed") === "1";
+          if (!tok && !seen) document.documentElement.setAttribute("data-landing", "show");
+        } catch (e) {
+          document.documentElement.setAttribute("data-landing", "show");
+        }
+      })();
+    </script>
 
     <script>
       /* 尽早把主题写上去。main.js 是 defer 的，要等 DOM 解析完才跑，
@@ -85,6 +108,54 @@
 </head>
 <body>
     <a href="#mainApp" class="skip-link">跳到主内容</a>
+
+    <!-- 首屏。只对未登录用户显示，由 landing.js 控制。
+         背景是真实运行截图，不是设计图。 -->
+    <div id="landingPage" class="landing">
+        <div class="landing-slides" id="landingSlides">
+            <div class="landing-slide is-active" style="background-image:url('images/landing/slide-1-map.jpg')"></div>
+            <div class="landing-slide" style="background-image:url('images/landing/slide-2-dashboard.jpg')"></div>
+            <div class="landing-slide" style="background-image:url('images/landing/slide-3-result.jpg')"></div>
+        </div>
+        <div class="landing-scrim"></div>
+
+        <header class="landing-top">
+            <div class="landing-brand">
+                <img src="images/logo.png" alt="">
+                <span>BlackLand CD</span>
+            </div>
+            <div class="landing-top-actions">
+                <button type="button" class="landing-ghost" id="landingLoginBtn" data-i18n="landing.login">登录</button>
+                <button type="button" class="landing-solid" id="landingEnterBtn" data-i18n="landing.enter">进入系统</button>
+            </div>
+        </header>
+
+        <main class="landing-body">
+            <p class="landing-kicker" data-i18n="landing.kicker">东北黑土地 · 遥感变化检测</p>
+            <!-- 拆成两行写死断点：中文按字断行会把「发生」拆到两行，很难看 -->
+            <h1 class="landing-title">
+                <span data-i18n="landing.titleA">两期影像，</span>
+                <span data-i18n="landing.titleB">看清这块地发生了什么</span>
+            </h1>
+            <p class="landing-lede" data-i18n="landing.lede">上传同一地块的前后两期卫星影像，几秒内得到变化区域、变化比例与实际受影响面积。7 种变化检测模型可以并排对比。</p>
+            <div class="landing-cta">
+                <button type="button" class="landing-solid landing-lg" id="landingSampleBtn" data-i18n="landing.sample">用示例影像试一次</button>
+                <button type="button" class="landing-ghost landing-lg" id="landingUploadBtn" data-i18n="landing.upload">自己上传影像</button>
+            </div>
+            <ul class="landing-points">
+                <li data-i18n="landing.point1">7 种模型，可并排对比</li>
+                <li data-i18n="landing.point2">变化比例 / 实际面积 / 掩膜与热力图</li>
+                <li data-i18n="landing.point3">时序趋势 · 灾害定损 · 卫星地图</li>
+            </ul>
+        </main>
+
+        <div class="landing-dots" id="landingDots" role="tablist" aria-label="背景切换">
+            <button type="button" class="landing-dot is-active" data-slide="0" aria-label="第 1 张"></button>
+            <button type="button" class="landing-dot" data-slide="1" aria-label="第 2 张"></button>
+            <button type="button" class="landing-dot" data-slide="2" aria-label="第 3 张"></button>
+        </div>
+    </div>
+
     <!-- 登录/注册页面 -->
     <div id="authPage" class="auth-container hidden">
         <button class="auth-overlay-close" id="authOverlayClose" title="关闭">&times;</button>
@@ -519,6 +590,7 @@
                                 </div>
                                 <div class="empty-state-title" data-i18n="detect.emptyTitle">还没有检测结果</div>
                                 <p class="empty-state-desc" data-i18n="detect.emptyDesc">上传 T1/T2 影像后开始检测，结果与统计显示在这里</p>
+                                <button type="button" class="empty-state-action" id="detectSampleBtn" data-i18n="detect.trySample">没有影像？用示例试一次</button>
                             </div>
                             <div id="resultArea" class="hidden fade-in">
                                 <div class="stats-row">

@@ -28,6 +28,7 @@ import { Gallery } from './gallery.js';
 import { ImageTools } from './imageTools.js';
 import { NDVIViewer } from './ndviViewer.js';
 import { Agent } from './agent.js';
+import { Landing } from './landing.js';
 import { Disaster } from './disaster.js';
 import { CommandPalette } from './commandPalette.js';
 
@@ -60,6 +61,8 @@ function safeInit(name, fn) {
 window.onload = () => {
     initEventListeners();
     safeInit('Auth', () => Auth.init());
+    // 必须在 Auth 之后：首屏要不要显示取决于登录态
+    safeInit('Landing', () => Landing.init());
     safeInit('Navigator', () => Navigator.init());
     safeInit('Uploader', () => Uploader.init());
     safeInit('GPSLocator', () => GPSLocator.init());
