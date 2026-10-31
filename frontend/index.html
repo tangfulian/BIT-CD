@@ -28,6 +28,10 @@
           var tok = localStorage.getItem("auth_token");
           var seen = sessionStorage.getItem("landing_dismissed") === "1";
           if (!tok && !seen) document.documentElement.setAttribute("data-landing", "show");
+          // 侧栏是否收起也必须在首绘前定下来，否则宽侧栏会先闪一下再收窄
+          if (localStorage.getItem("nav_rail") === "1") {
+            document.documentElement.setAttribute("data-nav-rail", "1");
+          }
         } catch (e) {
           document.documentElement.setAttribute("data-landing", "show");
         }
@@ -229,6 +233,10 @@
                     </div>
                     <div><h2>壤镜 SoilScope</h2></div>
                 </div>
+                <button type="button" class="nav-rail-toggle" id="navRailToggle"
+                        data-i18n-aria="nav.railToggle" title="收起 / 展开侧栏">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
             </div>
             <nav class="sidebar-nav">
                 <!-- 命令面板入口：Ctrl/Cmd+K 也能开，这里给一个看得见的入口 -->

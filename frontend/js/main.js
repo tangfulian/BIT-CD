@@ -30,6 +30,7 @@ import { NDVIViewer } from './ndviViewer.js';
 import { Agent } from './agent.js';
 import { Landing } from './landing.js';
 import { CommandPalette } from './commandPalette.js';
+import { ChartUtils } from './chartUtils.js';
 import { Overview } from './overview.js';
 import { Insights } from './insights.js';
 import { Disaster } from './disaster.js';
@@ -48,6 +49,20 @@ function initEventListeners() {
     if (registerBtn) registerBtn.onclick = () => Auth.handleRegister();
     if (loginBtn) loginBtn.onclick = () => Auth.handleLogin();
     if (githubLoginBtn) githubLoginBtn.onclick = () => Auth.startGithubLogin();
+    const navRail = document.getElementById('navRailToggle');
+    if (navRail) navRail.onclick = () => {
+        const on = document.documentElement.getAttribute('data-nav-rail') === '1';
+        if (on) {
+            document.documentElement.removeAttribute('data-nav-rail');
+            try { localStorage.setItem('nav_rail', '0'); } catch (e) { /* 隐私模式 */ }
+        } else {
+            document.documentElement.setAttribute('data-nav-rail', '1');
+            try { localStorage.setItem('nav_rail', '1'); } catch (e) { /* 隐私模式 */ }
+        }
+        // 正文宽度变了，图表要重新量一次容器
+        setTimeout(() => ChartUtils.resizeAll(), 220);
+    };
+
     const navSearch = document.getElementById('navSearchBtn');
     if (navSearch) navSearch.onclick = () => CommandPalette.open();
     if (logoutBtn) logoutBtn.onclick = () => Auth.handleLogout();

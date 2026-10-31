@@ -907,4 +907,6 @@ export const en = {
     "nav.groupAnalysis": "ANALYSIS",
     "nav.groupSystem": "SYSTEM",
 
+    "nav.railToggle": "Collapse or expand the sidebar",
+
 };

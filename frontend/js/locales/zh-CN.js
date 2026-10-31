@@ -949,4 +949,6 @@ export const zhCN = {
     "nav.groupAnalysis": "分析",
     "nav.groupSystem": "系统",
 
+    "nav.railToggle": "收起或展开侧栏",
+
 };

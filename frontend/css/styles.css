@@ -618,11 +618,78 @@ input[type="button"]:disabled {
     color: var(--primary-dark);
 }
 
+/* ---- 侧边栏收起成图标栏 ----
+   收起时 width 走 72px，正文的 margin-left 跟着走；鼠标移到侧栏上时
+   侧栏自己展回 268px 并浮在内容之上（z-index 抬高），正文不动 ——
+   否则每次划过侧栏整页都要跟着抖一下。 */
+html[data-nav-rail="1"] { --sidebar-w: 72px; }
+
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .nav-item span,
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .nav-group-title,
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .nav-search span,
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .nav-search kbd,
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .nav-rail-toggle,
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .btn-theme-toggle,
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .user-logout,
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .sidebar-logo h2,
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .user-details,
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .lock-icon {
+    display: none;
+}
+
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .nav-item {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+}
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .nav-search {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+}
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .sidebar-header,
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .sidebar-footer {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .sidebar-logo {
+    justify-content: center;
+}
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .user-info {
+    justify-content: center;
+}
+html[data-nav-rail="1"] .sidebar:not(:hover):not(:focus-within) .sidebar-nav {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+/* 悬停 / 键盘聚焦时浮出完整侧栏 */
+html[data-nav-rail="1"] .sidebar:hover,
+html[data-nav-rail="1"] .sidebar:focus-within {
+    width: 268px;
+    z-index: 300;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .45);
+}
+
+/* 收起状态下，正文不能再被浮出的侧栏挡住点击 —— 侧栏自己抬高即可，
+   正文保持 72px 偏移，不移动。 */
+
+/* 移动端是抽屉，没有收起这一说 */
+@media (max-width: 1024px) {
+    html[data-nav-rail="1"] { --sidebar-w: 0px; }
+    html[data-nav-rail="1"] .sidebar { width: 280px; }
+}
+
 /* ---- 侧边栏 — 深色专业面板 ---- */
 .app-container { display: flex; min-height: 100vh; }
 
+/* 侧栏宽度走变量：收起成图标栏时整条链路（侧栏本身、主内容偏移）一起改，
+   不会出现「侧栏窄了但正文还空着 268px」这种对不齐。 */
+:root { --sidebar-w: 268px; }
+
 .sidebar {
-    width: 268px;
+    width: var(--sidebar-w);
+    transition: width .18s var(--ease-smooth);
     background: var(--bg-sidebar);
     color: var(--text-inverse);
     display: flex; flex-direction: column;
@@ -638,6 +705,30 @@ input[type="button"]:disabled {
     background: radial-gradient(120% 100% at 0% 0%, rgba(78, 168, 119, .16), transparent 68%);
     pointer-events: none;
 }
+
+.nav-rail-toggle {
+    position: absolute;
+    top: 26px;
+    right: 14px;
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    background: transparent;
+    color: rgba(255, 255, 255, .5);
+    cursor: pointer;
+    transition: color .15s, border-color .15s, transform .18s;
+}
+.nav-rail-toggle:hover {
+    color: #fff;
+    border-color: rgba(255, 255, 255, .3);
+}
+/* 收起后箭头翻个方向，提示「点一下展开」 */
+html[data-nav-rail="1"] .nav-rail-toggle { transform: rotate(180deg); }
+@media (max-width: 1024px) { .nav-rail-toggle { display: none; } }
 
 .sidebar-header {
     position: relative;
@@ -1053,7 +1144,8 @@ input[type="button"]:disabled {
        是 .active，所以这里不会挤到页面内容。 */
     display: flex;
     flex-direction: column;
-    margin-left: 268px;
+    margin-left: var(--sidebar-w);
+    transition: margin-left .18s var(--ease-smooth);
     padding: 36px 40px;
     min-height: 100vh;
 }
